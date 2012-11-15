@@ -1,0 +1,1 @@
+if (defined(_last_clock)) { _absdiff = _clock - _last_clock; _pctdiff = 100.0 * _absdiff / _last_clock; }

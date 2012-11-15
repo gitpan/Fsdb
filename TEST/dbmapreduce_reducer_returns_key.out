@@ -1,0 +1,4 @@
+#fsdb experiment duration
+ufs_mab_sys	37.2
+ufs_mab_sys	37.3
+#   | dbmapreduce -k experiment -C dbrow("_experiment eq 'ufs_mab_sys'")
