@@ -4,7 +4,7 @@
 # Fsdb.pm
 # $Id: 535f2d6db51a9c848cff016eb9af024dc4522614 $
 #
-# Copyright (C) 2005-2011 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License,
@@ -17,7 +17,7 @@
 # 
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
 package Fsdb;
@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.27';
+our $VERSION = '2.28';
 
 =head1 SYNOPSIS
 
@@ -231,34 +231,15 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.27, 2012-11-15
-Accumulated bug fixes.
+=head2 2.28, 2012-11-15
+A quick release to fix most rpmlint errors.
 
 =over 4
 
-=item IMPROVEMENT
-
-F<csv_to_db> now reports errors in CVS input with real diagnostics.
-
-=item IMPROVEMENT
-
-F<dbcolmovingstats> can now compute median, when given the C<-m> option.
-
 =item BUG FIX
 
-F<dbcolmovingstats> non-numeric handling (the C<-a> option) now works properly.
-
-=item DOCUMENTATION
-
-The internal
-F<t/test_command.t> test framework
-is now documented.
-
-=item BUG FIX
-
-F<dbrowuniq> now corretly handles the case where there is no input
-(previously it output a blank line, which is a malformed fsdb file).
-Thanks to Yuri Pradkin for reporting this bug.
+Fixed a number of minor release problems (wrong permissions, old FSF
+address, etc.) found by rpmlint.
 
 =back
 
@@ -2387,6 +2368,37 @@ F<xml_to_db> can convert simple, very regular XML files into Fsdb.
 
 F<dbfilepivot> "pivots" a file, converting multiple rows
 correponding to the same entity into a single row with multiple columns.
+
+=back
+
+=head2 2.27, 2012-11-15
+Accumulated bug fixes.
+
+=over 4
+
+=item IMPROVEMENT
+
+F<csv_to_db> now reports errors in CVS input with real diagnostics.
+
+=item IMPROVEMENT
+
+F<dbcolmovingstats> can now compute median, when given the C<-m> option.
+
+=item BUG FIX
+
+F<dbcolmovingstats> non-numeric handling (the C<-a> option) now works properly.
+
+=item DOCUMENTATION
+
+The internal
+F<t/test_command.t> test framework
+is now documented.
+
+=item BUG FIX
+
+F<dbrowuniq> now corretly handles the case where there is no input
+(previously it output a blank line, which is a malformed fsdb file).
+Thanks to Yuri Pradkin for reporting this bug.
 
 =back
 

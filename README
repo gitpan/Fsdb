@@ -143,25 +143,10 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.27, 2012-11-15 Accumulated bug fixes.[0m
-       IMPROVEMENT
-           [4mcsv_to_db[24m now reports errors in CVS input with real diagnostics.
-
-       IMPROVEMENT
-           [4mdbcolmovingstats[24m can now compute median, when given the "-m"
-           option.
-
+   [1m2.28, 2012-11-15 A quick release to fix most rpmlint errors.[0m
        BUG FIX
-           [4mdbcolmovingstats[24m non-numeric handling (the "-a" option) now works
-           properly.
-
-       DOCUMENTATION
-           The internal [4mt/test_command.t[24m test framework is now documented.
-
-       BUG FIX
-           [4mdbrowuniq[24m now corretly handles the case where there is no input
-           (previously it output a blank line, which is a malformed fsdb
-           file).  Thanks to Yuri Pradkin for reporting this bug.
+           Fixed a number of minor release problems (wrong permissions, old
+           FSF address, etc.) found by rpmlint.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -1629,6 +1614,26 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        NEW [4mdbfilepivot[24m "pivots" a file, converting multiple rows correponding
            to the same entity into a single row with multiple columns.
+
+   [1m2.27, 2012-11-15 Accumulated bug fixes.[0m
+       IMPROVEMENT
+           [4mcsv_to_db[24m now reports errors in CVS input with real diagnostics.
+
+       IMPROVEMENT
+           [4mdbcolmovingstats[24m can now compute median, when given the "-m"
+           option.
+
+       BUG FIX
+           [4mdbcolmovingstats[24m non-numeric handling (the "-a" option) now works
+           properly.
+
+       DOCUMENTATION
+           The internal [4mt/test_command.t[24m test framework is now documented.
+
+       BUG FIX
+           [4mdbrowuniq[24m now corretly handles the case where there is no input
+           (previously it output a blank line, which is a malformed fsdb
+           file).  Thanks to Yuri Pradkin for reporting this bug.
 
    [1m2.26, 2011-12-12 Bug fixes, particularly for perl-5.14.2.[0m
        BUG FIX

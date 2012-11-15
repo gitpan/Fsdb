@@ -6,6 +6,7 @@ bin/dbrecolize
 bin/dbrowenumerate
 bin/dbstats
 bin/ns_to_db
+COPYING
 DATA/classes.jdb
 DATA/experiments.fsdb
 DATA/filesplit.jdb

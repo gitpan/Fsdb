@@ -1,6 +1,6 @@
-Summary: A set of commands for manipulating flat-text databases from the shell.
+Summary: A set of commands for manipulating flat-text databases from the shell
 Name: perl-Fsdb
-Version: 2.27
+Version: 2.28
 Release: 1
 License: GPLv2
 Group: Development/Libraries
@@ -10,8 +10,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildArch: noarch
 BuildRequires:  perl-Test-Simple
 Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
-Obsoletes:   perl-Jdb < 2.11
-Obsoletes:   perl-Jdb = 2.11
+# next line for rpmlint perl-Fsdb.noarch: W: obsolete-not-provided perl-Jdb
+Obsoletes:   perl-Jdb < 2.12
+Provides:  perl-Jdb = 2.12
+
 
 %description
 FSDB is package of commands for manipulating flat-ASCII databases from
@@ -31,7 +33,7 @@ Rather than hand-code scripts to do each special case, FSDB provides
 higher-level functions.  Although it's often easy throw together a
 custom script to do any single task, I believe that there are several
 advantages to using this library: it is higher-level than raw perl,
-control uses names intead of column numbers, it is self-documenting,
+control uses names instead of column numbers, it is self-documenting,
 and it is very robust (error cases, careful memory handling, etc.).
 
 %prep
@@ -67,3 +69,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Nov 15 2012 johnh - 2.28-1
+- See http://www.isi.edu/~johnh/SOFTWARE/FSDB/

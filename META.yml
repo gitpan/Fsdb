@@ -22,4 +22,4 @@ requires:
   HTML::Parser: 0
   Test::More: 0
   Text::CSV_XS: 0
-version: 2.27
+version: 2.28
