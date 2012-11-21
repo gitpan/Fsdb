@@ -14,6 +14,9 @@ Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $versi
 Obsoletes:   perl-Jdb < 2.12
 Provides:  perl-Jdb = 2.12
 
+BuildRequires:  perl(ExtUtils::MakeMaker)
+
+
 
 %description
 FSDB is package of commands for manipulating flat-ASCII databases from

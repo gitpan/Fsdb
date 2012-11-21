@@ -374,7 +374,7 @@ sub run_test {
     #
     # start with alternative output
     my($out_ok) = diff_output($cmd_base, $optref, $out, "$cmd_base.trial", 'altout');
-    if (!$out_ok && $optref->{altout} eq 'true') {
+    if (!$out_ok && defined($optref->{altout}) && $optref->{altout} eq 'true') {
 	$out_ok = diff_output($cmd_base, $optref, "$cmd_base.altout", "$cmd_base.trial", 'out');
     };
     return undef if (!$out_ok);

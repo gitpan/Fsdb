@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.28';
+our $VERSION = '2.29';
 
 =head1 SYNOPSIS
 
@@ -231,15 +231,21 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.28, 2012-11-15
-A quick release to fix most rpmlint errors.
+=head2 2.29, 2012-11-20
+a quick release for CPAN testing
+
 
 =over 4
 
-=item BUG FIX
+=item IMPROVEMENT
 
-Fixed a number of minor release problems (wrong permissions, old FSF
-address, etc.) found by rpmlint.
+Tweaked the RPM spec.
+
+=item IMPROVEMENT
+
+Modified F<Makefile.PL> to fail gracefully on Perl installations
+that lack threads.  (Without this fix, I get massive failures
+in the non-ithreads test system.)
 
 =back
 
@@ -2368,6 +2374,18 @@ F<xml_to_db> can convert simple, very regular XML files into Fsdb.
 
 F<dbfilepivot> "pivots" a file, converting multiple rows
 correponding to the same entity into a single row with multiple columns.
+
+=back
+
+=head2 2.28, 2012-11-15
+A quick release to fix most rpmlint errors.
+
+=over 4
+
+=item BUG FIX
+
+Fixed a number of minor release problems (wrong permissions, old FSF
+address, etc.) found by rpmlint.
 
 =back
 

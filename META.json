@@ -34,10 +34,11 @@
          "requires" : {
             "HTML::Parser" : "0",
             "Test::More" : "0",
-            "Text::CSV_XS" : "0"
+            "Text::CSV_XS" : "0",
+            "threads" : "1"
          }
       }
    },
    "release_status" : "stable",
-   "version" : "2.28"
+   "version" : "2.29"
 }

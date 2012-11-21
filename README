@@ -143,10 +143,14 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.28, 2012-11-15 A quick release to fix most rpmlint errors.[0m
-       BUG FIX
-           Fixed a number of minor release problems (wrong permissions, old
-           FSF address, etc.) found by rpmlint.
+   [1m2.29, 2012-11-20 a quick release for CPAN testing[0m
+       IMPROVEMENT
+           Tweaked the RPM spec.
+
+       IMPROVEMENT
+           Modified [4mMakefile.PL[24m to fail gracefully on Perl installations that
+           lack threads.  (Without this fix, I get massive failures in the
+           non-ithreads test system.)
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -1615,6 +1619,11 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        NEW [4mdbfilepivot[24m "pivots" a file, converting multiple rows correponding
            to the same entity into a single row with multiple columns.
 
+   [1m2.28, 2012-11-15 A quick release to fix most rpmlint errors.[0m
+       BUG FIX
+           Fixed a number of minor release problems (wrong permissions, old
+           FSF address, etc.) found by rpmlint.
+
    [1m2.27, 2012-11-15 Accumulated bug fixes.[0m
        IMPROVEMENT
            [4mcsv_to_db[24m now reports errors in CVS input with real diagnostics.
@@ -1673,4 +1682,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.14.3                      2012-11-15                           Fsdb(3)
+perl v5.14.3                      2012-11-20                           Fsdb(3)

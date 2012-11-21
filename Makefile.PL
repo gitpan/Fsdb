@@ -10,6 +10,14 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
+#
+# from http://www.nntp.perl.org/group/perl.module-authors/2008/02/msg6277.html
+use Config;
+BEGIN {
+    die("OS unsupported:  ERROR: This Perl is not built to support threads\n")
+        if (! $Config{'useithreads'});
+};
+
 # BEGIN MODULE LIST
 # (flag for update_modules)
 
@@ -109,6 +117,7 @@ WriteMakefile(
     EXE_FILES       => [ map "bin/$_", @programs_to_install ],
     PL_FILES            => {},
     PREREQ_PM => {
+	'threads' => 1.0,
         'Test::More' => 0,
         'Text::CSV_XS' => 0,
         'HTML::Parser' => 0,
@@ -172,6 +181,7 @@ release:
 	cp $(RPM_PREFIX)-$(VERSION)-1.$(RPM_ARCH).rpm $(WEBDIR)
 	cp $(RPM_PREFIX)-$(VERSION)-1.src.rpm $(WEBDIR)
 	cp $(SPEC_PREFIX)-$(VERSION).tar.gz $(WEBDIR)
+	cp Fsdb.spec $(WEBDIR)
 	cp README.html $(WEBDIR)/$(SPEC_PREFIX)-$(VERSION)_README.html
 	cd $(WEBDIR); git add $(RPM_PREFIX)-$(VERSION)*.rpm $(SPEC_PREFIX)-$(VERSION).tar.gz $(SPEC_PREFIX)-$(VERSION)_README.html
 	cd $(WEBDIR); rm Fsdb-current.tar.gz; ln -s Fsdb-$(VERSION).tar.gz Fsdb-current.tar.gz; rm perl-Fsdb-current.noarch.rpm; ln -s perl-Fsdb-$(VERSION)-1.noarch.rpm perl-Fsdb-current.noarch.rpm; rm perl-Fsdb-current.src.rpm; ln -s perl-Fsdb-$(VERSION)-1.src.rpm perl-Fsdb-current.src.rpm; 

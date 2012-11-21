@@ -15,6 +15,7 @@ requires:
   HTML::Parser: 0
   Test::More: 0
   Text::CSV_XS: 0
+  threads: 1
 version: 1.14
 x_installdirs: site
 x_version_from: lib/Fsdb.pm
