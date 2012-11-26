@@ -202,8 +202,8 @@ if ($#TESTS == -1) {
 
 plan tests => ($#TESTS + 1);
 
-foreach (@TESTS) {
-    ok(run_test($_), $_);
+foreach my $test (@TESTS) {
+    ok(run_test($test), $test);
 };
 
 exit 0;
@@ -323,6 +323,9 @@ sub run_test {
 	# normalize floating point numbers
 	s/([ \t])\.([0-9efgEFG])/$10.$2/g;
 	s/^\./0./;
+	# Carp has no period in perl-5.14, but gathers one by 5.17.
+	# normalize the difference.
+	s/^( at .* line \d+)\.?/$1./g;
 	if (defined($suppress_warnings_regexp)) {
 	    if (/^($suppress_warnings_regexp)/) {
 	        # print "skipping: $_\n";
@@ -332,18 +335,28 @@ sub run_test {
 	print OUT "$_\n";
     };
     if (!close RUN) {
+	# unsuccessful program.  is this a bad thing?
         if ($? == -1) {
+	    # yes... system failure
 	    diag "failed to execute command: $!\n";
 	    return undef;
 	} elsif ($? & 127) {
+	    # yes... crash
 	    diag "program " . $optref->{prog} . " received signal...very bad! $!\n\t$run_cmd";
 	    return undef;
 	} else {
+	    # maybe... failure
 	    my $exit_code = ($? >> 8);
 	    if (defined($optref->{expected_exit_code})) {
 		my $expected_result = undef;
-		$expected_result = 1 if (!$expected_result && $optref->{expected_exit_code} eq 'fail' && $exit_code != 0);
-		$expected_result = 1 if (!$expected_result && $optref->{expected_exit_code} ne 'fail' && $exit_code == $optref->{expected_exit_code});
+		if (!$expected_result && $optref->{expected_exit_code} eq 'fail' && $exit_code != 0) {
+		    print "expected failure and got it ($exit_code)\n" if ($debug);
+		    $expected_result = 1;
+		};
+		if (!$expected_result && $optref->{expected_exit_code} ne 'fail' && $exit_code == $optref->{expected_exit_code}) {
+		    print "expected some code (". $optref->{expected_exit_code}. "), and got it\n" if ($debug);
+		    $expected_result = 1;
+		};
 		if (!$expected_result) {
 		    diag "test $cmd_file exited with unexpected exit code $exit_code (should be " . $optref->{expected_exit_code} . ")\n\t$run_cmd\n";
 		    return undef;

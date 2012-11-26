@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.29';
+our $VERSION = '2.30';
 
 =head1 SYNOPSIS
 
@@ -231,21 +231,26 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.29, 2012-11-20
-a quick release for CPAN testing
+=head2 2.30, 2012-11-25
 
 
 =over 4
 
+=item BUG FIX
+
+Removed unicode character in documention of F<dbcolscorrelated>
+so pod tests will pass.  (Sigh, that should work :-( )
+
+=item BUG FIX
+
+Fixed test suite failures on 5 tests (F<dbcolcreate_double_creation>
+was the first) due to L<Carp>'s addition of a period.
+This problem was breaking Fsdb on perl-5.17.
+Thanks to Michael McQuaid for helping diagnose this problem.
+
 =item IMPROVEMENT
 
-Tweaked the RPM spec.
-
-=item IMPROVEMENT
-
-Modified F<Makefile.PL> to fail gracefully on Perl installations
-that lack threads.  (Without this fix, I get massive failures
-in the non-ithreads test system.)
+The test suite now prints out the names of tests it tries.
 
 =back
 
@@ -2377,15 +2382,21 @@ correponding to the same entity into a single row with multiple columns.
 
 =back
 
-=head2 2.28, 2012-11-15
-A quick release to fix most rpmlint errors.
+=head2 2.26, 2011-12-12
+Bug fixes, particularly for perl-5.14.2.
 
 =over 4
 
 =item BUG FIX
 
-Fixed a number of minor release problems (wrong permissions, old FSF
-address, etc.) found by rpmlint.
+Bugs fixed in L<Fsdb::IO::Reader(3)> manual page.
+
+=item BUG FIX
+
+Fixed problems where L<dbcolstats> was truncating floating point numbers
+when sorting.  This strange behavior happenes as of perl-5.14.2 and
+it I<seems> like a Perl bug.  I've worked around it for the test suites,
+but I'm a bit nervous.
 
 =back
 
@@ -2420,21 +2431,32 @@ Thanks to Yuri Pradkin for reporting this bug.
 
 =back
 
-=head2 2.26, 2011-12-12
-Bug fixes, particularly for perl-5.14.2.
+=head2 2.28, 2012-11-15
+A quick release to fix most rpmlint errors.
 
 =over 4
 
 =item BUG FIX
 
-Bugs fixed in L<Fsdb::IO::Reader(3)> manual page.
+Fixed a number of minor release problems (wrong permissions, old FSF
+address, etc.) found by rpmlint.
 
-=item BUG FIX
+=back
 
-Fixed problems where L<dbcolstats> was truncating floating point numbers
-when sorting.  This strange behavior happenes as of perl-5.14.2 and
-it I<seems> like a Perl bug.  I've worked around it for the test suites,
-but I'm a bit nervous.
+=head2 2.29, 2012-11-20
+a quick release for CPAN testing
+
+=over 4
+
+=item IMPROVEMENT
+
+Tweaked the RPM spec.
+
+=item IMPROVEMENT
+
+Modified F<Makefile.PL> to fail gracefully on Perl installations
+that lack threads.  (Without this fix, I get massive failures
+in the non-ithreads test system.)
 
 =back
 
@@ -2443,10 +2465,26 @@ but I'm a bit nervous.
 
 John Heidemann, C<johnh@isi.edu>
 
+Fsdb has benefited 
+from bug reports and suggested fixes from:
+Martin Lukac
+and
+Michael McQuaid.
+And also from from bug reports from:
+Xue Cai,
+Lars Eggert,
+Alefiya Hussain,
+Graham Phillips,
+Yuri Pradkin,
+Fabio Silva,
+Ya Xu,
+and
+Jerry Zhao.
+
 
 =head1 COPYRIGHT
 
-Fsdb is Copyright (C) 1991-2011 by John Heidemann <johnh@isi.edu>.
+Fsdb is Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as

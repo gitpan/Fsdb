@@ -143,14 +143,19 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.29, 2012-11-20 a quick release for CPAN testing[0m
-       IMPROVEMENT
-           Tweaked the RPM spec.
+   [1m2.30, 2012-11-25[0m
+       BUG FIX
+           Removed unicode character in documention of [4mdbcolscorrelated[24m so pod
+           tests will pass.  (Sigh, that should work :-( )
+
+       BUG FIX
+           Fixed test suite failures on 5 tests ([4mdbcolcreate_double_creation[0m
+           was the first) due to Carp's addition of a period.  This problem
+           was breaking Fsdb on perl-5.17.  Thanks to Michael McQuaid for
+           helping diagnose this problem.
 
        IMPROVEMENT
-           Modified [4mMakefile.PL[24m to fail gracefully on Perl installations that
-           lack threads.  (Without this fix, I get massive failures in the
-           non-ithreads test system.)
+           The test suite now prints out the names of tests it tries.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -1619,10 +1624,15 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        NEW [4mdbfilepivot[24m "pivots" a file, converting multiple rows correponding
            to the same entity into a single row with multiple columns.
 
-   [1m2.28, 2012-11-15 A quick release to fix most rpmlint errors.[0m
+   [1m2.26, 2011-12-12 Bug fixes, particularly for perl-5.14.2.[0m
        BUG FIX
-           Fixed a number of minor release problems (wrong permissions, old
-           FSF address, etc.) found by rpmlint.
+           Bugs fixed in [4mFsdb::IO::Reader[24m(3) manual page.
+
+       BUG FIX
+           Fixed problems where dbcolstats was truncating floating point
+           numbers when sorting.  This strange behavior happenes as of
+           perl-5.14.2 and it [4mseems[24m like a Perl bug.  I've worked around it
+           for the test suites, but I'm a bit nervous.
 
    [1m2.27, 2012-11-15 Accumulated bug fixes.[0m
        IMPROVEMENT
@@ -1644,21 +1654,30 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            (previously it output a blank line, which is a malformed fsdb
            file).  Thanks to Yuri Pradkin for reporting this bug.
 
-   [1m2.26, 2011-12-12 Bug fixes, particularly for perl-5.14.2.[0m
+   [1m2.28, 2012-11-15 A quick release to fix most rpmlint errors.[0m
        BUG FIX
-           Bugs fixed in [4mFsdb::IO::Reader[24m(3) manual page.
+           Fixed a number of minor release problems (wrong permissions, old
+           FSF address, etc.) found by rpmlint.
 
-       BUG FIX
-           Fixed problems where dbcolstats was truncating floating point
-           numbers when sorting.  This strange behavior happenes as of
-           perl-5.14.2 and it [4mseems[24m like a Perl bug.  I've worked around it
-           for the test suites, but I'm a bit nervous.
+   [1m2.29, 2012-11-20 a quick release for CPAN testing[0m
+       IMPROVEMENT
+           Tweaked the RPM spec.
+
+       IMPROVEMENT
+           Modified [4mMakefile.PL[24m to fail gracefully on Perl installations that
+           lack threads.  (Without this fix, I get massive failures in the
+           non-ithreads test system.)
 
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
+       Fsdb has benefited from bug reports and suggested fixes from: Martin
+       Lukac and Michael McQuaid.  And also from from bug reports from: Xue
+       Cai, Lars Eggert, Alefiya Hussain, Graham Phillips, Yuri Pradkin, Fabio
+       Silva, Ya Xu, and Jerry Zhao.
+
 [1mCOPYRIGHT[0m
-       Fsdb is Copyright (C) 1991-2011 by John Heidemann <johnh@isi.edu>.
+       Fsdb is Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>.
 
        This program is free software; you can redistribute it and/or modify it
        under the terms of version 2 of the GNU General Public License as
@@ -1682,4 +1701,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.14.3                      2012-11-20                           Fsdb(3)
+perl v5.14.3                      2012-11-25                           Fsdb(3)

@@ -1,6 +1,6 @@
 Summary: A set of commands for manipulating flat-text databases from the shell
 Name: perl-Fsdb
-Version: 2.28
+Version: 2.29
 Release: 1
 License: GPLv2
 Group: Development/Libraries

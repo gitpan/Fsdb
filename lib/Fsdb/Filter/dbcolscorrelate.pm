@@ -34,10 +34,10 @@ is given a name which is the concatination of the two source rows,
 joined with an underscore.
 
 By default, we compute the I<population correlation coefficient>
-(usually designed rho, ρ)
+(usually designed rho, E<0x03a1>)
 and assume we see all members of the population.
 With the B<--sample> option we instead compute the
-I<sample correlation coefficient>, usually desginated I<r>.
+I<sample correlation coiefficient>, usually desginated I<r>.
 (Be careful in that the default here to full-population
 is the I<opposite> of the default in L<dbcolstats>.)
 
