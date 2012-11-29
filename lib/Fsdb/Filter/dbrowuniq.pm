@@ -18,7 +18,7 @@ dbrowuniq - eliminate adjacent rows with duplicate fields, maybe counting
 
 =head1 SYNOPSIS
 
-dbrowuniq [-c] [uniquifying fields...]
+dbrowuniq [-cL] [uniquifying fields...]
 
 =head1 DESCRIPTION
 
@@ -38,6 +38,10 @@ uniquifying field.
 three lines of output with both a's, but if you dbsort it,
 it will become a/a/b and dbrowuniq will output a/b.
 
+By default, L<dbrowuniq> outputs the I<first> unique row.
+Optionally, with F<-L>, it will output the I<last> unique row.
+(This choice only matters when uniqueness is determined by specific fields.)
+
 =head1 OPTIONS
 
 =over 4
@@ -46,6 +50,11 @@ it will become a/a/b and dbrowuniq will output a/b.
 
 Create a new column (count) which counts the number of times
 each line occurred.
+
+=item B<-L> or B<--last>
+
+Output the last unique row. 
+By default, it outputs the first unique row.
 
 =back
 
@@ -123,6 +132,39 @@ end_standard_fsdb_options
     #	2	/home/johnh/BIN/DB/dbcol	event
     #  | /home/johnh/BIN/DB/dbrowuniq -c
 
+=head1 SAMPLE USAGE 2
+
+=head2 Input:
+
+	#h event i
+	_null_getpage+128 10
+	_null_getpage+128 11
+	_null_getpage+128 12
+	_null_getpage+128 13
+	_null_getpage+128 14
+	_null_getpage+128 15
+	_null_getpage+4 16
+	_null_getpage+4 17
+	_null_getpage+4 18
+	_null_getpage+4 19
+	_null_getpage+4 20
+	_null_getpage+4 21
+	#  | /home/johnh/BIN/DB/dbcol event
+	#  | /home/johnh/BIN/DB/dbsort event
+
+=head2 Command:
+
+    cat data.fsdb | dbrowuniq -c -L event
+
+=head2 Output:
+
+	#fsdb event i count
+	_null_getpage+128	15	6
+	#  | /home/johnh/BIN/DB/dbcol event
+	#  | /home/johnh/BIN/DB/dbsort event
+	_null_getpage+4	21	6
+	#   | dbrowuniq -c 
+
 =head1 SEE ALSO
 
 L<Fsdb>.
@@ -175,6 +217,7 @@ sub set_defaults ($) {
     my($self) = @_;
     $self->SUPER::set_defaults();
     $self->{_count} = undef;
+    $self->{_last} = undef;
     $self->{_uniquifying_cols} = [];
 }
 
@@ -196,6 +239,7 @@ sub parse_options ($@) {
 	'man' => sub { pod2usage(-verbose => 2); },
 	'autorun!' => \$self->{_autorun},
 	'c|count!' => \$self->{_count},
+	'L|last!' => \$self->{_last},
 	'close!' => \$self->{_close},
 	'd|debug+' => \$self->{_debug},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
@@ -248,8 +292,10 @@ sub run ($) {
     my $write_fastpath_sub = $self->{_out}->fastpath_sub();
     my $count_coli = $self->{_out}->col_to_i('count');
 
-    my $last_fref = [];
-    my $fref;
+    my $first_prev_fref = [];
+    my $last_prev_fref = [];
+    my $output_fref = [];
+    my $this_fref;
     my $count = 0;
 
     my $check_code = '1';
@@ -257,37 +303,45 @@ sub run ($) {
 	my $coli = $self->{_in}->col_to_i($_);
 	croak $self->{_prog} . ": internal error, cannot find column $_ even after checking already.\n"
 	    if (!defined($coli));
-	$check_code .= " && (\$last_fref->[$coli] eq \$fref->[$coli])";
+	$check_code .= " && (\$first_prev_fref->[$coli] eq \$this_fref->[$coli])";
     };
     print $check_code if ($self->{_debug});
 
-    my $handle_new_row_code = q'
-	@{$last_fref} = @{$fref};
+    my $handle_new_key_code = q'
+	@{$first_prev_fref} = @{$this_fref};
 	$count = 1;
     ';
-    my $handle_old_row_code =
-	(defined($self->{_count}) ? '$last_fref->[' . $count_coli . '] = $count;' . "\n" : '') .
-	'&$write_fastpath_sub($last_fref) if ($#{$last_fref} != -1);' . "\n";
+    my $remember_prev_row_code = q'
+	@{$last_prev_fref} = @{$this_fref};
+    ';
+    $remember_prev_row_code = '' if (!$self->{_last});  # optimization
+    my $handle_end_of_prev_code =
+	'@{$output_fref} = ' . ($self->{_last} ? '@{$last_prev_fref}' : '@{$first_prev_fref}') . ";\n" . 
+	(defined($self->{_count}) ? '$output_fref->[' . $count_coli . '] = $count;' . "\n" : '') .
+	'&$write_fastpath_sub($output_fref) if ($count > 0);' . "\n";
 
     my $loop_code = q'
-	while ($fref = &$read_fastpath_sub()) {
-	    if ($#{$last_fref} != -1) {
+	while ($this_fref = &$read_fastpath_sub()) {
+	    if ($count > 0) {
 		if (' . $check_code . q') {
-		    # identical
+		    # identical, so just update prev
+		    ' . $remember_prev_row_code . q'
 		    $count++;
 		    next;
 		} else {
 		    # not identical
-		    ' . $handle_old_row_code 
-		       . $handle_new_row_code . q'
+		    ' . $handle_end_of_prev_code 
+		       . $handle_new_key_code 
+		       . $remember_prev_row_code . q'
 		};
 	    } else {
 		# first row ever
-		' . $handle_new_row_code . q'
+		' . $handle_new_key_code 
+		. $remember_prev_row_code . q'
 	    };
         };
 	# handle last row
-	' . $handle_old_row_code . "\n";
+	' . $handle_end_of_prev_code . "\n";
     eval $loop_code;
     $@ && croak $self->{_prog} . ": internal eval error: $@\n";
 };

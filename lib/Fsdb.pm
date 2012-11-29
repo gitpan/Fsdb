@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.30';
+our $VERSION = '2.31';
 
 =head1 SYNOPSIS
 
@@ -231,26 +231,33 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.30, 2012-11-25
-
+=head2 2.31, 2012-11-28
+A release with actual improvements to dbfilepivot and dbrowuniq.
 
 =over 4
 
 =item BUG FIX
 
-Removed unicode character in documention of F<dbcolscorrelated>
-so pod tests will pass.  (Sigh, that should work :-( )
-
-=item BUG FIX
-
-Fixed test suite failures on 5 tests (F<dbcolcreate_double_creation>
-was the first) due to L<Carp>'s addition of a period.
-This problem was breaking Fsdb on perl-5.17.
-Thanks to Michael McQuaid for helping diagnose this problem.
+Documentation fixes: typos in L<dbcolscorrelated>,
+bugs in L<dbfilepivot>,
+clarification for comment handling in L<Fsdb::IO::Reader>.
 
 =item IMPROVEMENT
 
-The test suite now prints out the names of tests it tries.
+Previously L<dbfilepivot> assumed the input was grouped by keys
+and didn't very that pre-condition.
+Now there is no pre-condition (it will sort the input by default),
+and it checks if the invariant is violated.
+
+=item BUG FIX
+
+Previously L<dbfilepivot> failed if the input had comments (oops :-);
+no longer.
+
+=item IMPROVEMENT
+
+Now L<dbrowuniq> has the C<-L> option to preserve the last
+unique row (instead of the first), a common idiom.
 
 =back
 
@@ -1092,7 +1099,7 @@ should be able to read and write files in any format.
 
 Fsdb-2.0 preserves backwards compatibility where possible,
 but breaks it where necessary to accomplish the above goals.
-As of August 2008, fsdb-2.7 is the preferred version.
+In August 2008, fsdb-2.7 was declared preferred over the 1.x versions.
 
 =head2 Contributors
 
@@ -1108,13 +1115,16 @@ Arkadi Gelfond F<arkadig@dyna.com>,
 David Graff F<graff@ldc.upenn.edu>,
 Haobo Yu F<haoboy@packetdesign.com>,
 Pavlin Radoslavov F<pavlin@catarina.usc.edu>,
+Graham Phillips,
+Yuri Pradkin,
+Alefiya Hussain,
+Ya Xu,
 Fabio Silva F<fabio@isi.edu>,
 Jerry Zhao F<zhaoy@isi.edu>,
 Ning Xu F<nxu@aludra.usc.edu>,
-Martin Lukac F<mlukac@lecs.cs.ucla.edu>.
-
-In addition, bugs have been reported by:
-Yuri Pradkin.
+Martin Lukac F<mlukac@lecs.cs.ucla.edu>,
+Xue Cai,
+Michael McQuaid.
 
 Fsdb includes datasets contributed from NIST (DATA/nist_zarr13.fsdb),
 from
@@ -1136,6 +1146,14 @@ and look at the output.  The original implementation of this idea was
 database management: application development in the UNIX environment>
 by Rod Manis, Evan Schaffer, and Robert Jorgensen (and also at the web
 page L<http://www.rdb.com/>).
+
+While Fsdb is inspired by Rdb, it includes no code from it,
+and Fsdb makes several different design choices.
+In particular: rdb attempts to be closer to a "real" database,
+with provision for locking, file indexing.
+Fsdb focuses on single user use and so eschews these choices.
+Rdb also has some support for interactive editing.
+Fsdb leaves editing to text editors like emacs or vi.
 
 In August, 2002 I found out Carlo Strozzi extended RDB with his
 package NoSQL L<http://www.linux.it/~carlos/nosql/>.  According to
@@ -2460,26 +2478,36 @@ in the non-ithreads test system.)
 
 =back
 
+=head2 2.30, 2012-11-25
+imporovements to perl portability
+
+=over 4
+
+=item BUG FIX
+
+Removed unicode character in documention of F<dbcolscorrelated>
+so pod tests will pass.  (Sigh, that should work :-( )
+
+=item BUG FIX
+
+Fixed test suite failures on 5 tests (F<dbcolcreate_double_creation>
+was the first) due to L<Carp>'s addition of a period.
+This problem was breaking Fsdb on perl-5.17.
+Thanks to Michael McQuaid for helping diagnose this problem.
+
+=item IMPROVEMENT
+
+The test suite now prints out the names of tests it tries.
+
+=back
+
 
 =head1 AUTHOR
 
 John Heidemann, C<johnh@isi.edu>
 
-Fsdb has benefited 
-from bug reports and suggested fixes from:
-Martin Lukac
-and
-Michael McQuaid.
-And also from from bug reports from:
-Xue Cai,
-Lars Eggert,
-Alefiya Hussain,
-Graham Phillips,
-Yuri Pradkin,
-Fabio Silva,
-Ya Xu,
-and
-Jerry Zhao.
+See L</Contributors> for the many people who have contributed
+bug reports and fixes.
 
 
 =head1 COPYRIGHT

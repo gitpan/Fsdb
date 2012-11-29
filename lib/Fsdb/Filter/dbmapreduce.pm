@@ -136,7 +136,7 @@ is the same as the example
     cat DATA/stats.fsdb | \
 	dbmapreduce -k experiment dbcolstats duration
 
-excpet that with C<-C> there is no forking and so things run faster.
+except that with C<-C> there is no forking and so things run faster.
 
 If C<dbmapreduce> is invoked from within Perl, then one can use
 a code SUB as well:

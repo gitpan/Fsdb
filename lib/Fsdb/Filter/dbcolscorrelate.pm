@@ -30,14 +30,14 @@ With exactly two columns, a new column I<correlation> is created.
 
 With more than two columns, correlations are computed for each
 pairwise combination of rows, and each output column
-is given a name which is the concatination of the two source rows,
+is given a name which is the concatenation of the two source rows,
 joined with an underscore.
 
 By default, we compute the I<population correlation coefficient>
-(usually designed rho, E<0x03a1>)
+(usually designed rho, E<0x03c1>)
 and assume we see all members of the population.
 With the B<--sample> option we instead compute the
-I<sample correlation coiefficient>, usually desginated I<r>.
+I<sample correlation coefficient>, usually designated I<r>.
 (Be careful in that the default here to full-population
 is the I<opposite> of the default in L<dbcolstats>.)
 
@@ -50,12 +50,12 @@ This program requires a complete copy of the input data on disk.
 =item B<--sample>
 
 Select a the Pearson product-moment correlation coefficient
-(the "sample correlation coefficient", usually desginated I<r>).
+(the "sample correlation coefficient", usually designated I<r>).
 
 =item B<--nosample>
 
 Select a the Pearson product-moment correlation coefficient
-(the "sample correlation coefficient", usually desginated I<r>).
+(the "sample correlation coefficient", usually designated I<r>).
 
 
 

@@ -2,7 +2,7 @@
 
 #
 # dbfilepivot.pm
-# Copyright (C) 2011 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2011-2012 by John Heidemann <johnh@isi.edu>
 # $Id: 628d1e4630cc337fef1056df75e3cef8b51b2ad4 $
 #
 # This program is distributed under terms of the GNU general
@@ -29,7 +29,9 @@ In a normalized database, one might have data with a schema like
 (id, attribute, value),
 but sometimes it's more convenient to see the data with a schema like
 (id, attribute1, attribute2).
-This tool converts the first to the second.
+(For example, gnuplot's stacked histograms requires denomralized data.)
+Dbfilepivot converts the normalized format to the denormalized,
+but sometimes useful, format.
 Here the "id" is the key, the attribute is the "pivot",
 and the value is, well, the optional "value".
 
@@ -39,7 +41,7 @@ An example is clearer.  A gradebook usually looks like:
     John       97  98  99
     Paul       -   80  82
 
-but one could also represent it as
+but a properly normalized format would represent it as:
 
     #fsdb name hw score
     John       1  97
@@ -50,28 +52,30 @@ but one could also represent it as
 
 This tool converts the second form into the first, when used as
 
-    dbfilepivot -k hw score
+    dbfilepivot -k name -p hw -v score
 
 Here name is the I<key> column that indicates which rows belong
 to the same entity,
 hw is the I<pivot> column that will be indicate which column
 in the output is relevant,
-and score is the value that indicates what goes in the
+and score is the I<value> that indicates what goes in the
 output.
 
 The pivot creates a new column C<key_tag1>, C<key_tag2>, etc.
-for each tag, the contents of the key field in the input.
+for each tag, the contents of the pivot field in the input.
 It then populates those new columns with the contents of the value field
 in the input.
 
 If no value column is specified, then values are either empty or 1.
 
+Dbfilepivot assumes all lines with the same key are adjacent
+in the input source, like L<dbmapreduce(1)> with the F<-S> option.
+To enforce this invariant, by default, it I<requires> input be sorted by key.
+
 Dbfilepivot makes two passes over its data
 and so requires temporary disk space equal to the input size.
 
-Dbfilepivot assumes all lines with the same key are adjacent
-in the input source, like L<dbmapreduce(1)> with the F<-S> option.
-
+Memory usage is proportional to the number of unique pivot values.
 
 =head1 OPTIONS
 
@@ -105,8 +109,9 @@ give value E as the value for empty (null) records
 
 =item B<-S> or B<--pre-sorted>
 
-Assume data is already grouped by tag.
+Assume data is already grouped by key.
 Provided twice, it removes the validiation of this assertion.
+By default, we sort by key.
 
 =item B<-T TmpDir>
 
@@ -203,6 +208,7 @@ use Fsdb::Filter;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
 use Fsdb::IO::Replayable;
+use Fsdb::Filter::dbpipeline qw(dbpipeline_filter dbsort);
 
 
 =head2 new
@@ -240,6 +246,9 @@ sub set_defaults ($) {
     $self->{_key_column} = undef;
     $self->{_pivot_column} = undef;
     $self->{_value_column} = undef;
+    $self->{_pre_sorted} = 0;
+    $self->{_sort_order} = undef;
+    $self->{_sort_as_numeric} = undef;
 }
 
 =head2 parse_options
@@ -268,8 +277,14 @@ sub parse_options ($@) {
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	'p|pivot=s' => \$self->{_pivot_column},
+	'S|pre-sorted+' => \$self->{_pre_sorted},
 	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
 	'v|value=s' => \$self->{_value_column},
+	# sort key options:
+	'n|numeric' => sub { $self->{_sort_as_numeric} = 1; },
+	'N|lexical' => sub { $self->{_sort_as_numeric} = undef; },
+	'r|descending' => sub { $self->{_sort_order} = -1; },
+	'R|ascending' => sub { $self->{_sort_order} = 1; },
 	) or pod2usage(2);
     pod2usage(2) if ($#argv != -1);
 }
@@ -288,7 +303,23 @@ sub setup ($) {
     croak $self->{_prog} . ": invalid empty value (single quote).\n"
 	if ($self->{_empty} eq "'");
 
-    $self->finish_io_option('input', -comment_handler => $self->create_pass_comments_sub('_replayable_writer'));
+    #
+    # guarantee data is sorted
+    # (swap reader if necessary)
+    if ($self->{_pre_sorted}) {
+	# pre-sorted, so just read it
+	$self->finish_io_option('input', -comment_handler => $self->create_pass_comments_sub('_replayable_writer'));
+	$self->{_sorter_thread} = undef;
+    } else {
+	# not sorted, so sort it and read that
+	my @sort_args = ('--nolog', $self->{_key_column});
+	unshift(@sort_args, '--descending') if ($self->{_sort_order} == -1);
+	unshift(@sort_args, ($self->{_sort_as_numeric} ? '--numeric' : '--lexical'));
+	my($new_reader, $new_thread) = dbpipeline_filter($self->{_input}, [-comment_handler => $self->create_delay_comments_sub], dbsort(@sort_args));
+	$self->{_pre_sorted_input} = $self->{_input};
+	$self->{_in} = $new_reader;
+	$self->{_sorter_thread} = $new_thread;
+    };
 
     pod2usage(2) if (!defined($self->{_key_column}));
     $self->{_key_coli} = $self->{_in}->col_to_i($self->{_key_column});
@@ -311,18 +342,19 @@ sub setup ($) {
     # saving a copy as we go.
     #
     $self->{_replayable} = new Fsdb::IO::Replayable(-writer_args => [ -clone => $self->{_in} ], -reader_args => [ -comment_handler => $self->create_pass_comments_sub ]);
-    my $save_out = $self->{_replayable}->writer;
+    my $save_out = $self->{_replayable_writer} = $self->{_replayable}->writer;
     my $read_fastpath_sub = $self->{_in}->fastpath_sub();
     my $save_write_fastpath_sub = $save_out->fastpath_sub;
     my $fref;
     my %pivots;
     my $npivots = 0;
     my $loop = q(
+	    # first pass: reading data to find all possible pivots
 	    while ($fref = &$read_fastpath_sub) {
 		my $value = $fref->[) . $self->{_pivot_coli} . q@];
 		if ($value ne '@ . $self->{_empty} . q@') {
+		    $npivots++ if (!defined($pivots{$value}));
 		    $pivots{$value} = 1;
-		    $npivots++;
 		};
 		&$save_write_fastpath_sub($fref);
 	    };
@@ -330,6 +362,12 @@ sub setup ($) {
     print $loop if ($self->{_debug});
     eval $loop;
     $@ && croak $self->{_prog} . ": interal eval error: $@.\n";
+
+    if (defined($self->{_sorter_thread})) {
+	$self->{_sorter_thread}->join;
+	$self->{_sorter_thread} = undef;
+    };
+
     $self->{_replayable}->close;
     croak $self->{_prog} . ": no input data or pivots\n"
 	if ($npivots == 0);
@@ -344,9 +382,11 @@ sub setup ($) {
 		        @{$self->{_in}->cols});
     $self->finish_io_option('output', -clone => $self->{_in}, -cols => \@new_cols, -outputheader => 'delay');
     my %tag_colis;
+    my %new_columns;
     foreach (sort keys %pivots) {
 	# xxx: could try to sort numerically if all pivots are numbers
 	my $new_column = $self->{_pivot_column} . $self->{_elem_separator} . $_;
+	$new_columns{$new_column} = 1;
         $self->{_out}->col_create($new_column)
 	    or croak $self->{_prog} . ": cannot create column $new_column (maybe it already existed?)\n";
 	$tag_colis{$_} = $self->{_out}->col_to_i($new_column);
@@ -364,7 +404,7 @@ sub setup ($) {
     $self->{_old_mapping_code} = $old_mapping_code;
     # and initialize the new
     my $new_initialization_code = '';
-    foreach (sort keys %pivots) {
+    foreach (sort keys %new_columns) {
 	$new_initialization_code .= '$nf[' . $self->{_out}->col_to_i($_) . '] = ' . "\n";
     };
     $new_initialization_code .= "\t'" . $self->{_empty} . "';\n";
@@ -394,6 +434,10 @@ sub run ($) {
     # given we assume sorted input.
     #
     my $emit_nf_code = '&$write_fastpath_sub(\@nf);';
+    my $check_ordering_code = '
+	die "' . $self->{_prog} . q': keys $old_key and $new_key are out-of-order\n" if ($old_key gt $new_key);
+    ';
+    $check_ordering_code = '' if ($self->{_pre_sorted} > 1);
     my $value_value = (defined($self->{_value_column})) ? '$fref->[' . $self->{_value_coli} . ']' : '1';
     my $tag_colis_href = $self->{_tag_colis_href};
     my($loop) = q'
@@ -405,7 +449,8 @@ sub run ($) {
 	    my $new_key = $fref->[' . $self->{_key_coli} . '];
 	    if (!defined($old_key) || $old_key ne $new_key) {
 		if (defined($old_key)) {
-		    ' . $emit_nf_code . '
+		    ' . $emit_nf_code . 
+		    $check_ordering_code . '
 		};
 		' . $self->{_new_initialization_code} . '
 		' . $self->{_old_mapping_code} . '
@@ -419,13 +464,20 @@ sub run ($) {
     }\n";
     print $loop if ($self->{_debug});
     eval $loop;
-    $@ && croak $self->{_prog} . ": interal eval error: $@.\n";
+    if ($@) {
+	# propagate sort failure cleanly
+	if ($@ =~ /^$self->{_prog}/) {
+	    croak "$@";
+	} else {
+	    croak $self->{_prog} . ": internal eval error: $@.\n";
+	};
+    };
 }
 
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2011 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2011-2012 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

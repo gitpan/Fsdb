@@ -2,7 +2,7 @@
 
 #
 # dbfilepivot.pm
-# Copyright (C) 2011 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2011-2012 by John Heidemann <johnh@isi.edu>
 # $Id: 628d1e4630cc337fef1056df75e3cef8b51b2ad4 $
 #
 # This program is distributed under terms of the GNU general
@@ -28,7 +28,9 @@ In a normalized database, one might have data with a schema like
 (id, attribute, value),
 but sometimes it's more convenient to see the data with a schema like
 (id, attribute1, attribute2).
-This tool converts the first to the second.
+(For example, gnuplot's stacked histograms requires denomralized data.)
+Dbfilepivot converts the normalized format to the denormalized,
+but sometimes useful, format.
 Here the "id" is the key, the attribute is the "pivot",
 and the value is, well, the optional "value".
 
@@ -38,7 +40,7 @@ An example is clearer.  A gradebook usually looks like:
     John       97  98  99
     Paul       -   80  82
 
-but one could also represent it as
+but a properly normalized format would represent it as:
 
     #fsdb name hw score
     John       1  97
@@ -49,28 +51,30 @@ but one could also represent it as
 
 This tool converts the second form into the first, when used as
 
-    dbfilepivot -k hw score
+    dbfilepivot -k name -p hw -v score
 
 Here name is the I<key> column that indicates which rows belong
 to the same entity,
 hw is the I<pivot> column that will be indicate which column
 in the output is relevant,
-and score is the value that indicates what goes in the
+and score is the I<value> that indicates what goes in the
 output.
 
 The pivot creates a new column C<key_tag1>, C<key_tag2>, etc.
-for each tag, the contents of the key field in the input.
+for each tag, the contents of the pivot field in the input.
 It then populates those new columns with the contents of the value field
 in the input.
 
 If no value column is specified, then values are either empty or 1.
 
+Dbfilepivot assumes all lines with the same key are adjacent
+in the input source, like L<dbmapreduce(1)> with the F<-S> option.
+To enforce this invariant, by default, it I<requires> input be sorted by key.
+
 Dbfilepivot makes two passes over its data
 and so requires temporary disk space equal to the input size.
 
-Dbfilepivot assumes all lines with the same key are adjacent
-in the input source, like L<dbmapreduce(1)> with the F<-S> option.
-
+Memory usage is proportional to the number of unique pivot values.
 
 =head1 OPTIONS
 
@@ -104,8 +108,9 @@ give value E as the value for empty (null) records
 
 =item B<-S> or B<--pre-sorted>
 
-Assume data is already grouped by tag.
+Assume data is already grouped by key.
 Provided twice, it removes the validiation of this assertion.
+By default, we sort by key.
 
 =item B<-T TmpDir>
 
@@ -200,7 +205,7 @@ exit 0;
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2011 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2011-2012 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

@@ -4,7 +4,7 @@
 # Fsdb::IO::Reader.pm
 # $Id$
 #
-# Copyright (C) 2005 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2005-2012 by John Heidemann <johnh@isi.edu>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License,
@@ -94,7 +94,10 @@ where the one argument will be a string with the unparsed comment
 
 By default, or if $ref is undef, comments are consumed.
 
-TODO: need to support buffered comments.
+There are several support routines to handle comments in a pipeline;
+see L<Fsdb::Filter::create_pass_comments_sub>,
+L<Fsdb::Filter::create_tolerant_pass_comments_sub>,
+L<Fsdb::Filter::create_delay_comments_sub>.
 
 =back
 

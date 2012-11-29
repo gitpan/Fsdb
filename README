@@ -143,19 +143,26 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.30, 2012-11-25[0m
+   [1m2.31, 2012-11-28 A release with actual improvements to dbfilepivot and[0m
+       [1mdbrowuniq.[0m
        BUG FIX
-           Removed unicode character in documention of [4mdbcolscorrelated[24m so pod
-           tests will pass.  (Sigh, that should work :-( )
-
-       BUG FIX
-           Fixed test suite failures on 5 tests ([4mdbcolcreate_double_creation[0m
-           was the first) due to Carp's addition of a period.  This problem
-           was breaking Fsdb on perl-5.17.  Thanks to Michael McQuaid for
-           helping diagnose this problem.
+           Documentation fixes: typos in dbcolscorrelated, bugs in
+           dbfilepivot, clarification for comment handling in
+           Fsdb::IO::Reader.
 
        IMPROVEMENT
-           The test suite now prints out the names of tests it tries.
+           Previously dbfilepivot assumed the input was grouped by keys and
+           didn't very that pre-condition.  Now there is no pre-condition (it
+           will sort the input by default), and it checks if the invariant is
+           violated.
+
+       BUG FIX
+           Previously dbfilepivot failed if the input had comments (oops :-);
+           no longer.
+
+       IMPROVEMENT
+           Now dbrowuniq has the "-L" option to preserve the last unique row
+           (instead of the first), a common idiom.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -836,8 +843,8 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            to read and write files in any format.  (Accomplished in fsdb-2.1.)
 
        Fsdb-2.0 preserves backwards compatibility where possible, but breaks
-       it where necessary to accomplish the above goals.  As of August 2008,
-       fsdb-2.7 is the preferred version.
+       it where necessary to accomplish the above goals.  In August 2008,
+       fsdb-2.7 was declared preferred over the 1.x versions.
 
    [1mContributors[0m
        Fsdb includes code ported from Geoff Kuenning
@@ -848,10 +855,9 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        Varadahan [4mkannan@isi.edu[24m, Lars Eggert [4mlarse@isi.edu[24m, Arkadi Gelfond
        [4markadig@dyna.com[24m, David Graff [4mgraff@ldc.upenn.edu[24m, Haobo Yu
        [4mhaoboy@packetdesign.com[24m, Pavlin Radoslavov [4mpavlin@catarina.usc.edu[24m,
-       Fabio Silva [4mfabio@isi.edu[24m, Jerry Zhao [4mzhaoy@isi.edu[24m, Ning Xu
-       [4mnxu@aludra.usc.edu[24m, Martin Lukac [4mmlukac@lecs.cs.ucla.edu[24m.
-
-       In addition, bugs have been reported by: Yuri Pradkin.
+       Graham Phillips, Yuri Pradkin, Alefiya Hussain, Ya Xu, Fabio Silva
+       [4mfabio@isi.edu[24m, Jerry Zhao [4mzhaoy@isi.edu[24m, Ning Xu [4mnxu@aludra.usc.edu[24m,
+       Martin Lukac [4mmlukac@lecs.cs.ucla.edu[24m, Xue Cai, Michael McQuaid.
 
        Fsdb includes datasets contributed from NIST (DATA/nist_zarr13.fsdb),
        from
@@ -869,6 +875,13 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        [4mdatabase[24m [4mmanagement:[24m [4mapplication[24m [4mdevelopment[24m [4min[24m [4mthe[24m [4mUNIX[24m [4menvironment[24m by
        Rod Manis, Evan Schaffer, and Robert Jorgensen (and also at the web
        page <http://www.rdb.com/>).
+
+       While Fsdb is inspired by Rdb, it includes no code from it, and Fsdb
+       makes several different design choices.  In particular: rdb attempts to
+       be closer to a "real" database, with provision for locking, file
+       indexing.  Fsdb focuses on single user use and so eschews these
+       choices.  Rdb also has some support for interactive editing.  Fsdb
+       leaves editing to text editors like emacs or vi.
 
        In August, 2002 I found out Carlo Strozzi extended RDB with his package
        NoSQL <http://www.linux.it/~carlos/nosql/>.  According to Mr. Strozzi,
@@ -1668,13 +1681,25 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            lack threads.  (Without this fix, I get massive failures in the
            non-ithreads test system.)
 
+   [1m2.30, 2012-11-25 imporovements to perl portability[0m
+       BUG FIX
+           Removed unicode character in documention of [4mdbcolscorrelated[24m so pod
+           tests will pass.  (Sigh, that should work :-( )
+
+       BUG FIX
+           Fixed test suite failures on 5 tests ([4mdbcolcreate_double_creation[0m
+           was the first) due to Carp's addition of a period.  This problem
+           was breaking Fsdb on perl-5.17.  Thanks to Michael McQuaid for
+           helping diagnose this problem.
+
+       IMPROVEMENT
+           The test suite now prints out the names of tests it tries.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
-       Fsdb has benefited from bug reports and suggested fixes from: Martin
-       Lukac and Michael McQuaid.  And also from from bug reports from: Xue
-       Cai, Lars Eggert, Alefiya Hussain, Graham Phillips, Yuri Pradkin, Fabio
-       Silva, Ya Xu, and Jerry Zhao.
+       See "Contributors" for the many people who have contributed bug reports
+       and fixes.
 
 [1mCOPYRIGHT[0m
        Fsdb is Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>.
@@ -1701,4 +1726,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.14.3                      2012-11-25                           Fsdb(3)
+perl v5.14.3                      2012-11-28                           Fsdb(3)
