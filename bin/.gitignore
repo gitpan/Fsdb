@@ -22,6 +22,7 @@ dbcolsregression
 dbcolstats
 dbcolstatscores
 dbfilealter
+dbfilediff
 dbfilepivot
 dbfilestripcomments
 dbfilevalidate

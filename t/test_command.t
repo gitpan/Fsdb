@@ -1,4 +1,4 @@
-#!perl
+#!/usr/bin/perl
 
 #
 # test_command.t
@@ -232,19 +232,35 @@ sub parse_cmd_file {
     return \%opts;
 };
 
+sub fix_prog_path {
+    my ($prog) = @_;
+    return $prog if ($prog =~ /^(\/|cmp|diff|perl|sh)\b/);
+    return $scripts_dir . "/" . $prog;
+}
+
 sub diff_output {
-    my($cmd_base, $optref, $out, $trial, $alternative_p) = @_;
+    my($cmd_base, $out, $trial, $cmp, $altout_p) = @_;
     if (! -e $out) {
 	diag "    test $cmd_base is missing output $out\n";
 	return undef;
     };
-    $optref->{cmp} =  'diff -cb ' if (!defined($optref->{cmp}));
-    system($optref->{cmp} . " $out $cmd_base.trial >$cmd_base.diff");
-    if (-s "$cmd_base.diff") {
+    $cmp = fix_prog_path($cmp);
+    my($input_flag) = '';
+    my($cmp_env) = '';
+    if ($cmp =~ /dbfilediff/) {
+	# xxx
+	$input_flag = '--input';
+	$cmp_env = $env_cmd;
+    };
+    my $diff_cmd = "$cmp_env $cmp $input_flag $out $input_flag $cmd_base.trial >$cmd_base.diff";
+    print "$diff_cmd\n";
+    my($ret) = system($diff_cmd);
+    my($exit_status) = ($ret >> 8);
+    if ($exit_status != 0) {
 	open(DIFF, "<$cmd_base.diff") or die "cannot open $cmd_base.diff\n";
 	my(@diff) = <DIFF>;
 	close DIFF;
-	if ($alternative_p ne 'altout') {
+	if ($altout_p ne 'altout') {
 	    diag "    test $cmd_base failed, delta:\n" . join('', @diff);
 	};
 	return undef;
@@ -263,12 +279,7 @@ sub run_test {
 
     my $optref = parse_cmd_file($cmd_file);
 
-    my $prog_path = '';
-    if ($optref->{prog} =~ /^(perl|sh)$/) {
-        $prog_path = $optref->{prog};
-    }  else {
-        $prog_path = "$scripts_dir/" . $optref->{prog};
-    };
+    my $prog_path = fix_prog_path($optref->{prog});
 
     my $in;
     if (!defined($optref->{in})) {
@@ -320,9 +331,10 @@ sub run_test {
     open(OUT, ">$cmd_base.trial") or die "$0: cannot write $cmd_base.trial\n";
     while (<RUN>) {
 	chomp;
-	# normalize floating point numbers
-	s/([ \t])\.([0-9efgEFG])/$10.$2/g;
-	s/^\./0./;
+# now do floating point numbers with dbfilediff
+#	# normalize floating point numbers
+#	s/([ \t])\.([0-9efgEFG])/$10.$2/g;
+#	s/^\./0./;
 	# Carp has no period in perl-5.14, but gathers one by 5.17.
 	# normalize the difference.
 	s/^( at .* line \d+)\.?/$1./g;
@@ -385,10 +397,13 @@ sub run_test {
     #
     # finally do the compare
     #
-    # start with alternative output
-    my($out_ok) = diff_output($cmd_base, $optref, $out, "$cmd_base.trial", 'altout');
+    my($out_ok) = 1;
+    $out_ok = diff_output($cmd_base, $out, "$cmd_base.trial", $optref->{cmp}, 'altout');
+    if (!$out_ok && defined($optref->{altcmp})) {
+        $out_ok = diff_output($cmd_base, $out, "$cmd_base.trial", $optref->{altcmp}, 'altout');
+    };
     if (!$out_ok && defined($optref->{altout}) && $optref->{altout} eq 'true') {
-	$out_ok = diff_output($cmd_base, $optref, "$cmd_base.altout", "$cmd_base.trial", 'out');
+	$out_ok = diff_output($cmd_base, "$cmd_base.altout", "$cmd_base.trial", $optref->{cmp}, 'out');
     };
     return undef if (!$out_ok);
 

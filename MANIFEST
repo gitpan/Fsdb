@@ -1,6 +1,5 @@
 bin/.gitignore
 bin/dbcolize
-bin/dbfilepivot
 bin/dblistize
 bin/dbrecolize
 bin/dbrowenumerate
@@ -50,6 +49,7 @@ lib/Fsdb/Filter/dbcolsregression.pm
 lib/Fsdb/Filter/dbcolstats.pm
 lib/Fsdb/Filter/dbcolstatscores.pm
 lib/Fsdb/Filter/dbfilealter.pm
+lib/Fsdb/Filter/dbfilediff.pm
 lib/Fsdb/Filter/dbfilepivot.pm
 lib/Fsdb/Filter/dbfilestripcomments.pm
 lib/Fsdb/Filter/dbfilevalidate.pm
@@ -94,6 +94,7 @@ README
 README.html
 t/00-load.t
 t/boilerplate.t
+t/find_epsilon.t
 t/pod-coverage.t
 t/pod.t
 t/test_command.t
@@ -381,6 +382,18 @@ TEST/dbfilealter_listize_ex.out
 TEST/dbfilealter_listize_ex_S.cmd
 TEST/dbfilealter_listize_ex_S.in
 TEST/dbfilealter_listize_ex_S.out
+TEST/dbfilediff_epsilon.cmd
+TEST/dbfilediff_epsilon.out
+TEST/dbfilediff_epsilon_cases.cmd
+TEST/dbfilediff_epsilon_cases.in
+TEST/dbfilediff_epsilon_cases.in-2
+TEST/dbfilediff_epsilon_cases.out
+TEST/dbfilediff_ex.cmd
+TEST/dbfilediff_ex.in
+TEST/dbfilediff_ex.in-2
+TEST/dbfilediff_ex.out
+TEST/dbfilediff_ex_exit.cmd
+TEST/dbfilediff_ex_exit.out
 TEST/dbfilepivot_commented.cmd
 TEST/dbfilepivot_commented.in
 TEST/dbfilepivot_commented.out

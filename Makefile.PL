@@ -40,6 +40,7 @@ my @modularized_db_programs = qw(
 	dbcolstats
 	dbcolstatscores
 	dbfilealter
+	dbfilediff
 	dbfilepivot
 	dbfilestripcomments 
 	dbfilevalidate

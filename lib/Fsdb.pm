@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.31';
+our $VERSION = '2.32';
 
 =head1 SYNOPSIS
 
@@ -231,33 +231,23 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.31, 2012-11-28
-A release with actual improvements to dbfilepivot and dbrowuniq.
+=head2 2.32, 2012-12-21
+Test suites should now be more numerically robust.
 
 =over 4
 
-=item BUG FIX
+=item NEW
 
-Documentation fixes: typos in L<dbcolscorrelated>,
-bugs in L<dbfilepivot>,
-clarification for comment handling in L<Fsdb::IO::Reader>.
-
-=item IMPROVEMENT
-
-Previously L<dbfilepivot> assumed the input was grouped by keys
-and didn't very that pre-condition.
-Now there is no pre-condition (it will sort the input by default),
-and it checks if the invariant is violated.
-
-=item BUG FIX
-
-Previously L<dbfilepivot> failed if the input had comments (oops :-);
-no longer.
+New L<dbfilediff> does fsdb-aware file differencing.
+It does not do smart intuition of add/removes like Unix diff(1),
+but it does know about columns, and with C<-E>, it does
+numeric-aware differences.
 
 =item IMPROVEMENT
 
-Now L<dbrowuniq> has the C<-L> option to preserve the last
-unique row (instead of the first), a common idiom.
+Test suites that are numeric now use L<dbfilediff> to do numeric-aware
+comparisons, so the test suite should now be robust to slightly different
+computers and operating systems and complilers than I<exactly> what I use.
 
 =back
 
@@ -611,7 +601,7 @@ count the number of rows (a subset of dbstats)
 
 =item dbrowdiff
 
-compute differences between each row of a table
+compute differences between a columns in each row of a table
 
 =item dbrowenumerate
 
@@ -624,6 +614,10 @@ run arbitrary Perl code on each row
 =item dbrowuniq
 
 count/eliminate identical rows (like Unix uniq(1))
+
+=item dbfilediff
+
+compare fields on rows of a file (something like Unix diff(1))
 
 =back
 
@@ -2501,6 +2495,35 @@ The test suite now prints out the names of tests it tries.
 
 =back
 
+=head2 2.31, 2012-11-28
+A release with actual improvements to dbfilepivot and dbrowuniq.
+
+=over 4
+
+=item BUG FIX
+
+Documentation fixes: typos in L<dbcolscorrelated>,
+bugs in L<dbfilepivot>,
+clarification for comment handling in L<Fsdb::IO::Reader>.
+
+=item IMPROVEMENT
+
+Previously L<dbfilepivot> assumed the input was grouped by keys
+and didn't very that pre-condition.
+Now there is no pre-condition (it will sort the input by default),
+and it checks if the invariant is violated.
+
+=item BUG FIX
+
+Previously L<dbfilepivot> failed if the input had comments (oops :-);
+no longer.
+
+=item IMPROVEMENT
+
+Now L<dbrowuniq> has the C<-L> option to preserve the last
+unique row (instead of the first), a common idiom.
+
+=back
 
 =head1 AUTHOR
 

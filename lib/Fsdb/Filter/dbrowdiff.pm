@@ -128,6 +128,13 @@ end_standard_fsdb_options
 
 L<Fsdb>.
 L<dbcolmovingstats>.
+L<dbrowuniq>.
+L<dbfilediff>.
+
+L<dbrowdiff>, L<dbrowuniq>, and L<dbfilediff> are similar but different.
+L<dbrowdiff> computes row-by-row differences for a column,
+L<dbrowuniq> eliminates rows that have no differences,
+and L<dbfilediff> compares fields of two files.
 
 
 =head1 CLASS FUNCTIONS
