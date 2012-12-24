@@ -248,12 +248,12 @@ sub diff_output {
     my($input_flag) = '';
     my($cmp_env) = '';
     if ($cmp =~ /dbfilediff/) {
-	# xxx
+	# xxxnn
 	$input_flag = '--input';
 	$cmp_env = $env_cmd;
     };
     my $diff_cmd = "$cmp_env $cmp $input_flag $out $input_flag $cmd_base.trial >$cmd_base.diff";
-    print "$diff_cmd\n";
+    # print "$diff_cmd\n";
     my($ret) = system($diff_cmd);
     my($exit_status) = ($ret >> 8);
     if ($exit_status != 0) {
@@ -331,10 +331,6 @@ sub run_test {
     open(OUT, ">$cmd_base.trial") or die "$0: cannot write $cmd_base.trial\n";
     while (<RUN>) {
 	chomp;
-# now do floating point numbers with dbfilediff
-#	# normalize floating point numbers
-#	s/([ \t])\.([0-9efgEFG])/$10.$2/g;
-#	s/^\./0./;
 	# Carp has no period in perl-5.14, but gathers one by 5.17.
 	# normalize the difference.
 	s/^( at .* line \d+)\.?/$1./g;

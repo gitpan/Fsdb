@@ -1,10 +1,10 @@
 #fsdb event clock absdiff pctdiff
 _null_getpage+128	815812813.281756	-	-
-_null_getpage+128	815812813.328709	0.0469529628753662	5.75535982163474e-09
-_null_getpage+128	815812813.353830	0.0251209735870361	3.07925705218292e-09
-_null_getpage+128	815812813.357169	0.00333905220031738	4.09291463147097e-10
-_null_getpage+128	815812813.375844	0.0186749696731567	2.289124339235e-09
-_null_getpage+128	815812813.378358	0.00251400470733643	3.0815950253753e-10
+_null_getpage+128	815812813.328709	0.046953	5.75536e-09
+_null_getpage+128	815812813.353830	0.025121	3.07926e-09
+_null_getpage+128	815812813.357169	0.003339	4.09291e-10
+_null_getpage+128	815812813.375844	0.018675	2.28912e-09
+_null_getpage+128	815812813.378358	0.002514	3.0816e-10
 #  | /home/johnh/BIN/DB/dbrow 
 #  | /home/johnh/BIN/DB/dbcol event clock
-#   | dbroweval   { if (defined(_last_clock)) { _absdiff = _clock - _last_clock; _pctdiff = 100.0 * _absdiff / _last_clock; } ; }
+#   | dbroweval   { if (defined(_last_clock)) { my $ad = _clock - _last_clock; _absdiff = sprintf("%0.6f", $ad); _pctdiff = sprintf("%.6g", 100.0 * $ad / _last_clock); } ; }

@@ -22,7 +22,7 @@
 	<li><a href="#what_s_new">WHAT'S NEW</a></li>
 	<ul>
 
-		<li><a href="#2_32__2012_12_21">2.32, 2012-12-21</a></li>
+		<li><a href="#2_33__2012_12_23">2.33, 2012-12-23</a></li>
 	</ul>
 
 	<li><a href="#readme_contents">README CONTENTS</a></li>
@@ -107,6 +107,7 @@
 		<li><a href="#2_29__2012_11_20">2.29, 2012-11-20</a></li>
 		<li><a href="#2_30__2012_11_25">2.30, 2012-11-25</a></li>
 		<li><a href="#2_31__2012_11_28">2.31, 2012-11-28</a></li>
+		<li><a href="#2_32__2012_12_21">2.32, 2012-12-21</a></li>
 	</ul>
 
 	<li><a href="#author">AUTHOR</a></li>
@@ -279,23 +280,27 @@ All commands are backed by an automated test suite.</p>
 <h1><a name="what_s_new">WHAT'S NEW</a></h1>
 <p>
 </p>
-<h2><a name="2_32__2012_12_21_test_suites_should_now_be_more_numerically_robust_">2.32, 2012-12-21
-Test suites should now be more numerically robust.</a></h2>
+<h2><a name="2_33__2012_12_23_minor_fixes_to_some_test_cases_">2.33, 2012-12-23
+Minor fixes to some test cases.</a></h2>
 <dl>
-<dt><strong><a name="new" class="item">NEW</a></strong></dt>
-
-<dd>
-<p>New <a href="#dbfilediff">dbfilediff</a> does fsdb-aware file differencing.
-It does not do smart intuition of add/removes like Unix <code>diff(1)</code>,
-but it does know about columns, and with <code>-E</code>, it does
-numeric-aware differences.</p>
-</dd>
 <dt><strong><a name="improvement" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
-<p>Test suites that are numeric now use <a href="#dbfilediff">dbfilediff</a> to do numeric-aware
-comparisons, so the test suite should now be robust to slightly different
-computers and operating systems and complilers than <em>exactly</em> what I use.</p>
+<p><a href="#dbfilediff">dbfilediff</a> and <a href="#dbrowuniq">dbrowuniq</a>
+now supports the <code>-N</code> option to give the new column a 
+different name.  (And a test cases where this duplication mattered
+have been fixed.)</p>
+</dd>
+<dt><strong><a name="improvement2" class="item">IMPROVEMENT</a></strong></dt>
+
+<dd>
+<p><a href="#dbrvstatdiff">dbrvstatdiff</a> now show the t-test breakpoint with a reasonable number of
+floating point digits.</p>
+</dd>
+<dt><strong><a name="bug_fix" class="item">BUG FIX</a></strong></dt>
+
+<dd>
+<p>Fixed a numerical stability problem in the <em class="file">dbroweval_last</em> test case.</p>
 </dd>
 </dl>
 <p>
@@ -760,6 +765,13 @@ correponding to the same entity into a single row with multiple columns.</p>
 <dt><strong><a name="or_help" class="item"><strong>-?</strong> or <strong>--help</strong></a></strong></dt>
 
 <dd>
+<p>Show basic usage.</p>
+</dd>
+<dt><strong><a name="n_on_new_name" class="item"><strong>-N</strong> on <strong>--new-name</strong></a></strong></dt>
+
+<dd>
+<p>When a command creates a new column like <a href="#dbrowaccumulate">dbrowaccumulate</a>'s <code>accum</code>,
+this option lets one override the default name of that new column.</p>
 <p>Show basic usage.</p>
 </dd>
 <dt><strong><a name="c_fraction_or_confidence_fraction" class="item"><strong>-c FRACTION</strong> or <strong>--confidence FRACTION</strong></a></strong></dt>
@@ -1691,7 +1703,7 @@ exists only as a front-end (command-line) program.</p>
 <em>dbstripextraheaders</em>,
 <em>dbstripleadingspace</em>.</p>
 </dd>
-<dt><strong><a name="new2" class="item">NEW</a></strong></dt>
+<dt><strong><a name="new" class="item">NEW</a></strong></dt>
 
 <dd>
 <p><a href="#combined_log_format_to_db">combined_log_format_to_db</a> to convert Apache logfiles</p>
@@ -1743,12 +1755,12 @@ Oops.  No longer.</p>
 <p>Another alpha release, this one just to fix the critical dbjoin bug
 listed below (that happens to have blocked my MP3 jukebox :-).</p>
 <dl>
-<dt><strong><a name="bug_fix" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix2" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Dbsort no longer hangs if given an input file with no rows.</p>
 </dd>
-<dt><strong><a name="bug_fix2" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix3" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Dbjoin now works with unsorted input coming from a pipeline (like stdin).
@@ -1817,7 +1829,7 @@ that pass back the key column in put.
 It also passes the current key as the last argument to 
 external reducers.</p>
 </dd>
-<dt><strong><a name="bug_fix3" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix4" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><a href="/Fsdb/IO/Reader.html">the Fsdb::IO::Reader manpage</a>, correctly handle <code>-header</code> option again.
@@ -1843,19 +1855,19 @@ use <code>--rank</code> to require ranking instead of <code>-r</code>.
 Also, <code>--ascending</code> and <code>--descending</code> can now be specified separately,
 both for <code>--percentile</code> and <code>--rank</code>.</a></strong></dt>
 
-<dt><strong><a name="bug_fix4" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix5" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Sigh, the sense of the --warnings option in <a href="#dbrow">dbrow</a> was inverted.  No longer.</p>
 </dd>
-<dt><strong><a name="bug_fix5" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix6" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>I found and fixed the string leaks (errors like &quot;Unbalanced string
 table refcount&quot; and &quot;Scalars leaked&quot;) in <a href="#dbmapreduce">dbmapreduce</a> and <a href="#dbmultistats">dbmultistats</a>.
 (All <code>IO::Handle</code>s in threads must be manually destroyed.)</p>
 </dd>
-<dt><strong><a name="bug_fix6" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix7" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>The <code>-C</code> option to specify the column separator in <a href="#dbcolsplittorows">dbcolsplittorows</a> 
@@ -1912,7 +1924,7 @@ was dropped pending a test cases and examples.</p>
 <dd>
 <p><a href="#dbfilevalidate">dbfilevalidate</a> now has a <code>-c</code> option to correct errors.</p>
 </dd>
-<dt><strong><a name="new3" class="item">NEW</a></strong></dt>
+<dt><strong><a name="new2" class="item">NEW</a></strong></dt>
 
 <dd>
 <p><a href="#html_table_to_db">html_table_to_db</a> provides the inverse of
@@ -1924,7 +1936,7 @@ was dropped pending a test cases and examples.</p>
 <h2><a name="2_8__5_aug_08">2.8,  5-Aug-08</a></h2>
 <p>Change header format, preserving forwards compatibility.</p>
 <dl>
-<dt><strong><a name="bug_fix7" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix8" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Complete editing pass over the manual, making sure it aligns 
@@ -1939,7 +1951,7 @@ See <a href="#dbfilealter">dbfilealter</a> for the new specification.
 The v1 file format will be read, compatibly, but
 not written.</p>
 </dd>
-<dt><strong><a name="bug_fix8" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix9" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><a href="#dbmapreduce">dbmapreduce</a> now tolerates comments that preceed the first key,
@@ -1976,13 +1988,13 @@ of input.</p>
 now corrected.  As a result, warnings in user code now default off
 (like in fsdb-1.x).</p>
 </dd>
-<dt><strong><a name="bug_fix9" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix10" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><a href="#dbcolpercentile">dbcolpercentile</a> now defaults to assuming the target column is numeric.
 The new option <code>-N</code> allows selectin of a non-numeric target.</p>
 </dd>
-<dt><strong><a name="bug_fix10" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix11" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><a href="#dbcolscorrelate">dbcolscorrelate</a> now includes <code>--sample</code> and <code>--nosample</code> options
@@ -2007,7 +2019,7 @@ with the official empty value, rather than leaving them blank or as whitespace.<
 <p><em>dbpipeline</em> now catches failures during pipeline element setup
 and exits reasonably gracefully.</p>
 </dd>
-<dt><strong><a name="bug_fix11" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix12" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em>dbsubprocess</em> now reaps child prcoesses, thus avoiding
@@ -2043,12 +2055,12 @@ in fsdb-2.x.  I therefore expect to return to boring, bugfix releases.</p>
 </p>
 <h2><a name="2_13__30_oct_08">2.13, 30-Oct-08</a></h2>
 <dl>
-<dt><strong><a name="bug_fix12" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix13" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><a href="#dbrowaccumulate">dbrowaccumulate</a> now treats non-numeric data as zero by default.</p>
 </dd>
-<dt><strong><a name="bug_fix13" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix14" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Fixed a perl-5.10ism in <a href="#dbmapreduce">dbmapreduce</a> that
@@ -2060,7 +2072,7 @@ Thanks to Martin Lukac for reporting the bug.</p>
 </p>
 <h2><a name="2_14__26_nov_08">2.14, 26-Nov-08</a></h2>
 <dl>
-<dt><strong><a name="bug_fix14" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix15" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Improved documentation for <a href="#dbmapreduce">dbmapreduce</a>'s <a href="#f"><code>-f</code></a> option.</p>
@@ -2076,7 +2088,7 @@ to a moving mean.</p>
 </p>
 <h2><a name="2_15__13_apr_09">2.15, 13-Apr-09</a></h2>
 <dl>
-<dt><strong><a name="bug_fix15" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix16" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Fix a <em class="file">make install</em> bug reported by Shalindra Fernando.</p>
@@ -2086,7 +2098,7 @@ to a moving mean.</p>
 </p>
 <h2><a name="2_16__14_apr_09">2.16, 14-Apr-09</a></h2>
 <dl>
-<dt><strong><a name="bug_fix16" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix17" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Another minor release bug: on some systems <em class="file">programize_module</em> looses
@@ -2102,7 +2114,7 @@ executable permissions.  Again reported by Shalindra Fernando.</p>
 <dd>
 <p>Typo in the <em class="file">dbroweval</em> manual fixed.</p>
 </dd>
-<dt><strong><a name="improvement2" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement3" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>There is no longer a comment line to label columns
@@ -2111,7 +2123,7 @@ line up.  This change restores the Jdb-1.x behavior, and
 means that repeated runs of dbcolneaten no longer add comment lines
 each time.</p>
 </dd>
-<dt><strong><a name="bug_fix17" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix18" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>It turns out  <em class="file">dbcolneaten</em> was not correctly handling trailing spaces
@@ -2137,12 +2149,12 @@ The first bug was reported by Martin Lukac.</p>
 </p>
 <h2><a name="2_18__1_jul_09_a_minor_release">2.18,  1-Jul-09  A minor release</a></h2>
 <dl>
-<dt><strong><a name="improvement3" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement4" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>Documentation for <em class="file">Fsdb::IO::Reader</em> has been improved.</p>
 </dd>
-<dt><strong><a name="improvement4" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement5" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>The package should now be PGP-signed.</p>
@@ -2152,7 +2164,7 @@ The first bug was reported by Martin Lukac.</p>
 </p>
 <h2><a name="2_19__10_jul_09">2.19,  10-Jul-09</a></h2>
 <dl>
-<dt><strong><a name="bug_fix18" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix19" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Internal improvements to debugging output and robustness of
@@ -2165,7 +2177,7 @@ The first bug was reported by Martin Lukac.</p>
 <h2><a name="2_20__30_nov_09__a_collection_of_minor_bugfixes__plus_a_build_against_fedora_12__">2.20, 30-Nov-09
 (A collection of minor bugfixes, plus a build against Fedora 12.)</a></h2>
 <dl>
-<dt><strong><a name="bug_fix19" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix20" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Loging for 
@@ -2173,19 +2185,19 @@ The first bug was reported by Martin Lukac.</p>
 with code refs is now stable
 (it no longer includes a hex pointer to the code reference).</p>
 </dd>
-<dt><strong><a name="bug_fix20" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix21" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Better handling of mixed blank lines in <em class="file">Fsdb::IO::Reader</em>
 (see test case <em class="file">dbcolize_blank_lines.cmd</em>).</p>
 </dd>
-<dt><strong><a name="bug_fix21" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix22" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em class="file">html_table_to_db</em> now handles multi-line input better,
 and handles tables with COLSPAN.</p>
 </dd>
-<dt><strong><a name="bug_fix22" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix23" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em class="file">dbpipeline</em> now cleans up threads in an <code>eval</code>
@@ -2194,14 +2206,14 @@ up in perl-5.10.  Hopefully this prevents a race condition
 that causes the test suites to hang about 20% of the time
 (in <em class="file">dbpipeline_first_fails</em>).</p>
 </dd>
-<dt><strong><a name="improvement5" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement6" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p><em class="file">dbmapreduce</em> now detects and correctly fails
 when the input and reducer have incompatible 
 field seperators.</p>
 </dd>
-<dt><strong><a name="improvement6" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement7" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p><em class="file">dbcolstats</em>, <em class="file">dbcolhisto</em>, <em class="file">dbcolscorrelate</em>, <em class="file">dbcolsregression</em>,
@@ -2209,7 +2221,7 @@ and <em class="file">dbrowcount</em>
 now all take an <code>-F</code> option to let one specify the output field seperator
 (so they work better with <em class="file">dbmapreduce</em>).</p>
 </dd>
-<dt><strong><a name="bug_fix23" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix24" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>An omitted <code>-k</code> from the manual page of <em class="file">dbmultistats</em>
@@ -2221,13 +2233,13 @@ is now there.  Bug reported by Unkyu Park.</p>
 <h2><a name="2_21__17_apr_10_bug_fix_release">2.21, 17-Apr-10
 bug fix release</a></h2>
 <dl>
-<dt><strong><a name="bug_fix24" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix25" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em class="file">Fsdb::IO::Writer</em> now no longer fails with -outputheader =&gt; never
 (an obscure bug).</p>
 </dd>
-<dt><strong><a name="improvement7" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement8" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p><em class="file">Fsdb</em> (in the warnings section)
@@ -2236,13 +2248,13 @@ handle (and do not handle) numerical precision problems,
 and other general limits.  Thanks to Yuri Pradkin for prompting
 this documentation.</p>
 </dd>
-<dt><strong><a name="improvement8" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement9" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p><code>Fsdb::Support::fullname_to_sortkey</code>
 is now restored from <code>Jdb</code>.</p>
 </dd>
-<dt><strong><a name="improvement9" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement10" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>Documention for multiple styles of input approaches
@@ -2254,7 +2266,7 @@ is now restored from <code>Jdb</code>.</p>
 <h2><a name="2_22__2010_10_31_one_new_tool_dbcolcopylast_and_several_bug_fixes_for_perl_5_10_">2.22, 2010-10-31
 One new tool <em class="file">dbcolcopylast</em> and several bug fixes for Perl 5.10.</a></h2>
 <dl>
-<dt><strong><a name="bug_fix25" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix26" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em class="file">dbmerge</em> now correctly handles n-way merges.
@@ -2280,7 +2292,7 @@ into a new column copylast_column of the next row.
 New program requested by Fabio Silva;
 useful for convereting dbmultistats output into dbrvstatdiff input.</p>
 </dd>
-<dt><strong><a name="bug_fix26" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix27" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Several tools (particularly <em class="file">dbmapreduce</em> and <em class="file">dbmultistats</em>) would
@@ -2297,19 +2309,19 @@ standard IO redirection.</p>
 <h2><a name="2_23__2011_03_10_several_small_portability_bugfixes__improved_dbcolstats_for_large_datsets">2.23, 2011-03-10
 Several small portability bugfixes; improved <em class="file">dbcolstats</em> for large datsets</a></h2>
 <dl>
-<dt><strong><a name="improvement10" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement11" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>Documentation to <em class="file">dbrvstatdiff</em> was changed to use &quot;sd&quot; to refer to
 standard deviation, not &quot;ss&quot; (which might be confused with sum-of-squares).</p>
 </dd>
-<dt><strong><a name="bug_fix27" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix28" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>This documentation about <em class="file">dbmultistats</em> was missing the <em class="file">-k</em> option
 in some cases.</p>
 </dd>
-<dt><strong><a name="bug_fix28" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix29" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em class="file">dbmapreduce</em> was failing on MacOS-10.6.3 for some tests with
@@ -2321,7 +2333,7 @@ On MacOS, the error is now suppressed.
 Thanks to Alefiya Hussain for providing access to a Mac system
 that allowed debugging of this problem.</p>
 </dd>
-<dt><strong><a name="improvement11" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement12" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>The <em class="file">csv_to_db</em> command requires an external
@@ -2330,14 +2342,14 @@ lack this optional library, previously Fsdb would configure
 with a warning and then test cases would fail.
 Now those test cases are skipped with an additional warning.</p>
 </dd>
-<dt><strong><a name="bug_fix29" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix30" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>The test suite now supports alternative valid output, as a hack
 to account for last-digit floating point differences.
 (Not very satisfying :-(</p>
 </dd>
-<dt><strong><a name="bug_fix30" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix31" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em class="file">dbcolstats</em> output for confidence intervals on very large
@@ -2352,7 +2364,7 @@ infinitely large and hopefully correctly handled.</p>
 <h2><a name="2_24__2011_04_15_improvements_to_fix_an_old_bug_in_dbmapreduce_with_different_field_separators">2.24, 2011-04-15
 Improvements to fix an old bug in dbmapreduce with different field separators</a></h2>
 <dl>
-<dt><strong><a name="improvement12" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement13" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>The <em class="file">dbfilealter</em> command had a <code>--correct</code> option to
@@ -2360,7 +2372,7 @@ work-around from incompatible field-seperators,
 but it did nothing.  Now it does the correct but sad, data-loosing
 thing.</p>
 </dd>
-<dt><strong><a name="improvement13" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement14" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>The <em class="file">dbmultistats</em> command
@@ -2380,7 +2392,7 @@ Bug re-reported by Unkyu Park.</p>
 <h2><a name="2_25__2011_08_07_two_new_tools__xml_to_db_and_dbfilepivot__and_a_bugfix_for_two_people_">2.25, 2011-08-07
 Two new tools, <em class="file">xml_to_db</em> and <em class="file">dbfilepivot</em>, and a bugfix for two people.</a></h2>
 <dl>
-<dt><strong><a name="improvement14" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement15" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p><em class="file">kitrace_to_db</em> now supports a <em class="file">--utc</em> option, 
@@ -2388,12 +2400,12 @@ which also fixes this test case for users outside of the Pacific
 time zone.  Bug reported by David Graff, and also by Peter Desnoyers
 (within a week of each other :-)</p>
 </dd>
-<dt><strong><a name="new4" class="item">NEW</a></strong></dt>
+<dt><strong><a name="new3" class="item">NEW</a></strong></dt>
 
 <dd>
 <p><em class="file">xml_to_db</em> can convert simple, very regular XML files into Fsdb.</p>
 </dd>
-<dt><strong><a name="new5" class="item">NEW</a></strong></dt>
+<dt><strong><a name="new4" class="item">NEW</a></strong></dt>
 
 <dd>
 <p><em class="file">dbfilepivot</em> &quot;pivots&quot; a file, converting multiple rows
@@ -2405,12 +2417,12 @@ correponding to the same entity into a single row with multiple columns.</p>
 <h2><a name="2_26__2011_12_12_bug_fixes__particularly_for_perl_5_14_2_">2.26, 2011-12-12
 Bug fixes, particularly for perl-5.14.2.</a></h2>
 <dl>
-<dt><strong><a name="bug_fix31" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix32" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Bugs fixed in <a href="/Fsdb/IO/Reader(3).html">the Fsdb::IO::Reader(3) manpage</a> manual page.</p>
 </dd>
-<dt><strong><a name="bug_fix32" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix33" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Fixed problems where <a href="#dbcolstats">dbcolstats</a> was truncating floating point numbers
@@ -2424,17 +2436,17 @@ but I'm a bit nervous.</p>
 <h2><a name="2_27__2012_11_15_accumulated_bug_fixes_">2.27, 2012-11-15
 Accumulated bug fixes.</a></h2>
 <dl>
-<dt><strong><a name="improvement15" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement16" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p><em class="file">csv_to_db</em> now reports errors in CVS input with real diagnostics.</p>
 </dd>
-<dt><strong><a name="improvement16" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement17" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p><em class="file">dbcolmovingstats</em> can now compute median, when given the <code>-m</code> option.</p>
 </dd>
-<dt><strong><a name="bug_fix33" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix34" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em class="file">dbcolmovingstats</em> non-numeric handling (the <code>-a</code> option) now works properly.</p>
@@ -2446,7 +2458,7 @@ Accumulated bug fixes.</a></h2>
 <em class="file">t/test_command.t</em> test framework
 is now documented.</p>
 </dd>
-<dt><strong><a name="bug_fix34" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix35" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p><em class="file">dbrowuniq</em> now corretly handles the case where there is no input
@@ -2459,7 +2471,7 @@ Thanks to Yuri Pradkin for reporting this bug.</p>
 <h2><a name="2_28__2012_11_15_a_quick_release_to_fix_most_rpmlint_errors_">2.28, 2012-11-15
 A quick release to fix most rpmlint errors.</a></h2>
 <dl>
-<dt><strong><a name="bug_fix35" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix36" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Fixed a number of minor release problems (wrong permissions, old FSF
@@ -2471,12 +2483,12 @@ address, etc.) found by rpmlint.</p>
 <h2><a name="2_29__2012_11_20_a_quick_release_for_cpan_testing">2.29, 2012-11-20
 a quick release for CPAN testing</a></h2>
 <dl>
-<dt><strong><a name="improvement17" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement18" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>Tweaked the RPM spec.</p>
 </dd>
-<dt><strong><a name="improvement18" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement19" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>Modified <em class="file">Makefile.PL</em> to fail gracefully on Perl installations
@@ -2489,13 +2501,13 @@ in the non-ithreads test system.)</p>
 <h2><a name="2_30__2012_11_25_imporovements_to_perl_portability">2.30, 2012-11-25
 imporovements to perl portability</a></h2>
 <dl>
-<dt><strong><a name="bug_fix36" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix37" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Removed unicode character in documention of <em class="file">dbcolscorrelated</em>
 so pod tests will pass.  (Sigh, that should work :-( )</p>
 </dd>
-<dt><strong><a name="bug_fix37" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix38" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Fixed test suite failures on 5 tests (<em class="file">dbcolcreate_double_creation</em>
@@ -2503,7 +2515,7 @@ was the first) due to <em>Carp</em>'s addition of a period.
 This problem was breaking Fsdb on perl-5.17.
 Thanks to Michael McQuaid for helping diagnose this problem.</p>
 </dd>
-<dt><strong><a name="improvement19" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement20" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>The test suite now prints out the names of tests it tries.</p>
@@ -2514,14 +2526,14 @@ Thanks to Michael McQuaid for helping diagnose this problem.</p>
 <h2><a name="2_31__2012_11_28_a_release_with_actual_improvements_to_dbfilepivot_and_dbrowuniq_">2.31, 2012-11-28
 A release with actual improvements to dbfilepivot and dbrowuniq.</a></h2>
 <dl>
-<dt><strong><a name="bug_fix38" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix39" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Documentation fixes: typos in <em>dbcolscorrelated</em>,
 bugs in <a href="#dbfilepivot">dbfilepivot</a>,
 clarification for comment handling in <a href="/Fsdb/IO/Reader.html">the Fsdb::IO::Reader manpage</a>.</p>
 </dd>
-<dt><strong><a name="improvement20" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement21" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>Previously <a href="#dbfilepivot">dbfilepivot</a> assumed the input was grouped by keys
@@ -2529,17 +2541,38 @@ and didn't very that pre-condition.
 Now there is no pre-condition (it will sort the input by default),
 and it checks if the invariant is violated.</p>
 </dd>
-<dt><strong><a name="bug_fix39" class="item">BUG FIX</a></strong></dt>
+<dt><strong><a name="bug_fix40" class="item">BUG FIX</a></strong></dt>
 
 <dd>
 <p>Previously <a href="#dbfilepivot">dbfilepivot</a> failed if the input had comments (oops :-);
 no longer.</p>
 </dd>
-<dt><strong><a name="improvement21" class="item">IMPROVEMENT</a></strong></dt>
+<dt><strong><a name="improvement22" class="item">IMPROVEMENT</a></strong></dt>
 
 <dd>
 <p>Now <a href="#dbrowuniq">dbrowuniq</a> has the <code>-L</code> option to preserve the last
 unique row (instead of the first), a common idiom.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="2_32__2012_12_21_test_suites_should_now_be_more_numerically_robust_">2.32, 2012-12-21
+Test suites should now be more numerically robust.</a></h2>
+<dl>
+<dt><strong><a name="new5" class="item">NEW</a></strong></dt>
+
+<dd>
+<p>New <a href="#dbfilediff">dbfilediff</a> does fsdb-aware file differencing.
+It does not do smart intuition of add/removes like Unix <code>diff(1)</code>,
+but it does know about columns, and with <code>-E</code>, it does
+numeric-aware differences.</p>
+</dd>
+<dt><strong><a name="improvement23" class="item">IMPROVEMENT</a></strong></dt>
+
+<dd>
+<p>Test suites that are numeric now use <a href="#dbfilediff">dbfilediff</a> to do numeric-aware
+comparisons, so the test suite should now be robust to slightly different
+computers and operating systems and complilers than <em>exactly</em> what I use.</p>
 </dd>
 </dl>
 <p>

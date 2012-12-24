@@ -18,7 +18,7 @@ dbfilediff - compare two fsdb tables
 
 =head1 SYNOPSIS
 
-    dbfilediff [-Eq] --input table1.fsdb --input table2.fsdb 
+    dbfilediff [-Eq] [-N diff_column_name] --input table1.fsdb --input table2.fsdb 
 
 OR
 
@@ -35,7 +35,8 @@ subsequent lines being marked different.
 By default, I<all> columns must be unique.
 (At some point, support to specific specific columns may be added.)
 
-Output is a new table with a new column C<diff>,
+Output is a new table with a new column C<diff>
+(or something else if the C<-N> option is given),
 "-"  and "+" for the first and second non-equal rows,
 or "~" if they are equal with epsilon numerics (in which case only the
 first row is included).
@@ -71,6 +72,11 @@ but only for floating point numbers.
 Exit with a status of 1 if some differences were found.
 (By default, the exit status is 0 with or without differences
 if the file is processed successfully.)
+
+=item B<-N> on B<--new-name>
+
+Specify the name of the C<diff> column, if any.
+(Default is C<diff>.)
 
 =item B<-q> or B<--quiet>
 
@@ -219,6 +225,7 @@ sub set_defaults ($) {
     $self->{_info}{input_count} = 2;
     $self->{_epsilon_numerics} = undef;
     $self->{_exit_one_if_diff} = undef;
+    $self->{_destination_column} = 'diff';
     $self->{_quiet} = undef;
 }
 
@@ -246,6 +253,7 @@ sub parse_options ($@) {
 	'exit!' => \$self->{_exit_one_if_diff},
 	'i|input=s@' => sub { $self->parse_io_option('inputs', @_); },
 	'log!' => \$self->{_logprog},
+	'N|new-name=s' => \$self->{_destination_column},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	'q|quiet+' => \$self->{_quiet},
 	) or pod2usage(2);
@@ -267,8 +275,8 @@ sub setup ($) {
     $self->setup_exactly_two_inputs;
     $self->finish_io_option('inputs', -comment_handler => undef);
     $self->finish_io_option('output', -clone => $self->{_ins}[0], -outputheader => 'delay');
-    $self->{_out}->col_create('diff')
-	    or croak $self->{_prog} . ": cannot create column diff (maybe it already existed?)\n";
+    $self->{_out}->col_create($self->{_destination_column})
+	    or croak $self->{_prog} . ": cannot create column " . $self->{_destination_column} . " (maybe it already existed?)\n";
 
 
     croak $self->{_prog} . ": intput streams have different schemas; cannot merge\n"

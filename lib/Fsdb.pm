@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.32';
+our $VERSION = '2.33';
 
 =head1 SYNOPSIS
 
@@ -231,23 +231,26 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.32, 2012-12-21
-Test suites should now be more numerically robust.
+=head2 2.33, 2012-12-23
+Minor fixes to some test cases.
 
 =over 4
 
-=item NEW
+=item IMPROVEMENT
 
-New L<dbfilediff> does fsdb-aware file differencing.
-It does not do smart intuition of add/removes like Unix diff(1),
-but it does know about columns, and with C<-E>, it does
-numeric-aware differences.
+L<dbfilediff> and L<dbrowuniq>
+now supports the C<-N> option to give the new column a 
+different name.  (And a test cases where this duplication mattered
+have been fixed.)
 
 =item IMPROVEMENT
 
-Test suites that are numeric now use L<dbfilediff> to do numeric-aware
-comparisons, so the test suite should now be robust to slightly different
-computers and operating systems and complilers than I<exactly> what I use.
+L<dbrvstatdiff> now show the t-test breakpoint with a reasonable number of
+floating point digits.
+
+=item BUG FIX
+
+Fixed a numerical stability problem in the F<dbroweval_last> test case.
 
 =back
 
@@ -705,6 +708,13 @@ Many programs have common options:
 =over 4
 
 =item B<-?> or B<--help>
+
+Show basic usage.
+
+=item B<-N> on B<--new-name>
+
+When a command creates a new column like L<dbrowaccumulate>'s C<accum>,
+this option lets one override the default name of that new column.
 
 Show basic usage.
 
@@ -2522,6 +2532,26 @@ no longer.
 
 Now L<dbrowuniq> has the C<-L> option to preserve the last
 unique row (instead of the first), a common idiom.
+
+=back
+
+=head2 2.32, 2012-12-21
+Test suites should now be more numerically robust.
+
+=over 4
+
+=item NEW
+
+New L<dbfilediff> does fsdb-aware file differencing.
+It does not do smart intuition of add/removes like Unix diff(1),
+but it does know about columns, and with C<-E>, it does
+numeric-aware differences.
+
+=item IMPROVEMENT
+
+Test suites that are numeric now use L<dbfilediff> to do numeric-aware
+comparisons, so the test suite should now be robust to slightly different
+computers and operating systems and complilers than I<exactly> what I use.
 
 =back
 

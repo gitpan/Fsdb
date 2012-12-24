@@ -143,16 +143,19 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.32, 2012-12-21 Test suites should now be more numerically robust.[0m
-       NEW New dbfilediff does fsdb-aware file differencing.  It does not do
-           smart intuition of add/removes like Unix [4mdiff[24m(1), but it does know
-           about columns, and with "-E", it does numeric-aware differences.
+   [1m2.33, 2012-12-23 Minor fixes to some test cases.[0m
+       IMPROVEMENT
+           dbfilediff and dbrowuniq now supports the "-N" option to give the
+           new column a different name.  (And a test cases where this
+           duplication mattered have been fixed.)
 
        IMPROVEMENT
-           Test suites that are numeric now use dbfilediff to do numeric-aware
-           comparisons, so the test suite should now be robust to slightly
-           different computers and operating systems and complilers than
-           [4mexactly[24m what I use.
+           dbrvstatdiff now show the t-test breakpoint with a reasonable
+           number of floating point digits.
+
+       BUG FIX
+           Fixed a numerical stability problem in the [4mdbroweval_last[24m test
+           case.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -492,6 +495,12 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        Many programs have common options:
 
        [1m-? [22mor [1m--help[0m
+           Show basic usage.
+
+       [1m-N [22mon [1m--new-name[0m
+           When a command creates a new column like dbrowaccumulate's "accum",
+           this option lets one override the default name of that new column.
+
            Show basic usage.
 
        [1m-c FRACTION [22mor [1m--confidence FRACTION[0m
@@ -1709,6 +1718,17 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            Now dbrowuniq has the "-L" option to preserve the last unique row
            (instead of the first), a common idiom.
 
+   [1m2.32, 2012-12-21 Test suites should now be more numerically robust.[0m
+       NEW New dbfilediff does fsdb-aware file differencing.  It does not do
+           smart intuition of add/removes like Unix [4mdiff[24m(1), but it does know
+           about columns, and with "-E", it does numeric-aware differences.
+
+       IMPROVEMENT
+           Test suites that are numeric now use dbfilediff to do numeric-aware
+           comparisons, so the test suite should now be robust to slightly
+           different computers and operating systems and complilers than
+           [4mexactly[24m what I use.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -1740,4 +1760,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.14.3                      2012-12-22                           Fsdb(3)
+perl v5.14.3                      2012-12-23                           Fsdb(3)

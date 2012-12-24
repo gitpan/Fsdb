@@ -499,7 +499,7 @@ sub run ($) {
         if (defined($self->{_hypothesis})) {
             $fref->[$t_test_f] = sprintf("$format", $t_test);
             $fref->[$t_test_result_f] = $t_test_result;
-            $fref->[$t_test_break_f] = $t_test_break;
+            $fref->[$t_test_break_f] = sprintf("$format", $t_test_break);
             $fref->[$t_test_break_pct_f] = sprintf("$format", $t_test_break_pct);
         };
     

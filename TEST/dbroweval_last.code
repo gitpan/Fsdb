@@ -1,1 +1,1 @@
-if (defined(_last_clock)) { _absdiff = _clock - _last_clock; _pctdiff = 100.0 * _absdiff / _last_clock; }
+if (defined(_last_clock)) { my $ad = _clock - _last_clock; _absdiff = sprintf("%0.6f", $ad); _pctdiff = sprintf("%.6g", 100.0 * $ad / _last_clock); }

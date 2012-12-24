@@ -51,6 +51,13 @@ Optionally, with F<-L>, it will output the I<last> unique row.
 Create a new column (count) which counts the number of times
 each line occurred.
 
+The new column is named by the C<-N> argument, defaulting to C<count>.
+
+=item B<-N> on B<--new-name>
+
+Specify the name of the count column, if any.
+(Default is C<count>.)
+
 =item B<-L> or B<--last>
 
 Output the last unique row. 
@@ -219,6 +226,7 @@ sub set_defaults ($) {
     $self->{_count} = undef;
     $self->{_last} = undef;
     $self->{_uniquifying_cols} = [];
+    $self->{_destination_column} = 'count';
 }
 
 =head2 parse_options
@@ -244,6 +252,7 @@ sub parse_options ($@) {
 	'd|debug+' => \$self->{_debug},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
+	'N|new-name=s' => \$self->{_destination_column},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	) or pod2usage(2);
     push (@{$self->{_uniquifying_cols}}, @argv);
@@ -273,8 +282,8 @@ sub setup ($) {
 
     $self->finish_io_option('output', -clone => $self->{_in}, -outputheader => 'delay');
     if ($self->{_count}) {
-        $self->{_out}->col_create('count')
-	    or croak $self->{_prog} . ": cannot create column count (maybe it already existed?)\n";
+        $self->{_out}->col_create($self->{_destination_column})
+	    or croak $self->{_prog} . ": cannot create column " . $self->{_destination_column} . " (maybe it already existed?)\n";
     };
 }
 
