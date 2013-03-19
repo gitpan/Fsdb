@@ -42,7 +42,7 @@ Fsdb::Filter will dump these after all other output.
 =cut
 
 @ISA = ();
-($VERSION) = ('$Revision$' =~ m/(\d+)/);
+($VERSION) = 1.0;
 
 use Carp;
 

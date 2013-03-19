@@ -143,19 +143,10 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.33, 2012-12-23 Minor fixes to some test cases.[0m
-       IMPROVEMENT
-           dbfilediff and dbrowuniq now supports the "-N" option to give the
-           new column a different name.  (And a test cases where this
-           duplication mattered have been fixed.)
-
-       IMPROVEMENT
-           dbrvstatdiff now show the t-test breakpoint with a reasonable
-           number of floating point digits.
-
-       BUG FIX
-           Fixed a numerical stability problem in the [4mdbroweval_last[24m test
-           case.
+   [1m2.37, 2013-02-26 quick bugfix to support parallel sort and merge from[0m
+       [1mrecent releases[0m
+       BUG FIX Since 2.35, dbmerge delayed removal of input files given by
+       "--xargs".  This problem is now fixed.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -1729,6 +1720,60 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            different computers and operating systems and complilers than
            [4mexactly[24m what I use.
 
+   [1m2.33, 2012-12-23 Minor fixes to some test cases.[0m
+       IMPROVEMENT
+           dbfilediff and dbrowuniq now supports the "-N" option to give the
+           new column a different name.  (And a test cases where this
+           duplication mattered have been fixed.)
+
+       IMPROVEMENT
+           dbrvstatdiff now show the t-test breakpoint with a reasonable
+           number of floating point digits.
+
+       BUG FIX
+           Fixed a numerical stability problem in the [4mdbroweval_last[24m test
+           case.
+
+[1mWHAT'S NEW[0m
+   [1m2.34, 2013-02-10 Parallelism in dbmerge.[0m
+       IMPROVEMENT
+           Documention for dbjoin now includes resource requirements.
+
+       IMPROVEMENT
+           Default memory usage for dbsort is now about 256MB.  (The world
+           keeps moving forward.)
+
+       IMPROVEMENT
+           dbmerge now does merging in parallel.  As a side-effect, dbsort
+           should be faster when input overflows memory.  The level of
+           parallelism can be limited with the "--parallelism" option.  (There
+           is more work to do here, but we're off to a start.)
+
+   [1m2.35, 2013-02-23 Improvements to dbmerge parallelism[0m
+       BUG FIX
+           Fsdb temporary files are now created more securely (with
+           File::Temp).
+
+       IMPROVEMENT
+           Programs that sort or merge on fields (dbmerge2, dbmerge, dbsort,
+           dbjoin) now report an error if no fields on which to join or merge
+           are given.
+
+       IMPROVEMENT
+           Parallelism in dbmerge is should now be more consistent, with less
+           starting and stopping.
+
+       IMPROVEMENT In dbmerge, the "--xargs" option lets one give input
+       filenames on standard input, rather than the command line. This feature
+       paves the way for faster dbsort for large inputs (by pipelining sorting
+       and merging), expected in the next release.
+
+   [1m2.36, 2013-02-25 dbsort pipelines with dbmerge[0m
+       IMPROVEMENT For large inputs, dbsort now pipelines sorting and merging,
+       allowing earlier processing.
+       BUG FIX Since 2.35, dbmerge delayed cleanup of intermediate files,
+       thereby requiring extra disk space.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -1736,7 +1781,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        and fixes.
 
 [1mCOPYRIGHT[0m
-       Fsdb is Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>.
+       Fsdb is Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>.
 
        This program is free software; you can redistribute it and/or modify it
        under the terms of version 2 of the GNU General Public License as
@@ -1760,4 +1805,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.14.3                      2012-12-23                           Fsdb(3)
+perl v5.16.2                      2013-02-26                           Fsdb(3)

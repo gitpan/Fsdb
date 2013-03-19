@@ -30,6 +30,11 @@ and -T options.)
 
 The sort should be stable, but this has not yet been verified.
 
+For large inputs (those that spill to disk),
+L<dbsort> will do some of the merging in parallel, if possible.
+The <--parallel> option can control the degree of parallelism,
+if desired.
+
 =head1 OPTIONS
 
 General option:
@@ -48,6 +53,11 @@ where to put tmp files.
 Also uses environment variable TMPDIR, if -T is 
 not specified.
 Default is /tmp.
+
+=item <--parallelism> N
+
+Allow up to N merges to happen in parallel.
+Default is the number of CPUs in the machine.
 
 =back
 
@@ -157,8 +167,9 @@ use Carp;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
 use Fsdb::Filter;
-use Fsdb::Filter::dbmerge;
 use Fsdb::Support::NamedTmpfile;
+use Fsdb::Filter::dbmerge;
+use Fsdb::Filter::dbpipeline qw(dbpipeline_sink dbmerge);
 
 my($PERL_MEM_OVERHEAD) = 50;  # approx. bytes of overhead for each record in mem
 my($PERL_MEM_SCALING) = 2;    # divided user requested mem by this factor to account to perl memory usage (huge approximatation)
@@ -194,10 +205,11 @@ Internal: set up defaults.
 sub set_defaults ($) {
     my $self = shift @_;
     $self->SUPER::set_defaults();
-    $self->{_max_memory} = 1024*1024*64;
+    $self->{_max_memory} = 1024*1024*256;
     $self->{_mem_debug} = undef;
     $self->{_sort_argv} = [];
     $self->{_tmpdir} = defined($ENV{'TMPDIR'}) ? $ENV{'TMPDIR'} : "/tmp";
+    $self->{_max_parallelism} = undef;
 }
 
 =head2 parse_options
@@ -223,6 +235,7 @@ sub parse_options ($@) {
 	'log!' => \$self->{_logprog},
 	'M|maxmemory=i' => \$self->{_max_memory},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
+	'parallelism=i' => \$self->{_max_parallelism},
 	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
 	# sort key options:
 	'n|numeric' => sub { $self->parse_sort_option(@_); },
@@ -256,6 +269,8 @@ sub setup ($) {
     $self->finish_io_option('input', -comment_handler => $self->create_delay_comments_sub);
 
     $self->{_compare_code} = $self->create_compare_code($self->{_in}, $self->{_in});
+    croak $self->{_prog} . ": no sort field specified.\n"
+	if (!defined($self->{_compare_code}));
     print "COMPARE CODE:\n\t" . $self->{_compare_code} . "\n" if ($self->{_debug});
     my $compare_sub;
     eval '$self->{_compare_sub} = $compare_sub = ' . $self->{_compare_code} . ';';
@@ -272,7 +287,7 @@ to handle large things in pieces if necessary.
 
 call C<$self->segment_start> to init things and to restart after an overflow
 C<$self->segment_overflow> to close one segment and start the next,
-and C<$self->segment_merge> to put them back together again.
+and C<$self->segment_merge_finish> to put them back together again.
 
 Note that we don't invoke the merge code unless the data
 exceeds some threshold size, so small sorts happen completely
@@ -299,20 +314,24 @@ depending on how things are going.
 
 =cut
 
-sub segment_next_output {
+sub segment_next_output($$) {
     my ($self, $input_finished) = @_;
     my $final_output = ($#{$self->{_files_to_merge}} == -1 && $input_finished);
     my $out;
     if ($final_output) {
-	$self->finish_io_option('output', -clone => $self->{_in});
+	if (!defined($self->{_merge_thread})) {
+	    # setup output
+	    # (if merging, then we did this when we forked the merge thread)
+	    $self->finish_io_option('output', -clone => $self->{_in});
+	};
         $out = $self->{_out};
-	print "# final output\n" if ($self->{_debug});
+	print "# dbsort segment_next_output: final output\n" if ($self->{_debug});
     } else {
 	# dump to a file for merging
 	my $tmpfile = Fsdb::Support::NamedTmpfile::alloc($self->{_tmpdir});
 	$out = $tmpfile;   # just return the name
 	push(@{$self->{_files_to_merge}}, $tmpfile);
-	print "# intermediate file: $tmpfile\n" if ($self->{_debug});
+	print "# dbsort segment_next_output: intermediate file: $tmpfile\n" if ($self->{_debug});
     };
     return ($out, $final_output);
 }
@@ -332,7 +351,7 @@ $INPUT_FINISHED is set if all input has been read.
 #    return @sorted_rows;
 #}
 
-sub segment_overflow ($\@$) {
+sub segment_overflow($\@$) {
     my($self, $rows_ref, $input_finished) = @_;
 
     my $compare_sub = $self->{_compare_sub};
@@ -342,8 +361,12 @@ sub segment_overflow ($\@$) {
     my ($out_fn, $final_output) = $self->segment_next_output($input_finished, 'Fsdb:IO');
     my $out;
     if (ref($out_fn) =~ /^Fsdb::IO::Writer/) {
+	die "dbsort segment_overflow: suprise writer and NOT final_output\n"
+	    if (!$final_output);
 	$out = $out_fn;   # a bit hacky, but whatever
     } else {
+	die "dbsort segment_overflow: suprise filename and final_output\n"
+	    if ($final_output);
 	$out = new Fsdb::IO::Writer(-file => $out_fn, -clone => $self->{_in});
     };
 
@@ -354,31 +377,66 @@ sub segment_overflow ($\@$) {
 
     if (!$final_output) {
 	$out->close;
+	$self->segment_merge_start($out_fn);
 	$self->segment_start($rows_ref);
     };
 }
 
-=head2 segment_merge
+=head2 segment_merge_start
 
-    $self->segment_merge();
+    $self->segment_merge_start($fn);
+
+Start merging on file $FN.
+Fork off a merge thread, if necessary.
+
+=cut
+sub segment_merge_start($$) {
+    my($self, $fn) = @_;
+
+    if (!defined($self->{_merge_thread})) {
+	# create our output so we can give it to merge-thread
+	$self->finish_io_option('output', -clone => $self->{_in}); # , -outputheader => 'never');
+
+	print "# forking merge thread\n" if ($self->{_debug});
+	my(@writer_args) = (-cols => [qw(filename)]);
+	my(@merge_args) = qw(--nolog --noclose --removeinputs --xargs);
+	push(@merge_args, '--parallelism', $self->{_max_parallelism})
+	    if (defined($self->{_max_parallelism}));
+	push(@merge_args, @{$self->{_sort_argv}});
+
+	my($writer, $merge_thread) = dbpipeline_sink(\@writer_args,
+	    '--output' => $self->{_out},
+	    dbmerge(@merge_args));
+	croak "dbsort: internal error in invoking dbmerge\n"
+	    if (!defined($writer) || !defined($merge_thread));
+	$self->{_merge_writer} = $writer;
+	$self->{_merge_thread} = $merge_thread;
+    };
+    print "# dbsort segment_merge_start: sending merge thread: $fn\n" if ($self->{_debug});
+    $self->{_merge_writer}->write_row($fn);
+}
+
+
+=head2 segment_merge_finish
+
+    $self->segment_merge_finish();
 
 Merge queued files, if any.
-Just call L<dbmerge(3)> to do all the real work.
+Just call L<dbmerge(1)> to do all the real work.
 
 =cut
 
-sub segment_merge ($) {
+sub segment_merge_finish($) {
     my($self) = @_;
+    return if (!defined($self->{_merge_thread}));
     return if ($#{$self->{_files_to_merge}} == -1);
 
-    $self->finish_io_option('output', -clone => $self->{_in});
     print "# final output\n" if ($self->{_debug});
-
-    new Fsdb::Filter::dbmerge(qw(--autorun --nolog --noclose --removeinputs),
-				'--output' => $self->{_out},
-				@{$self->{_sort_argv}},
-				'--inputs',
-				@{$self->{_files_to_merge}});
+    # tell it we're done
+    $self->{_merge_writer}->close();	
+    # and make it do its work
+    $self->{_merge_thread}->join();
+    $self->{_merge_thread} = undef;
 }
 
 
@@ -420,7 +478,7 @@ my $i = 0;
     # handle end case
     $self->segment_overflow(\@rows, 1) if ($#rows > -1);   # (spill any records in queued)
     # merge, if necessary
-    $self->segment_merge;
+    $self->segment_merge_finish();
     # handle the null case: no output
     if ($#rows == -1 && $#{$self->{_files_to_merge}} == -1) {
 	# open _out, just so we can log ourselves in finish()

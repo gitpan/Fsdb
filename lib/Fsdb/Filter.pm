@@ -54,7 +54,7 @@ In addition, the C<info> method returns metadata about a given filter.
 =cut
 
 @ISA = ();
-($VERSION) = ('$Revision$' =~ m/(\d+)/);
+($VERSION) = 1.0;
 
 use strict;
 use Carp qw(carp croak);
@@ -797,6 +797,8 @@ for the two objects.
 We assume the variables C<$a> and C<$b> point to arefs;
 these names can be overridden by specifying
 C<$A_FREF_NAME> and C<$B_FREF_NAME>.
+
+Returns undef if there are no fields in C<$self->{_sort_argv}>.
 =cut
 
 sub create_compare_code ($$;$$) {
@@ -821,6 +823,7 @@ sub create_compare_code ($$;$$) {
 	    "\t\treturn\n";
     my ($reverse, $numeric) = (0, 0);
     my $arg;
+    my $fields_found = 0;
     foreach $arg (@{$self->{_sort_argv}}) {
 	if ($arg eq '-r') {
 	    $reverse = 1;
@@ -852,9 +855,11 @@ sub create_compare_code ($$;$$) {
 		    ($numeric ? " numeric" : " lexical") .
 		    "\n";
 	    # note that we don't currently handle NaN comparisons returning undef
+	    $fields_found++;
 	};
     };
     $compare_code .= "\t0; # match\n};\n";
+    return undef if ($fields_found == 0);
     return $compare_code;
 }
 

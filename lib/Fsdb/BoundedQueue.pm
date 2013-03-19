@@ -33,7 +33,7 @@ Fsdb::BoundedQueue - thread-safe queues
 
 =head1 DESCRIPTION
 
-A queue, as implemented by C<Thread::BoundedQueue> is a thread-safe 
+A queue, as implemented by C<Fsdb::BoundedQueue> is a thread-safe 
 data structure much like a list.  Any number of threads can safely 
 add elements to the end of the list, or remove elements from the head 
 of the list. (BoundedQueues don't permit adding or removing elements from 
@@ -122,6 +122,7 @@ sub enqueue {
     lock(@$q);
     cond_wait @$q while ($#$q >= $bound);
     foreach (@_) {
+	#
 	# This copying is gross, but without it I found I
 	# was getting aliases in the queue.  I.e., enqueue one,
 	# then the caller modifies what should be a new copy,
@@ -129,6 +130,12 @@ sub enqueue {
 	# Better correct than wrong.
 	#
 	# The positive thing is it means the caller can be share oblivious.
+	#
+	# By perl-5.14 we could do
+	#   push(@$q, shared_clone($_));
+	# but our code here is a little more specialized
+	# and otherwise equivalent.
+	#
 	if (!ref($_)) {
 	    my $copy : shared = $_;
 	    push @$q, $copy;

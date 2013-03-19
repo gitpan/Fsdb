@@ -2,7 +2,7 @@
 
 #
 # dbmerge.pm
-# Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -33,6 +33,7 @@ or
 Merge all provided, pre-sorted input files, producing one sorted result.
 Inputs can both be specified with C<--input>, or one can come
 from standard input and the other from C<--input>.
+With C<--xargs>, each line of standard input is a filename for input.
 
 Inputs must have identical schemas (columns, column order,
 and field separators).
@@ -47,10 +48,14 @@ If you wish to list F<-> as an explicit input source.
 Also, because we deal with multiple input files,
 this module doesn't output anything until it's run.
 
-Dbmerge consumes a fixed amount of memory regardless of input size.
+L<dbmerge> consumes a fixed amount of memory regardless of input size.
 It therefore buffers output on disk as necessary.
 (Merging is implemented a series of two-way merges,
 so disk space is O(number of records).)
+
+L<dbmerge> will merge data in parallel, if possible.
+The <--parallelism> option can control the degree of parallelism,
+if desired.
 
 
 =head1 OPTIONS
@@ -59,17 +64,27 @@ General option:
 
 =over 4
 
-=item <--removeinputs>
+=item B<--xargs>
+
+Expect that input filenames are given, one-per-line, on standard input.
+(In this case, merging can start incrementally.
+
+=item B<--removeinputs>
 
 Delete the source files after they have been consumed.
 (Defaults off, leaving the inputs in place.)
 
-=item <-T TmpDir>
+=item B<-T TmpDir>
 
 where to put tmp files.
 Also uses environment variable TMPDIR, if -T is 
 not specified.
 Default is /tmp.
+
+=item B<--parallelism> N
+
+Allow up to N merges to happen in parallel.
+Default is the number of CPUs in the machine.
 
 =back
 
@@ -191,11 +206,17 @@ use strict;
 use Carp qw(croak);
 use Pod::Usage;
 
+use threads;
+use Thread::Semaphore;
+use Thread::Queue;
+
 use Fsdb::Filter;
 use Fsdb::Filter::dbmerge2;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
 use Fsdb::Support::NamedTmpfile;
+use Fsdb::Support::OS qw($parallelism_available);
+
 
 =head2 new
 
@@ -205,7 +226,7 @@ Create a new object, taking command-line arugments.
 
 =cut
 
-sub new ($@) {
+sub new($@) {
     my $class = shift @_;
     my $self = $class->SUPER::new(@_);
     bless $self, $class;
@@ -224,12 +245,15 @@ Internal: set up defaults.
 
 =cut
 
-sub set_defaults ($) {
+sub set_defaults($) {
     my $self = shift @_;
     $self->SUPER::set_defaults();
     $self->{_remove_inputs} = undef;
     $self->{_info}{input_count} = 2;
     $self->{_sort_argv} = [];
+    $self->{_max_parallelism} = undef;
+    $self->{_test} = '';
+    $self->{_xargs} = undef;
     $self->set_default_tmpdir;
 }
 
@@ -241,7 +265,7 @@ Internal: parse command-line arguments.
 
 =cut
 
-sub parse_options ($@) {
+sub parse_options($@) {
     my $self = shift @_;
 
     my(@argv) = @_;
@@ -257,8 +281,11 @@ sub parse_options ($@) {
 	'inputs!' => \$past_sort_options,
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
+	'parallelism=i' => \$self->{_max_parallelism},
 	'removeinputs!' => \$self->{_remove_inputs},
+	'test=s' => \$self->{_test},
 	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
+	'xargs!' => \$self->{_xargs},
 	# sort key options:
 	'n|numeric' => sub { $self->parse_sort_option(@_); },
 	'N|lexical' => sub { $self->parse_sort_option(@_); },
@@ -274,6 +301,390 @@ sub parse_options ($@) {
 }
 
 
+=head2 segment_next_output
+
+    $out = $self->segment_next_output($is_final_output)
+
+Internal: return a Fsdb::IO::Writer as $OUT
+that either points to our output or a temporary file, 
+depending on how things are going.
+
+=cut
+
+sub segment_next_output($$) {
+    my ($self, $is_final_output) = @_;
+    my $out;
+    if ($is_final_output) {
+#        $self->finish_io_option('output', -clone => $self->{_two_ins}[0]);
+#        $out = $self->{_out};
+	$out = $self->{_output};   # will pass this to the dbmerge2 module
+	print "# final output\n" if ($self->{_debug});
+    } else {
+	# dump to a file for merging
+	my $tmpfile = Fsdb::Support::NamedTmpfile::alloc($self->{_tmpdir});
+	$self->{_files_cleanup}{$tmpfile} = 'NamedTmpfile';
+	$out = $tmpfile;   # just return the name
+    };
+    return $out;
+}
+
+
+=head2 segment_cleanup
+
+    $out = $self->segment_cleanup($file);
+
+Internal: Clean up a file, if necessary.
+(Sigh, used to be function pointers, but 
+not clear how they would interact with threads.)
+
+=cut
+
+sub segment_cleanup($$) {
+    my($self, $file) = @_;
+    my($cleanup_type) = $self->{_files_cleanup}{$file};
+    die "bad (empty) file in dbmerge::segment_cleanup\n"
+	if (!defined($file));
+    if (!defined($cleanup_type)) {
+	print "# dbmerge: segment_cleanup:  no cleanup for $file\n" if ($self->{_debug});
+	# nothing
+    } elsif ($cleanup_type eq 'unlink') {
+	print "# dbmerge: segment_cleanup: cleaning up $file\n" if ($self->{_debug});
+	unlink($file);
+    } elsif ($cleanup_type eq 'NamedTmpfile') {
+	print "# dbmerge: segment_cleanup:  NamedTmpfile::cleanup_one $file\n" if ($self->{_debug});
+	Fsdb::Support::NamedTmpfile::cleanup_one($file);
+    } else {
+	die $self->{_prog} . ": internal error, unknown segment_cleanup type $cleanup_type\n";
+    };
+}
+
+
+=head2 segments_merge2_finish
+
+    $out = $self->segments_merge2_finish($out_fn, $is_final_output, 
+			$two_in_fn_ref);
+
+
+Internal: do the actual merge2 work (maybe our parent put us in a
+thread, maybe not).
+
+=cut
+sub segments_merge2_finish($$$$) {
+    my($self, $out_fn, $is_final_output, $two_in_fn_ref) = @_;
+
+    my @merge_options = qw(--autorun --nolog);
+    push(@merge_options, '--noclose', '--saveoutput' => \$self->{_out})
+	if ($is_final_output);
+
+    my $debug_msg = "$two_in_fn_ref->[0] with $two_in_fn_ref->[1] to $out_fn" . ($is_final_output ? " (final)" : "");
+    print "# segments_merge2_finish: starting merge $debug_msg\n"
+	if ($self->{_debug});
+    new Fsdb::Filter::dbmerge2(@merge_options,
+			'--input' => $two_in_fn_ref->[0],
+			'--input' => $two_in_fn_ref->[1],
+			'--output' => $out_fn,
+			@{$self->{_sort_argv}});
+    print "# segments_merge2_finish: done with merge $debug_msg\n"
+	if ($self->{_debug});
+
+    foreach (0..1) {
+	$self->segment_cleanup($two_in_fn_ref->[$_]);
+    };
+}
+
+=head2 segments_merge2_start
+
+    $out = $self->segments_merge2_start($go_sem, $filename, $force_start);
+
+Internal: release a forked thread (bound by $GO_SEM).
+Always if $FORCE_START, otherwise only if we have free parallelism.
+
+Returns either the semaphore (if it's not started)
+or the thread (if it is started).
+
+=cut
+
+sub segments_merge2_start($$$$) {
+    my($self, $go_sem, $out_fn, $force_start) = @_;
+    #
+    # Note there's a race in our check of parallelism available
+    # and letting it go.
+    # It's not REALLY a race because only one thread releases threads,
+    # and it doesn't matter because an extra active thread is not
+    # the end of the world.
+    #
+    if ($parallelism_available <= 0 && !$force_start) {
+	print "# segments_merge2_start: merge thread for $out_fn postponed\n" if ($self->{_debug});
+	return [$go_sem, $out_fn];
+    };
+    # send it off!
+    if ($self->{_debug}) {
+	my $reason = ($parallelism_available <= 0) ? 'forced' : 'free';
+        print "# segments_merge2_start: merge thread for $out_fn started, $reason\n";
+    };
+    $go_sem->up();
+    return [undef, $out_fn];
+}
+
+=head2 segments_merge_one_depth
+
+    $self->segments_merge_one_depth($depth);
+
+Merge queued files, if any.
+
+Also release any queued threads.
+
+=cut
+
+sub segments_merge_one_depth($$) {
+    my($self, $depth) = @_;
+
+    my $work_ref = $self->{_work}[$depth];
+    my $closed = $self->{_work_closed}[$depth];
+    my $ipc = $self->{_ipc};
+
+    #
+    # Merge the files in a binary tree.
+    #
+    # In the past, we did this in a very clever
+    # a file-system-cache-friendly order, based on ideas from
+    # "Information and Control in Gray-box Systems" by
+    # the Arpaci-Dusseaus at SOSP 2001.
+    #
+    # Unfortunately, this optimization makes the sort unstable
+    # and complicated,
+    # so it was dropped when paralleism was added.
+    #
+    while ($#{$work_ref} >= ($closed ? 0 : 3)) {
+	if ($#{$work_ref} == 0) {
+	    last if (!$closed);
+	    # one left, just punt it next
+	    print "# segments_merge_one_depth: runt at depth $depth pushed to next depth.\n" if ($self->{_debug});
+	    push ($self->{_work}[$depth + 1], shift @$work_ref);
+	    die "internal error\n" if ($#{$work_ref} != -1);
+	    last;
+	};
+	# are they blocked?  force-start them if we are
+	my $waiting_on_inputs = 0;
+	foreach my $i (0..1) {
+	    my $ref = ref($work_ref->[$i]);
+	    next if ($ref eq '');  # filename
+	    die "suprise ref $ref in the work queue $depth\n" if ($ref ne 'ARRAY');
+	    my($go_sem, $fn) = ($work_ref->[$i][0], $work_ref->[$i][1]);
+	    if (defined($go_sem)) {
+		print "# segments_merge_one_depth: depth $depth forced start on $fn.\n" if ($self->{_debug});
+		$self->segments_merge2_start($go_sem, $fn, 1);
+		$work_ref->[$i][0] = undef;   # note that it's started
+	    } else {
+		print "# segments_merge_one_depth: depth $depth waiting on working $fn.\n" if ($self->{_debug});
+	    };
+	    $waiting_on_inputs++;
+	};
+	# bail out if inputs are not done yet.
+	return if ($waiting_on_inputs);
+
+	# now we KNOW we have filenames, not queued work
+	my(@two_fn) = (shift @${work_ref}, shift @${work_ref});
+	my $is_final_output = ($closed && $#{$work_ref} == -1 && $depth == $#{$self->{_work}});
+	my($out_fn) = $self->segment_next_output($is_final_output);
+	print "# segments_merge_one_depth: depth $depth planning $two_fn[0] and $two_fn[1] to $out_fn.\n" if ($self->{_debug});
+
+	foreach my $i (0..1) {
+	    next if ($two_fn[$i] eq '-');
+	    croak $self->{_prog} . ": file $two_fn[$i] is missing.\n"
+		if (! -f $two_fn[$i]);
+	};
+
+	if ($is_final_output) {
+		# last time: do it here, in-line
+		# so that we update $self->{_out} in the main thread
+		$self->segments_merge2_finish($out_fn, $is_final_output, \@two_fn);
+		# signal ourselves that we're really done
+		$ipc->enqueue([-1, 'merge-final']);
+		return;
+	};
+	#
+	# fork a thread to do the merge
+	#
+	my $go_sem = Thread::Semaphore->new(0);
+	my $merge_thread = threads->new(
+	    sub {
+		$go_sem->down();  # wait to be told to start
+		$parallelism_available--;
+		$self->segments_merge2_finish($out_fn, $is_final_output, \@two_fn);
+		sleep(1) if (defined($self->{_test}) && $self->{_test} eq 'delay-finish');
+		$parallelism_available++;
+		$ipc->enqueue([$depth+1, $out_fn]);
+		return $out_fn;
+	    }
+        );
+	# Put the thread in our queue, and maybe run it.
+	$merge_thread->detach();
+	push(@{$self->{_work}[$depth+1]}, $self->segments_merge2_start($go_sem, $out_fn, 0));
+    }; 
+    # At this point all possible work has been queued and maybe started.
+    # If the depth is closed, the work should be empty.
+    # if not, there may be some files in the queue
+}
+
+=head2 segments_xargs
+
+    $self->segments_xargs();
+
+Internal: read new filenames to process (from stdin)
+and send them to the work queue.
+
+=cut
+
+sub segments_xargs($) {
+    my($self) = @_;
+    my $ipc = $self->{_ipc};
+
+    my $num_inputs = 0;
+
+    # read files as in fsdb format
+    if ($#{$self->{_inputs}} == 0) {
+	# hacky...
+	$self->{_input} = $self->{_inputs}[0];
+    };
+    $self->finish_io_option('input', -header => '#fsdb filename');
+    my $read_fastpath_sub = $self->{_in}->fastpath_sub();
+    while (my $fref = &$read_fastpath_sub()) {
+	# send each file for processing as level zero
+	print "# dbmerge: segments_xargs: got $fref->[0]\n" if ($self->{_debug});
+	$ipc->enqueue([0, $fref->[0]]);
+	$num_inputs++;
+    };
+    if ($num_inputs <= 1) {
+	$ipc->enqueue([-1, "error: --xargs, but zero or one input files; dbmerge needs at least two."]);  # signal eof-f
+    };
+    $ipc->enqueue([-1, 'xargs-eof']);
+}
+
+
+=head2 segments_merge_all
+
+    $self->segments_merge_all()
+
+Internal:
+Merge queued files, if any.
+Iterates over all depths of the merge tree,
+and handles any forked threads.
+
+=cut
+
+sub segments_merge_all($) {
+    my($self) = @_;
+
+    # queue to handle inter-thread communication
+    my $ipc = Thread::Queue->new();
+    $self->{_ipc} = $ipc;
+
+    my $xargs_thread = undef;
+    if ($self->{_xargs}) {
+	$xargs_thread = threads->new(
+	    sub {
+		$self->segments_xargs();
+	    }
+	);
+	$xargs_thread->detach();
+    };
+
+    #
+    # Alternate forking off new merges from finished files,
+    # and checking $ipc for finished work or new files.
+    #
+    for (;;) {
+	# test for done by signal that is_final_output has run
+#	# done?
+#	my $deepest = $#{$self->{_work}};
+#	last if ($self->{_work_closed}[$deepest] && $#{$self->{_work}[$deepest]} <= 0);
+
+	#
+	# First, fork off new threads, where possible.
+	#
+	foreach my $depth (0..$#{$self->{_work}}) {
+	    $self->segments_merge_one_depth($depth);
+	    if ($#{$self->{_work}[$depth]} == -1 && $self->{_work_closed}[$depth]) {
+		# When one level is all in progress, we can close the next.
+		my $next_depth = $depth + 1;
+		if (!$self->{_work_closed}[$next_depth]) {
+		    $self->{_work_closed}[$next_depth] = 1;
+		    print "# segments_merge_all: closed work level $next_depth\n" if ($self->{_debug});
+		};
+	    };
+	};
+
+	#
+	# Next, handle stuff that's finished.
+	# We do ONE thing, maybe blocking, then go back and see
+	# if we can fork off more threads.
+	#
+	my $work_aref = $ipc->dequeue();
+	my($work_depth, $work_fn) = @$work_aref;
+	if ($work_depth == -1) {
+	    if ($work_fn =~ /^error/) {
+		croak $self->{_prog} . ": $work_fn\n";
+	    } elsif ($work_fn eq 'xargs-eof') {
+		# eof from xargs, propagate it
+		print "# segments_merge_all: eof from xargs\n" if ($self->{_debug});
+		$self->{_work_closed}[0] = 1;
+		next;
+	    } elsif ($work_fn eq 'merge-final') {
+		print "# segments_merge_all: got is_final_output signal\n" if ($self->{_debug});
+		last;
+	    } else {
+		croak $self->{_prog} . ": internal error: suprising ipc signal $work_fn\n";
+	    };
+	};
+	print "# segments_merge_all: new file for $work_fn at $work_depth\n" if ($self->{_debug});
+
+	if ($work_depth == 0) {
+	    # queue first level files here
+	    push(@{$self->{_work}[$work_depth]}, $work_fn);
+	    $self->{_files_cleanup}{$work_fn} = 'unlink'
+		if ($self->{_remove_inputs});
+	} else {
+	    #
+	    # If we get a new deeper file, then 
+	    # some thread finished.  We therefore need to
+	    # (1) find that file in the work queue and make it finished,
+	    # and (2) to try to release a pending thread, if any. 
+	    #
+	    my $found_finished = undef;
+	    my $found_new = undef;
+	    CLEANUP:
+	    foreach my $depth (0..$#{$self->{_work}}) {
+	        foreach my $i (0..$#{$self->{_work}[$depth]}) {
+		    last CLEANUP if ($found_finished && $found_new);
+		    my $work_ref = $self->{_work}[$depth][$i];
+		    if (ref($work_ref) eq 'ARRAY') {
+			my($go_sem, $fn) = @$work_ref;
+			if (!defined($go_sem)) {
+			    next if ($found_finished);
+			    next if ($fn ne $work_fn);
+			    print "# segments_merge_all: merge thread for $depth, $i reports $fn is done\n" if ($self->{_debug});
+			    $self->{_work}[$depth][$i] = $work_fn;
+			    $found_finished = 1;
+			} else {
+			    die "internal error: suprising thing in the work queue at $depth/$i\n"
+				if (ref($go_sem) ne 'Thread::Semaphore');
+			    next if ($found_new);
+			    # release it
+			    print "# segments_merge_all: merge thread released, depth $depth, file $fn\n" if ($self->{_debug});
+			    $go_sem->up();
+			    $work_ref->[0] = undef;
+			    $found_new = 1;
+			};
+		    };
+		};
+	    };
+	};
+    };
+}
+
+
+
 =head2 setup
 
     $filter->setup();
@@ -282,16 +693,21 @@ Internal: setup, parse headers.
 
 =cut
 
-sub setup ($) {
+sub setup($) {
     my($self) = @_;
 
     croak $self->{_prog} . ": no sorting key specified.\n"
 	if ($#{$self->{_sort_argv}} == -1);
 
-    if ($#{$self->{_inputs}} == -1) {
-	croak $self->{_prog} . ": no input sources specified, use --input.\n";
+    if (!$self->{_xargs} && $#{$self->{_inputs}} == -1) {
+	croak $self->{_prog} . ": no input sources specified, use --input or --xargs.\n";
     };
-    @{$self->{_files_to_merge}} = @{$self->{_inputs}};
+    if (!$self->{_xargs} && $#{$self->{_inputs}} == 0) {
+	croak $self->{_prog} . ": only one input source, but can't merge one file.\n";
+    };
+    if ($self->{_xargs} && $#{$self->{_inputs}} > 0) {
+	croak $self->{_prog} . ": --xargs and multiple inputs (perhaps you meant NOT --xargs?).\n";
+    };
     # prove files exist (early error checking)
     foreach (@{$self->{_inputs}}) {
 	next if (ref($_) ne '');   # skip objects
@@ -300,124 +716,34 @@ sub setup ($) {
 	    croak $self->{_prog} . ": input source $_ does not exist.\n";
 	};
     };
-    # don't
-    my $default_callback = $self->{_remove_inputs} ?
-	    ($self->{_debug} ? sub { print STDERR "cleaning up $_[0]\n"; unlink($_[0]); } 
-		: sub { unlink($_[0]); } ) :
-	    undef;
-    @{$self->{_files_cleanup}} = ($default_callback) x ($#{$self->{_files_to_merge}}+1);
-}
-
-=head2 segment_next_output
-
-    $out = $self->segment_next_output($input_finished)
-
-Internal: return a Fsdb::IO::Writer as $OUT
-that either points to our output or a temporary file, 
-depending on how things are going.
-
-=cut
-
-sub segment_next_output {
-    my ($self, $input_finished) = @_;
-    my $final_output = ($#{$self->{_files_to_merge}} == -1 && $input_finished);
-    my $out;
-    if ($final_output) {
-#        $self->finish_io_option('output', -clone => $self->{_two_ins}[0]);
-#        $out = $self->{_out};
-	$out = $self->{_output};   # will pass this to the dbmerge2 module
-	print "# final output\n" if ($self->{_debug});
+    if ($self->{_remove_inputs}) {
+	foreach (@{$self->{_inputs}}) {
+	    $self->{_files_cleanup}{$_} = 'unlink'
+		if ($_ ne '-');
+	};
+    };
+    #
+    # the _work queue consists of
+    # 1. filenames that need to be merged.
+    # 2. [$go_sem, filename] for blocked threads
+    # 3. [undef, filename] for files still being computed.
+    if ($self->{_xargs}) {
+	$self->{_work}[0] = [];
+	$self->{_work_closed}[0] = 0;
     } else {
-	# dump to a file for merging
-	my $tmpfile = Fsdb::Support::NamedTmpfile::alloc($self->{_tmpdir});
-	$out = $tmpfile;   # just return the name
-	push(@{$self->{_files_to_merge}}, $tmpfile);
-	push(@{$self->{_files_cleanup}}, \&Fsdb::Support::NamedTmpfile::cleanup_one);
-	print "# intermediate file: $tmpfile\n" if ($self->{_debug});
+	push(@{$self->{_work}[0]}, @{$self->{_inputs}});
+	$self->{_work_closed}[0] = 1;
     };
-    return ($out, $final_output);
-}
-
-
-=head2 segment_merge
-
-    $self->segment_merge();
-
-Merge queued files, if any.
-
-We process the work queue in
-a file-system-cache-friendly order, based on ideas from
-"Information and Control in Gray-box Systems" by
-the Arpaci-Dusseau's at SOSP 2001.
-
-Idea:  each "pass" through the queue, reverse the processing
-order so that the most recent data (that's hopefully
-in the file system cache in memory) is handled first.
-
-This algorithm isn't perfect (sometimes if there's an odd number
-of files in the queue you reach way back in time, but most of 
-the time it's quite good).
-
-=cut
-
-sub segment_merge ($) {
-    my($self) = @_;
-    return if ($#{$self->{_files_to_merge}} == -1);
-
-    my $files_to_merge_ref = $self->{_files_to_merge};
-    my $files_cleanup_ref = $self->{_files_cleanup};
-
-    # keep track of how often to reverse
-    my($files_before_reversing_queue) = $#{$files_to_merge_ref} + 1;
-    # Merge the files in a binary tree.
-    while ($#{$files_to_merge_ref} >= 0) {
-	# Each "pass", reverse the queue to reuse stuff in memory.
-	if ($files_before_reversing_queue <= 0) {
-	    @{$files_to_merge_ref} = reverse @{$files_to_merge_ref};
-	    $files_before_reversing_queue = $#{$files_to_merge_ref} + 1;
-	    print "# reversed queue, $files_before_reversing_queue before next reverse.\n" if ($self->{_debug});
+    #
+    # control parallelism
+    #
+    if (!defined($parallelism_available)) {
+        if (!defined($self->{_max_parallelism})) {
+	    $self->{_max_parallelism} = Fsdb::Support::OS::max_parallelism();
 	};
-	$files_before_reversing_queue -= 2;
-	# Pick off the two next files for merging.
-	die $self->{_prog} . ": segment_merge, odd number of segments.\n" if ($#{$files_to_merge_ref} == 0);   # assert
-	my (@two_fn) = (shift @${files_to_merge_ref}, shift @${files_to_merge_ref});
-	my (@two_cleanup) = (shift @${files_cleanup_ref}, shift @${files_cleanup_ref});
-	if (!ref($two_fn[0]) && !ref($two_fn[1])) {
-	    # Take files in order with the goal of providing a stable sort,
-	    # (if they're files... do nothing if they're objects).
-	    if (($two_fn[0] cmp $two_fn[1]) > 0) {
-		my $tmp_fn = $two_fn[0];
-		$two_fn[0] = $two_fn[1];
-		$two_fn[1] = $tmp_fn;
-
-		my $tmp_cleanup = $two_cleanup[0];
-		$two_cleanup[0] = $two_cleanup[1];
-		$two_cleanup[1] = $tmp_cleanup;
-	    };
-	};
-	my($out_fn, $final_output) = $self->segment_next_output(1);
-	print "# merging $two_fn[0] with $two_fn[1] to $out_fn\n" if ($self->{_debug});
-
-	#
-	# run our merge
-	#
-	@{$self->{_two_inputs}} = @two_fn;
-	my @merge_options = qw(--autorun --nolog);
-	push(@merge_options, '--noclose', '--saveoutput' => \$self->{_out})
-	    if ($final_output);
-	new Fsdb::Filter::dbmerge2(@merge_options,
-				'--input' => $two_fn[0], '--input' => $two_fn[1],
-				'--output' => $out_fn,
-				@{$self->{_sort_argv}});
-
-        foreach (0..1) {
-	    &{$two_cleanup[$_]}($two_fn[$_])
-		if (defined($two_cleanup[$_]));
-	};
+	$parallelism_available = $self->{_max_parallelism};
     };
 }
-
-
 
 =head2 run
 
@@ -426,17 +752,17 @@ sub segment_merge ($) {
 Internal: run over each rows.
 
 =cut
-sub run ($) {
+sub run($) {
     my($self) = @_;
 
-    $self->segment_merge();
+    $self->segments_merge_all();
 };
 
     
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

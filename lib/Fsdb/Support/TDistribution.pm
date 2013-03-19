@@ -35,7 +35,7 @@ Fsdb::Support::TDistribution - t-distributions for stats
 use Exporter 'import';
 @EXPORT = qw();
 @EXPORT_OK = qw(t_distribution);
-($VERSION) = ('$Revision$' =~ / (\d+) /);
+($VERSION) = 1.0;
 
 use Carp qw(croak);
 #'

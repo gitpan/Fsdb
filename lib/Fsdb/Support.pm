@@ -25,7 +25,7 @@ This class contains the bits of Fsdb::Old that needed to be kept.
 =cut
 
 @ISA = ();
-($VERSION) = ('$Revision$' =~ m/(\d+)/);
+($VERSION) = 1.0;
 
 ## Module import.
 use Exporter 'import';

@@ -4,7 +4,7 @@
 # Fsdb.pm
 # $Id: 535f2d6db51a9c848cff016eb9af024dc4522614 $
 #
-# Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License,
@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.33';
+our $VERSION = '2.37';
 
 =head1 SYNOPSIS
 
@@ -231,26 +231,14 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.33, 2012-12-23
-Minor fixes to some test cases.
+=head2 2.37, 2013-02-26
+quick bugfix to support parallel sort and merge from recent releases
 
 =over 4
 
-=item IMPROVEMENT
-
-L<dbfilediff> and L<dbrowuniq>
-now supports the C<-N> option to give the new column a 
-different name.  (And a test cases where this duplication mattered
-have been fixed.)
-
-=item IMPROVEMENT
-
-L<dbrvstatdiff> now show the t-test breakpoint with a reasonable number of
-floating point digits.
-
 =item BUG FIX
-
-Fixed a numerical stability problem in the F<dbroweval_last> test case.
+Since 2.35, L<dbmerge> delayed removal of input files given by 
+C<--xargs>.  This problem is now fixed.
 
 =back
 
@@ -2555,6 +2543,103 @@ computers and operating systems and complilers than I<exactly> what I use.
 
 =back
 
+=head2 2.33, 2012-12-23
+Minor fixes to some test cases.
+
+=over 4
+
+=item IMPROVEMENT
+
+L<dbfilediff> and L<dbrowuniq>
+now supports the C<-N> option to give the new column a 
+different name.  (And a test cases where this duplication mattered
+have been fixed.)
+
+=item IMPROVEMENT
+
+L<dbrvstatdiff> now show the t-test breakpoint with a reasonable number of
+floating point digits.
+
+=item BUG FIX
+
+Fixed a numerical stability problem in the F<dbroweval_last> test case.
+
+=back
+
+=head1 WHAT'S NEW
+
+=head2 2.34, 2013-02-10
+Parallelism in L<dbmerge>.
+
+=over 4
+
+=item IMPROVEMENT
+
+Documention for L<dbjoin> now includes resource requirements.
+
+=item IMPROVEMENT
+
+Default memory usage for L<dbsort> is now about 256MB.
+(The world keeps moving forward.)
+
+=item IMPROVEMENT
+
+L<dbmerge> now does merging in parallel.
+As a side-effect, L<dbsort> should be faster when
+input overflows memory.  The level of parallelism
+can be limited with the C<--parallelism> option.
+(There is more work to do here, but we're off to a start.)
+
+=back
+
+=head2 2.35, 2013-02-23
+Improvements to dbmerge parallelism
+
+=over 4
+
+=item BUG FIX
+
+Fsdb temporary files are now created more securely (with File::Temp).
+
+=item IMPROVEMENT
+
+Programs that sort or merge on fields (L<dbmerge2>, L<dbmerge>, L<dbsort>, 
+L<dbjoin>) now report an error if no fields on which to join or merge
+are given.
+
+=item IMPROVEMENT
+
+Parallelism in L<dbmerge> is should now be more consistent,
+with less starting and stopping.
+
+=item IMPROVEMENT
+In L<dbmerge>, the C<--xargs> option lets one give input filenames on
+standard input, rather than the command line.
+This feature paves the way for faster dbsort for large inputs
+(by pipelining sorting and merging), expected in the next release.
+
+=back
+
+
+=head2 2.36, 2013-02-25
+dbsort pipelines with dbmerge
+
+=over 4
+
+=item IMPROVEMENT
+For large inputs,
+L<dbsort> now pipelines sorting and merging,
+allowing earlier processing.
+
+=item BUG FIX
+Since 2.35, L<dbmerge> delayed cleanup of intermediate files,
+thereby requiring extra disk space.
+
+=back
+
+
+
+
 =head1 AUTHOR
 
 John Heidemann, C<johnh@isi.edu>
@@ -2565,7 +2650,7 @@ bug reports and fixes.
 
 =head1 COPYRIGHT
 
-Fsdb is Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>.
+Fsdb is Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as

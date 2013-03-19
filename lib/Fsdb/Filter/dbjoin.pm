@@ -34,12 +34,21 @@ By default, data will be sorted lexically,
 but the usual sorting options can be mixed with the column
 specification.
 
-If data is already sorted, dbjoin will run more efficiently
-with the C<-S> option.
-
 Because two tables are required,
 input is typically in files.
 Standard input is accessible by the file "-".
+
+If data is already sorted, dbjoin will run more efficiently
+with the C<-S> option.
+
+The resource requirements L<dbjoin> vary.
+If input data is sorted and C<-S> is given,
+then memory consumption is bounded by the 
+the sum of the largest number of records in either dataset
+with the same value in the join column,
+and there is no disk consumption.
+If data is not sorted, then L<dbjoin> requires
+disk storage the size of both input files.
 
 =head1 OPTIONS
 
@@ -365,9 +374,14 @@ sub setup ($) {
     # comparision code
     #
     $self->{_compare_code} = $self->create_compare_code(@{$self->{_ins}}, 'fref[0]', 'fref[1]');;
+    croak $self->{_prog} . ": no join field specified.\n"
+	if (!defined($self->{_compare_code}));
+
     print "COMPARE CODE:\n\t" . $self->{_compare_code} . "\n" if ($self->{_debug});
     foreach (0..1) {
        $self->{_compare_code_ins}[$_] = $self->create_compare_code($self->{_ins}[$_], $self->{_ins}[$_], "prev_fref[$_]", "fref[$_]");
+       croak $self->{_prog} . ": no join field specified.\n"
+	    if (!defined($self->{_compare_code_ins}[$_]));
     };
 }
 

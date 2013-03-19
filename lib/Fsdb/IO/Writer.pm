@@ -30,7 +30,7 @@ Fsdb::IO::Writer - handle formatting reading from a fsdb file (handle) or queue
 =cut
 
 @ISA = qw(Fsdb::IO);
-($VERSION) = ('$Revision$' =~ m/(\d+)/);
+($VERSION) = 1.0;
 
 use strict;
 use IO::File;

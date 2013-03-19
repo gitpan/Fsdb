@@ -82,6 +82,7 @@ lib/Fsdb/IO/Writer.pm
 lib/Fsdb/Support.pm
 lib/Fsdb/Support/DelayPassComments.pm
 lib/Fsdb/Support/NamedTmpfile.pm
+lib/Fsdb/Support/OS.pm
 lib/Fsdb/Support/TDistribution.pm
 Makefile.PL
 MANIFEST
@@ -523,6 +524,16 @@ TEST/dbmerge2_ex_R.cmd
 TEST/dbmerge2_ex_R.out
 TEST/dbmerge2_two_input.cmd
 TEST/dbmerge2_two_input.out
+TEST/dbmerge_17_input.cmd
+TEST/dbmerge_17_input.out
+TEST/dbmerge_17_xargs.cmd
+TEST/dbmerge_17_xargs.in
+TEST/dbmerge_17_xargs.out
+TEST/dbmerge_1k.in
+TEST/dbmerge_20_delayed.cmd
+TEST/dbmerge_20_delayed.out
+TEST/dbmerge_20_input.cmd
+TEST/dbmerge_20_input.out
 TEST/dbmerge_ex.cmd
 TEST/dbmerge_ex.in
 TEST/dbmerge_ex.out
@@ -701,6 +712,7 @@ TEST/dbsort_reversed.out
 TEST/dbsubprocess_ex.cmd
 TEST/dbsubprocess_ex.out
 TEST/dbsubprocess_ex.pl
+TEST/generate_ints.pl
 TEST/html_table_to_db_colspan.cmd
 TEST/html_table_to_db_colspan.in
 TEST/html_table_to_db_colspan.out

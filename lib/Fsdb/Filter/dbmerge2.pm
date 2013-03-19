@@ -267,6 +267,8 @@ sub setup ($) {
 	if ($self->{_ins}[0]->compare($self->{_ins}[1]) ne 'identical');
 
     $self->{_compare_code} = $self->create_compare_code(@{$self->{_ins}});;
+    croak $self->{_prog} . ": no merge field specified.\n"
+	if (!defined($self->{_compare_code}));
     print "COMPARE CODE:\n\t" . $self->{_compare_code} . "\n" if ($self->{_debug});
 }
 

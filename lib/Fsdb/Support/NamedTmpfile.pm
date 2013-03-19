@@ -37,7 +37,7 @@ Note that there is a potential race condition between when we pick the file
 and when the caller opens it, when an external program could interceed.
 The caller therefor should open files with exclusive access.
 
-This routine is Perl thread-save.
+This routine is Perl thread-safe.
 
 While this routine is basically "new", we don't call it such
 because we do not return an object.
@@ -45,31 +45,29 @@ because we do not return an object.
 =cut
 
 @ISA = ();
-($VERSION) = ('$Revision$' =~ m/(\d+)/);
+($VERSION) = 1.0;
 
 use threads;
 use threads::shared;
 
-my $named_tmpfile_counter : shared = 0;
+use File::Temp qw(tempfile);
+
 my @named_tmpfiles : shared;
+my $tmpdir = undef;
+my $template = undef;
 
 sub alloc {
     my($class, $tmpdir) = @_;
 
-    $tmpdir = (defined($ENV{'TMPDIR'}) ? $ENV{'TMPDIR'} : "/tmp") if (!defined($tmpdir));
-
-    my $i = $named_tmpfile_counter++;
-    # Generate files with leading zeros so they can be lexically sorted
-    # and dbsort can be stable (hopefully).
-    my $fn = sprintf("%s/fsdb.%d.%05d~", $tmpdir, $$, $i);
-
-    if ($i == 0) {
-	 # install signals on first time
-	 foreach (qw(HUP INT TERM)) {
-	     $SIG{$_} = \&cleanup_signal;
-	 };
+    if (!defined($tmpdir)) {
+	$tmpdir = (defined($ENV{'TMPDIR'}) ? $ENV{'TMPDIR'} : "/tmp") if (!defined($tmpdir));
+    };
+    if (!defined($template)) {
+	$template = sprintf("fsdb.%d.XXXXXX", $$);
     };
 
+    my($fh, $fn) = tempfile($template, SUFFIX => "~", DIR => $tmpdir);
+    close $fh;
     push @named_tmpfiles, $fn;
 
     return $fn;
@@ -86,9 +84,10 @@ cleanup one tmpfile, forgetting about it if necessary.
 
 sub cleanup_one {
     my($fn) = @_;
+    return if (!defined($fn));
     # xxx: doesn't check for inclusion first
     unlink($fn) if (-f $fn);
-    @named_tmpfiles = grep { $_ ne $fn } @named_tmpfiles;
+    @named_tmpfiles = grep { defined($_) && $_ ne $fn } @named_tmpfiles;
 }
 
 
@@ -112,17 +111,5 @@ sub END {
     cleanup_all;
 }
 
-
-=head2 cleanup_signal 
-
-cleanup tmpfiles after a signal. 
-Not a method.
-
-=cut
-
-sub cleanup_signal {
-    my($sig) = @_;
-    # print "terminated with signal $sig, cleaning up ". join(',', @tmpfiles) . "\n";
-}
 
 1;

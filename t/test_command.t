@@ -2,7 +2,7 @@
 
 #
 # test_command.t
-# Copyright (C) 1997-2007 by John Heidemann
+# Copyright (C) 1997-2013 by John Heidemann
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -234,8 +234,10 @@ sub parse_cmd_file {
 
 sub fix_prog_path {
     my ($prog) = @_;
-    return $prog if ($prog =~ /^(\/|cmp|diff|perl|sh)\b/);
-    return $scripts_dir . "/" . $prog;
+    return $prog if ($prog =~ /^(\|\s*)?(\/|cmp|diff|perl|sh)\b/);
+    my($head, $tail) = ($prog =~ /^(\|\s*)?([^| ].*)$/);
+    $head = '' if (!defined($head));
+    return $head . $scripts_dir . "/" . $tail;
 }
 
 sub diff_output {
@@ -273,6 +275,7 @@ sub diff_output {
 
 sub run_test {
     my($cmd_file) = @_;
+    die "confusion: run on non .cmd file: $cmd_file\n" if ($cmd_file !~ /\.cmd$/);
 
     my $cmd_base = $cmd_file;
     $cmd_base =~ s/\.cmd$//;
@@ -291,7 +294,7 @@ sub run_test {
     };
     my $out = (defined($optref->{out}) ? $optref->{in} : "$cmd_base.out");
     my $run_cmd = $prog_path . " " . (defined($optref->{args}) ? $optref->{args} : '') ." $in";
-    $run_cmd .= $optref->{cmd_tail} if (defined($optref->{cmd_tail}));
+    $run_cmd .= fix_prog_path($optref->{cmd_tail}) if (defined($optref->{cmd_tail}));
     print "$env_cmd $run_cmd\n" if ($verbose);
 
     if (defined($optref->{enabled}) && !$optref->{enabled}) {

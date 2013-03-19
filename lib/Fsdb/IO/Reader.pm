@@ -30,7 +30,7 @@ Fsdb::IO::Reader - handle formatting reading from a fsdb file (handle) or queue
 =cut
 
 @ISA = qw(Fsdb::IO);
-($VERSION) = ('$Revision$' =~ m/(\d+)/);
+($VERSION) = 1.0;
 
 use strict;
 use IO::File;
@@ -59,7 +59,7 @@ Sample code reading an input stream:
 =head2 new
 
     $fsdb = new Fsdb::IO::Reader(-file => $filename);
-    $fsdb = new Fsdb::IO::Reader(-header => "#h -Ft foo bar", -fh => $file_handle);
+    $fsdb = new Fsdb::IO::Reader(-header => "#fsdb -F t foo bar", -fh => $file_handle);
 
 Creates a new reader object from FILENAME.
 (FILENAME can also be a IO::Handle object.)

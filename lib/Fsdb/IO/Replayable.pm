@@ -52,7 +52,7 @@ Specifies wher tmpfiles go.
 =cut
 
 @ISA = ();
-($VERSION) = ('$Revision$' =~ m/(\d+)/);
+($VERSION) = 1.0;
 
 use Carp;
 use Fsdb::Support::NamedTmpfile;
