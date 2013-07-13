@@ -30,7 +30,7 @@ Fsdb::IO::Reader - handle formatting reading from a fsdb file (handle) or queue
 =cut
 
 @ISA = qw(Fsdb::IO);
-($VERSION) = 1.0;
+($VERSION) = 1.1;
 
 use strict;
 use IO::File;
@@ -153,11 +153,13 @@ sub config_one {
 	shift @$aaref;
 	my($file) = shift @$aaref;
 	my $fh;
+	my $mode = $self->default_binmode();
 	if ($file eq '-') {
 	     $fh = new IO::Handle;
-	     $fh->fdopen(fileno(STDIN),"r");
+	     binmode(STDIN, $mode);
+	     $fh->fdopen(fileno(STDIN),"<");
 	} else {
-	     $fh = new IO::File $file, "r";
+	     $fh = new IO::File $file, "<$mode";
 	};
 	if ($fh) {
 	    $self->{_fh} = $fh;

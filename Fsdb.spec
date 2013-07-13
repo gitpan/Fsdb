@@ -1,6 +1,6 @@
 Summary: A set of commands for manipulating flat-text databases from the shell
 Name: perl-Fsdb
-Version: 2.36
+Version: 2.40
 Release: 1
 License: GPLv2
 Group: Development/Libraries
@@ -8,8 +8,16 @@ URL: http://www.isi.edu/~johnh/SOFTWARE/FSDB/
 Source0: http://www.isi.edu/~johnh/SOFTWARE/FSDB/Fsdb-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildArch: noarch
-BuildRequires:  perl-Test-Simple
 Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
+BuildRequires:  perl(ExtUtils::MakeMaker)
+BuildRequires:  perl(HTML::Parser)
+BuildRequires:  perl(Test::More)
+BuildRequires:  perl(Text::CSV_XS)
+BuildRequires:  perl(threads) >= 1
+Requires:       perl(HTML::Parser)
+Requires:       perl(Test::More)
+Requires:       perl(Text::CSV_XS)
+Requires:       perl(threads) >= 1
 # next line for rpmlint perl-Fsdb.noarch: W: obsolete-not-provided perl-Jdb
 Obsoletes:   perl-Jdb < 2.12
 Provides:  perl-Jdb = 2.12
@@ -52,7 +60,7 @@ make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type f -name '*.bs' -empty -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type d -depth -exec rmdir {} 2>/dev/null ';'
-chmod -R u+w $RPM_BUILD_ROOT/*
+%{_fixperms} $RPM_BUILD_ROOT/*
 
 %check
 make test
@@ -63,7 +71,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc README
+# %doc COPYING Fsdb.spec META.json MYMETA.json MYMETA.yml programize_module README README.html update_modules
+%doc README COPYING
 %{_bindir}/*
 %{perl_vendorlib}/Fsdb.pm
 %{perl_vendorlib}/Fsdb/

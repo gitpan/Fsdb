@@ -275,6 +275,7 @@ sub set_defaults ($) {
     $self->{_pre_sorted} = 0;
     $self->{_include_non_numeric} = undef;
     $self->{_fscode} = undef;
+    $self->set_default_tmpdir;
 }
 
 =head2 parse_options

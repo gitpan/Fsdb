@@ -64,6 +64,13 @@ Select a the Pearson product-moment correlation coefficient
 Specify a L<printf(3)>-style format for output statistics.
 Defaults to C<%.5g>.
 
+=item B<-T TmpDir>
+
+where to put tmp files.
+Also uses environment variable TMPDIR, if -T is 
+not specified.
+Default is /tmp.
+
 =back
 
 =for comment
@@ -191,6 +198,7 @@ sub set_defaults ($) {
     $self->{_include_non_numeric} = undef;
     $self->{_sample} = undef;
     $self->{_fscode} = undef;
+    $self->set_default_tmpdir;
 }
 
 =head2 parse_options
@@ -217,6 +225,7 @@ sub parse_options ($@) {
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	's|sample!' =>  \$self->{_sample},
+	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	) or pod2usage(2);
     push (@{$self->{_columns}}, @argv);

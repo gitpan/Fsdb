@@ -208,7 +208,7 @@ sub set_defaults ($) {
     $self->{_max_memory} = 1024*1024*256;
     $self->{_mem_debug} = undef;
     $self->{_sort_argv} = [];
-    $self->{_tmpdir} = defined($ENV{'TMPDIR'}) ? $ENV{'TMPDIR'} : "/tmp";
+    $self->set_default_tmpdir;
     $self->{_max_parallelism} = undef;
 }
 
@@ -402,6 +402,8 @@ sub segment_merge_start($$) {
 	my(@merge_args) = qw(--nolog --noclose --removeinputs --xargs);
 	push(@merge_args, '--parallelism', $self->{_max_parallelism})
 	    if (defined($self->{_max_parallelism}));
+	push(@merge_args, '-T', $self->{_tmpdir})
+	    if (defined($self->{_tmpdir}));
 	push(@merge_args, @{$self->{_sort_argv}});
 
 	my($writer, $merge_thread) = dbpipeline_sink(\@writer_args,

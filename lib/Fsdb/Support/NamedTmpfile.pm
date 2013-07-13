@@ -50,6 +50,7 @@ because we do not return an object.
 use threads;
 use threads::shared;
 
+use Carp;
 use File::Temp qw(tempfile);
 
 my @named_tmpfiles : shared;
@@ -57,7 +58,7 @@ my $tmpdir = undef;
 my $template = undef;
 
 sub alloc {
-    my($class, $tmpdir) = @_;
+    my($tmpdir) = @_;
 
     if (!defined($tmpdir)) {
 	$tmpdir = (defined($ENV{'TMPDIR'}) ? $ENV{'TMPDIR'} : "/tmp") if (!defined($tmpdir));
@@ -66,6 +67,8 @@ sub alloc {
 	$template = sprintf("fsdb.%d.XXXXXX", $$);
     };
 
+    croak "tmpdir $tmpdir is not a directory\n" if (! -d $tmpdir);
+    croak "tmpdir $tmpdir is not writable\n" if (! -w $tmpdir);
     my($fh, $fn) = tempfile($template, SUFFIX => "~", DIR => $tmpdir);
     close $fh;
     push @named_tmpfiles, $fn;

@@ -522,7 +522,6 @@ sub _multikey_aware_reducer {
     my($self) = @_;
 
     my $from_preprocessor = $self->{_reducer_queue};
-    my $map_aware_reduce = $self->{_map_aware_reduce};
     my $write_fastpath_sub = undef;
 
     my $sync_marker;
@@ -557,6 +556,7 @@ sub _multikey_aware_reducer {
 	    # and use noclose so we can log our own final bit.
 	    $users_reducer->parse_options('--input' => $from_preprocessor,
 		    '--output' => $self->{_output},
+		    '--saveoutput' => \$self->{_out},
 		    '--noclose');
 
 	    # run!  (in the current thread)
@@ -801,8 +801,12 @@ sub _open_new_key {
     $self->{_current_key} = $new_key;
 
     # If already running and can handle multiple tags, just keep going.
-    return if ($self->{_reducer_is_multikey_aware} &&
-	    defined($self->{_reducer_thread}));
+    if ($self->{_reducer_is_multikey_aware}) {
+	return if (defined($self->{_current_reducer_fastpath_sub}));
+	die "reducer_thread not started, and not our job to start it.\n"
+	    if (!defined($self->{_reducer_thread}));
+	# fall through to setup fastpath
+    };
 
     #
     # make the reducer
@@ -872,7 +876,7 @@ sub run ($) {
     my($self) = @_;
 
     my $read_fastpath_sub = $self->{_in}->fastpath_sub();
-    my $reducer_fastpath_sub;
+    my $reducer_fastpath_sub = undef;
 
     # read data
     my($last_key) = undef;
@@ -910,6 +914,7 @@ sub run ($) {
             $self->_open_new_key($key);
             $last_key = $key;
 	    $reducer_fastpath_sub = $self->{_current_reducer_fastpath_sub};
+	    die "no reducer\n" if (!defined($reducer_fastpath_sub));
         };
         # pass the data to be reduced
 	&{$reducer_fastpath_sub}($fref);

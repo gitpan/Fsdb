@@ -189,6 +189,7 @@ sub new {
     my $self = bless {
 	# i/o source: one of:
 	_fh => undef,	# filehandle to file
+	_encoding => undef, # encoding (defaults to :utf8)
 	_queue => undef,# ref to queue
 
 	_headerrow => undef,
@@ -288,6 +289,10 @@ sub config_one {
 	    $self->_internal_col_create($_);
 	};
 	$self->update_headerrow;
+	$self->{_encoding} = $clone->{_encoding};
+    } elsif ($aaref->[0] eq '-encoding') {
+	shift @$aaref;
+	$self->{_encoding} = shift @$aaref;
     } elsif ($aaref->[0] eq '-debug') {
 	shift @$aaref;
 	$self->{_debug} = shift @$aaref;
@@ -310,6 +315,34 @@ sub config ($@) {
     while ($#args >= 0) {
 	$self->config_one(\@args);
     };
+}
+
+=head2 default_binmode
+
+    $fsdb->binmode();
+
+Set the file to the correct binmode,
+either given by C<-encoding> at setup,
+or defaulting from C<LC_CTYPE> or C<LANG>.
+
+=cut
+
+sub default_binmode($) {
+    my($self) = shift @_;
+    if (!defined($self->{_encoding})) {
+#	foreach ($ENV{LC_CTYPE}, $ENV{LANG}, 'en.:utf8') {
+	# as of perl v5.16.3, UTF-8 segfaults
+	foreach ('en.:utf8') {
+	    next if (!defined($_));
+	    my($locale, $charset) = ($_ =~ /^([^\.]+)\.([^\.]+)/);
+	    next if (!defined($charset));
+	    $self->{_encoding} = $charset;
+	    last;
+	};
+    };
+    my $mode = $self->{_encoding};
+    $mode = ":encoding($mode)" if ($mode !~ /^:/);
+    return $mode;
 }
 
 =head2 compare

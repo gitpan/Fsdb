@@ -143,10 +143,17 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.37, 2013-02-26 quick bugfix to support parallel sort and merge from[0m
-       [1mrecent releases[0m
-       BUG FIX Since 2.35, dbmerge delayed removal of input files given by
-       "--xargs".  This problem is now fixed.
+   [1m2.40, 2013-07-13 small bug fixes[0m
+       BUG FIX
+           dbsort now has more respect for a user-given temporary directory;
+           it no longer is ignored for merging.
+
+       IMPROVEMENT
+           dbrowuniq now has options to output the first, last, and both first
+           and last rows of a run ("-F", "-L", and "-B").
+
+       BUG FIX
+           dbrowuniq now correctly handles "-N".  Sigh, it didn't work before.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -458,12 +465,10 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            HTML tables to fsdb (assuming they're reasonably formatted).
 
        kitrace_to_db
-           http://ficus-www.cs.ucla.edu/ficus-members/geoff/kitrace.html
            <http://ficus-www.cs.ucla.edu/ficus-members/geoff/kitrace.html>
 
        ns_to_db
-           http://mash-www.cs.berkeley.edu/ns/ <http://mash-
-           www.cs.berkeley.edu/ns/>
+           <http://mash-www.cs.berkeley.edu/ns/>
 
        tabdelim_to_db
            spreadsheet tab-delimited files to db
@@ -491,6 +496,10 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        [1m-N [22mon [1m--new-name[0m
            When a command creates a new column like dbrowaccumulate's "accum",
            this option lets one override the default name of that new column.
+
+       [1m-T TmpDir[0m
+           where to put tmp files.  Also uses environment variable TMPDIR, if
+           -T is not specified.  Default is /tmp.
 
            Show basic usage.
 
@@ -850,7 +859,8 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        [4mhaoboy@packetdesign.com[24m, Pavlin Radoslavov [4mpavlin@catarina.usc.edu[24m,
        Graham Phillips, Yuri Pradkin, Alefiya Hussain, Ya Xu, Fabio Silva
        [4mfabio@isi.edu[24m, Jerry Zhao [4mzhaoy@isi.edu[24m, Ning Xu [4mnxu@aludra.usc.edu[24m,
-       Martin Lukac [4mmlukac@lecs.cs.ucla.edu[24m, Xue Cai, Michael McQuaid.
+       Martin Lukac [4mmlukac@lecs.cs.ucla.edu[24m, Xue Cai, Michael McQuaid,
+       Christopher Meng.
 
        Fsdb includes datasets contributed from NIST (DATA/nist_zarr13.fsdb),
        from
@@ -1542,7 +1552,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        ADDITION
            [4mdbrowenumerate[24m now takes [1m-N NewColumn [22mto give the new column a name
-           other than "count".  Feature reuested by Mike Rouch in January
+           other than "count".  Feature requested by Mike Rouch in January
            2005.
 
        ADDITION
@@ -1774,6 +1784,49 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        BUG FIX Since 2.35, dbmerge delayed cleanup of intermediate files,
        thereby requiring extra disk space.
 
+   [1m2.37, 2013-02-26 quick bugfix to support parallel sort and merge from[0m
+       [1mrecent releases[0m
+       BUG FIX Since 2.35, dbmerge delayed removal of input files given by
+       "--xargs".  This problem is now fixed.
+
+   [1m2.38, 2013-04-29 minor bug fixes[0m
+       CLARIFICATION
+           Configure now rejects Windows since tests seem to hang on some
+           versions of Windows.  (I would love help from a Windows developer
+           to get this problem fixed, but I cannot do it.)  See
+           [4mhttps://rt.cpan.org/Ticket/Display.html?id=84201[24m.
+
+       IMPROVEMENT
+           All programs that use temporary files (dbcolpercentile,
+           dbcolscorrelate, dbcolstats, dbcolstatscores) now take the "-T"
+           option and set the temporary directory consistently.
+
+           In addition, error messages are better when the temporary directory
+           has problems.  Problem reported by Liang Zhu.
+
+       BUG FIX
+           dbmapreduce was failing with external, map-reduce aware reducers
+           (when invoked with -M and an external program).  (Sigh, did this
+           case ever work?)  This case should now work.  Thanks to Yuri
+           Pradkin for reporting this bug (in 2011).
+
+       BUG FIX
+           Fixed perl-5.10 problem with dbmerge.  Thanks to Yuri Pradkin for
+           reporting this bug (in 2013).
+
+   [1m2.39, date 2013-05-31 quick release for the dbrowuniq extension[0m
+       BUG FIX
+           Actually in 2.38, the Fedora [4m.spec[24m got cleaner dependencies.
+           Suggestion from Christopher Meng via
+           <https://bugzilla.redhat.com/show_bug.cgi?id=877096>.
+
+       ENHANCEMENT
+           Fsdb files are now explicitly set into UTF-8 encoding, unless one
+           specifies "-encoding" to "Fsdb::IO".
+
+       ENHANCEMENT
+           dbrowuniq now supports "-I" for incremental counting.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -1805,4 +1858,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.16.2                      2013-02-26                           Fsdb(3)
+perl v5.16.3                      2013-07-13                           Fsdb(3)

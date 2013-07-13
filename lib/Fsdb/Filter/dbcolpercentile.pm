@@ -42,6 +42,10 @@ Show percentile (default).
 
 Compute ranks instead of percentiles.
 
+=item B<--fraction>
+
+Show fraction (percentage, except between 0 and 1, not cumulatative fraction).
+
 =item B<-a> or B<--include-non-numeric>
 
 Compute stats over all records (treat non-numeric records
@@ -57,6 +61,13 @@ When repeated, we skip the check.
 
 Specify a L<printf(3)>-style format for output statistics.
 Defaults to C<%.5g>.
+
+=item B<-T TmpDir>
+
+where to put tmp files.
+Also uses environment variable TMPDIR, if -T is 
+not specified.
+Default is /tmp.
 
 =back
 
@@ -225,7 +236,7 @@ Internal: set up defaults.
 sub set_defaults ($) {
     my($self) = @_;
     $self->SUPER::set_defaults();
-    $self->{_do_percentile} = 1;
+    $self->{_mode} = 'percentile';
     $self->{_sort_order} = undef;
     $self->{_sort_as_numeric} = 1;
     $self->{_include_non_numeric} = undef;
@@ -233,6 +244,7 @@ sub set_defaults ($) {
     $self->{_target_column} = undef;
     $self->{_save_in_filename} = undef;
     $self->{_format} = "%.5g";
+    $self->set_default_tmpdir;
 }
 
 =head2 parse_options
@@ -258,9 +270,11 @@ sub parse_options ($@) {
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
-	'p|percentile' => sub { $self->{_do_percentile} = 1; },
-	'P|nopercentile|rank' => sub { $self->{_do_percentile} = undef; },
+	'fraction' => sub { $self->{_mode} = 'fraction'; },
+	'p|percentile' => sub { $self->{_mode} = 'percentile'; },
+	'P|nopercentile|rank' => sub { $self->{_mode} = 'rank'; },
 	'S|pre-sorted+' => \$self->{_pre_sorted},
+	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
 	# sort key options:
 	'n|numeric' => sub { $self->{_sort_as_numeric} = 1; },
 	'N|lexical' => sub { $self->{_sort_as_numeric} = undef; },
@@ -313,7 +327,7 @@ sub setup ($) {
     #
     # output
     #
-    $self->{_destination_column} = ($self->{_do_percentile} ? 'percentile' : 'rank');
+    $self->{_destination_column} = $self->{_mode};
     croak $self->{_prog} . ": internal error: bad rank mode\n"
 	if (!defined($self->{_destination_column}));
 
@@ -364,7 +378,7 @@ sub run ($) {
 
     my $percentile_scaling = 1;
     my $n;
-    if ($self->{_do_percentile}) {
+    if ($self->{_mode} eq 'percentile') {
 	$n = $self->_count_rows;
         $percentile_scaling = 1.0 / $n;
     };
@@ -372,8 +386,8 @@ sub run ($) {
     my $read_fastpath_sub = $self->{_in}->fastpath_sub();
     my $write_fastpath_sub = $self->{_out}->fastpath_sub();
     my $fref;
-    my($do_percentile) = $self->{_do_percentile};
-    my $i = ($do_percentile ? 0 : 1);
+    my($mode) = $self->{_mode};
+    my $i = ($mode eq 'rank' ? 1 : 0);
     my $result;  # this row
     my $last = undef;
     my $in_run = undef;
@@ -388,7 +402,7 @@ sub run ($) {
 
         $x = $fref->[$xf];
 	$result = $i++;
-	if ($do_percentile) {
+	if ($mode eq 'percentile') {
 	    $result = ($n - $result) * $percentile_scaling;
 	    $result = $self->numeric_formatting($result);
 	};

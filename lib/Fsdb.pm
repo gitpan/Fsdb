@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.37';
+our $VERSION = '2.40';
 
 =head1 SYNOPSIS
 
@@ -231,14 +231,25 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.37, 2013-02-26
-quick bugfix to support parallel sort and merge from recent releases
+=head2 2.40, 2013-07-13
+small bug fixes
 
 =over 4
 
 =item BUG FIX
-Since 2.35, L<dbmerge> delayed removal of input files given by 
-C<--xargs>.  This problem is now fixed.
+
+L<dbsort> now has more respect for a user-given temporary directory;
+it no longer is ignored for merging.
+
+=item IMPROVEMENT
+
+L<dbrowuniq> now has options to output the first, last, and both first
+and last rows of a run (C<-F>, C<-L>, and C<-B>).
+
+=item BUG FIX
+
+L<dbrowuniq> now correctly handles C<-N>.  Sigh, it didn't work before.
+
 
 =back
 
@@ -704,6 +715,13 @@ Show basic usage.
 When a command creates a new column like L<dbrowaccumulate>'s C<accum>,
 this option lets one override the default name of that new column.
 
+=item B<-T TmpDir>
+
+where to put tmp files.
+Also uses environment variable TMPDIR, if -T is 
+not specified.
+Default is /tmp.
+
 Show basic usage.
 
 =item B<-c FRACTION> or B<--confidence FRACTION>
@@ -1116,7 +1134,8 @@ Jerry Zhao F<zhaoy@isi.edu>,
 Ning Xu F<nxu@aludra.usc.edu>,
 Martin Lukac F<mlukac@lecs.cs.ucla.edu>,
 Xue Cai,
-Michael McQuaid.
+Michael McQuaid,
+Christopher Meng.
 
 Fsdb includes datasets contributed from NIST (DATA/nist_zarr13.fsdb),
 from
@@ -2268,7 +2287,7 @@ F<dbcolneaten> now defaults to I<not> padding the last column.
 =item ADDITION
 
 F<dbrowenumerate> now takes B<-N NewColumn> to give the new
-column a name other than "count".  Feature reuested by Mike Rouch
+column a name other than "count".  Feature requested by Mike Rouch
 in January 2005.
 
 =item ADDITION
@@ -2637,6 +2656,75 @@ thereby requiring extra disk space.
 
 =back
 
+=head2 2.37, 2013-02-26
+quick bugfix to support parallel sort and merge from recent releases
+
+=over 4
+
+=item BUG FIX
+Since 2.35, L<dbmerge> delayed removal of input files given by 
+C<--xargs>.  This problem is now fixed.
+
+=back
+
+
+=head2 2.38, 2013-04-29
+minor bug fixes
+
+=over 4
+
+=item CLARIFICATION
+
+Configure now rejects Windows since tests seem to hang
+on some versions of Windows.
+(I would love help from a Windows developer to get this problem fixed,
+but I cannot do it.)  See F<https://rt.cpan.org/Ticket/Display.html?id=84201>.
+
+=item IMPROVEMENT
+
+All programs that use temporary files 
+(L<dbcolpercentile>, L<dbcolscorrelate>, L<dbcolstats>, L<dbcolstatscores>)
+now take the C<-T> option
+and set the temporary directory consistently.
+
+In addition, error messages are better when the temporary directory 
+has problems.  Problem reported by Liang Zhu.
+
+=item BUG FIX
+
+L<dbmapreduce> was failing with external, map-reduce aware reducers
+(when invoked with -M and an external program).
+(Sigh, did this case ever work?)
+This case should now work.
+Thanks to Yuri Pradkin for reporting this bug (in 2011).
+
+=item BUG FIX
+
+Fixed perl-5.10 problem with L<dbmerge>.
+Thanks to Yuri Pradkin for reporting this bug (in 2013).
+
+=back
+
+=head2 2.39, date 2013-05-31
+quick release for the dbrowuniq extension
+
+=over 4
+
+=item BUG FIX
+
+Actually in 2.38, the Fedora F<.spec> got cleaner dependencies.
+Suggestion from Christopher Meng via L<https://bugzilla.redhat.com/show_bug.cgi?id=877096>.
+
+=item ENHANCEMENT
+
+Fsdb files are now explicitly set into UTF-8 encoding,
+unless one specifies C<-encoding> to C<Fsdb::IO>.
+
+=item ENHANCEMENT
+
+L<dbrowuniq> now supports C<-I> for incremental counting.
+
+=back
 
 
 

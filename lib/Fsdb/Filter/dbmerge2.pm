@@ -45,6 +45,10 @@ General option:
 
 =over 4
 
+=item B<--saveoutput $OUT_REF>
+
+Save output writer (for integration with other fsdb filters).
+
 =item <-T TmpDir>
 
 where to put tmp files.

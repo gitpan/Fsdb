@@ -8,6 +8,7 @@
 lib/boilerplate.pm
 ^OLD
 ^bin/OLD
+^lib/Fsdb/Filter/OLD
 ^T/
 ^TEST/ABANDONED
 \.trial$

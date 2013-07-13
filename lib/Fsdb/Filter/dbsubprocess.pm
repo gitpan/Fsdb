@@ -88,16 +88,33 @@ end_standard_fsdb_options
 
 =head2 Input:
 
-    xxx
+	#fsdb name id test1
+	a	1	80
+	b	2	70
+	c	3	65
+	d	4	90
+	e	5	70
+	f	6	90
 
 =head2 Command:
 
-    xxx
+the following perl code:
+
+    use Fsdb::Filter::dbsubprocess;
+    my $f = new Fsdb::Filter::dbsubprocess(qw(cat));
+    $f->setup_run_finish;
+    exit 0;
 
 =head2 Output:
 
-    xxx
-
+	#fsdb name id test1
+	a	1	80
+	b	2	70
+	c	3	65
+	d	4	90
+	e	5	70
+	f	6	90
+	#   | dbsubprocess cat
 
 =head1 SEE ALSO
 
@@ -177,6 +194,7 @@ sub parse_options ($@) {
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
+	'saveoutput=s' => \$self->{_save_output},
         'w|warnings!' => \$self->{_warnings},
 	) or pod2usage(2);
     push (@{$self->{_external_command_argv}}, @argv);
@@ -197,6 +215,36 @@ sub setup ($) {
         if ($#{$self->{_external_command_argv}} < 0);
 
     $self->finish_io_option('input', -comment_handler => $self->create_pass_comments_sub('_to_subproc_out'));
+}
+
+=head2 _subproc_preprocessor
+
+    $filter->_subproc_preprocessor
+
+(internal)
+Send output to the subprocess.
+
+=cut
+
+sub _subproc_preprocessor ($) {
+    my($self) = @_;
+
+    $self->{_from_subproc_fh}->close;
+    delete $self->{_from_subproc_fh};
+
+    #
+    # Here we're going to send the subproc stuff (as text).
+    #
+    my $read_fastpath_sub = $self->{_in}->fastpath_sub();
+    $self->{_to_subproc_out} = new Fsdb::IO::Writer(-fh => $self->{_to_subproc_fh}, -clone => $self->{_in});
+    my $to_subproc_fastpath_sub = $self->{_to_subproc_out}->fastpath_sub();
+    my $fref;
+    while ($fref = &$read_fastpath_sub()) {
+	&$to_subproc_fastpath_sub($fref);
+    };
+    $self->{_to_subproc_out}->close;
+    $self->{_to_subproc_fh}->close;
+    delete $self->{_to_subproc_fh};
 }
 
 =head2 _subproc_postprocessor
@@ -221,9 +269,6 @@ sub _subproc_postprocessor ($) {
     while ($fref = &{$from_subproc_fastpath_sub}()) {
 	&{$write_fastpath_sub}($fref);
     };
-
-    # Finish up the IO.
-    $self->SUPER::finish();
 }
 
 =head2 _dbsubprocess_open2
@@ -297,55 +342,30 @@ sub run ($) {
     #
     # Deadlock warning: we've now forked (in open2)
     # and need separate threads to read and write to the subproc.
-    # We fork a subprocessor thread to get stuff from the subproc,
-    # and we stick around to write to the subproc.
+    # We fork a subprocessor thread to write to the subproc.
+    # and we stick around to get stuff from the subproc.
+    # (We used to do this the other way,
+    # but we want output to be in the main thread so we can save _out.)
     #
 
-    # Need a thread to convert the output back to fsdb.
-    my $subproc_postprocessor_thread = threads->new( sub {
-	$self->{_to_subproc_fh}->close;
-	delete $self->{_to_subproc_fh};
-	$self->_subproc_postprocessor;
-	$self->{_from_subproc_fh}->close;  # clean up the other out of paranoia
-	delete $self->{_from_subproc_fh};
+    # Need a thread to send input to subproc
+    my $subproc_preprocessor_thread = threads->new( sub {
+	$self->_subproc_preprocessor;
     } );
-    $self->{_subproc_postprocessor_thread} = $subproc_postprocessor_thread;
+    $self->{_subproc_preprocessor_thread} = $subproc_preprocessor_thread;
 
-    #
-    # Here we're going to send the subproc stuff (as text).
-    #
-    $self->{_from_subproc_fh}->close;
-    delete $self->{_from_subproc_fh};
-    my $read_fastpath_sub = $self->{_in}->fastpath_sub();
-    $self->{_to_subproc_out} = new Fsdb::IO::Writer(-fh => $self->{_to_subproc_fh}, -clone => $self->{_in});
-    my $to_subproc_fastpath_sub = $self->{_to_subproc_out}->fastpath_sub();
-    my $fref;
-    while ($fref = &$read_fastpath_sub()) {
-	&$to_subproc_fastpath_sub($fref);
-    };
-    # done, so close and block on the postprocessing
-    $self->{_to_subproc_out}->close;
+    # Convert the output back to fsdb here.
     $self->{_to_subproc_fh}->close;
     delete $self->{_to_subproc_fh};
-    $self->{_subproc_postprocessor_thread}->join;
+    $self->_subproc_postprocessor;
+    $self->{_from_subproc_fh}->close;  # clean up the other out of paranoia
+    delete $self->{_from_subproc_fh};
+
+    $self->{_subproc_preprocessor_thread}->join;
     # and reap the subprocess
     waitpid $subproc_pid, 0 if (defined($subproc_pid));
 }
 
-
-=head2 finish
-
-    $filter->finish();
-
-Internal: write trailer.
-
-=cut
-sub finish ($) {
-    my($self) = @_;
-
-    # We assume let the postprocessor cleanup things.
-    # And nothing to join here since we did the join in run.
-}
 
 =head1 AUTHOR and COPYRIGHT
 

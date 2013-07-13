@@ -14,8 +14,10 @@ use ExtUtils::MakeMaker;
 # from http://www.nntp.perl.org/group/perl.module-authors/2008/02/msg6277.html
 use Config;
 BEGIN {
-    die("OS unsupported:  ERROR: This Perl is not built to support threads\n")
+    die("perl without threads unsupported:  ERROR: This Perl is not built to support threads\n")
         if (! $Config{'useithreads'});
+    die("OS unsupported:  ERROR: Windows support is desired, but needs a tester.  Please contact the fsdb developer if you're that person\n")
+        if ($Config{'osname'} =~ /^MSWin/i);
 };
 
 # BEGIN MODULE LIST
@@ -71,11 +73,12 @@ my @modularized_db_converters = qw(
 	db_to_html_table 
 	html_table_to_db 
 	kitrace_to_db 
-	mysql_to_db 
 	tabdelim_to_db 
 	tcpdump_to_db
 	xml_to_db
 );
+#	mysql_to_db 
+
 # helper programs: stubs that provide CLI glue around perl modules
 my @helper_db_programs = qw(
 	dbrowenumerate

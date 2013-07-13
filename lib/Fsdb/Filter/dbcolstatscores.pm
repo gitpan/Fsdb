@@ -214,7 +214,7 @@ sub set_defaults ($) {
     $self->{_t_mean} = undef;
     $self->{_t_stddev} = undef;
     $self->{_format} = "%.5g";
-    $self->{_tmpdir} = defined($ENV{'TMPDIR'}) ? $ENV{'TMPDIR'} : "/tmp";
+    $self->set_default_tmpdir;
 }
 
 =head2 parse_options

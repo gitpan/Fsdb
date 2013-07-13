@@ -460,7 +460,7 @@ sub segments_merge_one_depth($$) {
 	    last if (!$closed);
 	    # one left, just punt it next
 	    print "# segments_merge_one_depth: runt at depth $depth pushed to next depth.\n" if ($self->{_debug});
-	    push ($self->{_work}[$depth + 1], shift @$work_ref);
+	    push (@{$self->{_work}[$depth + 1]}, shift @{$work_ref});
 	    die "internal error\n" if ($#{$work_ref} != -1);
 	    last;
 	};

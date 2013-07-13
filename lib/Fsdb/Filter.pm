@@ -640,7 +640,8 @@ sub finish($) {
 	$problems .= "delay_comments " if (defined($self->{_delay_comments}));
 	$problems .= "logprog " if (defined($self->{_logprog}));
 	$problems .= "save_output " if (defined($self->{_save_output}));
-	carp "finish with no _out object and $problems\n";
+	carp "finish with no _out object and $problems\n"
+	    if ($problems ne '');
     };
 
     if (defined($self->{_delay_comments})) {

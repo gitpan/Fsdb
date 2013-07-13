@@ -62,6 +62,13 @@ do I<not> unescape data, but leave it CGI-encoded
 
 give value E as the value for empty (null) records
 
+=item B<-T TmpDir>
+
+where to put tmp files.
+Also uses environment variable TMPDIR, if -T is 
+not specified.
+Default is /tmp.
+
 =back
 
 =for comment
@@ -207,6 +214,7 @@ sub set_defaults ($) {
     $self->SUPER::set_defaults();
     $self->{_unescape} = 1;
     $self->{_save_in_filename} = undef;
+    $self->set_default_tmpdir;
 }
 
 =head2 parse_options
@@ -233,6 +241,7 @@ sub parse_options ($@) {
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	'u|unescape!' => \$self->{_unescape},
+	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
 	'U' => sub { $self->{_unescape} = undef; },
 	'<>' => sub { $self->parse_io_option('inputs', @_); },
 	) or pod2usage(2);

@@ -2,7 +2,7 @@
 
 #
 # dbrowuniq.pm
-# Copyright (C) 1997-2012 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1997-2013 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -18,7 +18,7 @@ dbrowuniq - eliminate adjacent rows with duplicate fields, maybe counting
 
 =head1 SYNOPSIS
 
-dbrowuniq [-cL] [uniquifying fields...]
+dbrowuniq [-cFLB] [uniquifying fields...]
 
 =head1 DESCRIPTION
 
@@ -39,8 +39,14 @@ three lines of output with both a's, but if you dbsort it,
 it will become a/a/b and dbrowuniq will output a/b.
 
 By default, L<dbrowuniq> outputs the I<first> unique row.
-Optionally, with F<-L>, it will output the I<last> unique row.
+Optionally, with C<-L>, it will output the I<last> unique row,
+or with C<-B> it outputs both first and last.
 (This choice only matters when uniqueness is determined by specific fields.)
+
+L<dbrowuniq> can also count how many unique, adjcent lines it finds
+with C<-c>, with the count coing to a new column (defaulting to C<count>).
+Incremental counting, when the C<count> column already exists,
+is possible with C<-I>.
 
 =head1 OPTIONS
 
@@ -58,10 +64,26 @@ The new column is named by the C<-N> argument, defaulting to C<count>.
 Specify the name of the count column, if any.
 (Default is C<count>.)
 
+=item B<-I> on B<--incremental>
+
+Incremental counting.
+If the count column exists, it is assumed to have a partial count
+and the count accumulates.
+If the count column doesn't exist, it is created.
+
 =item B<-L> or B<--last>
 
 Output the last unique row. 
 By default, it outputs the first unique row.
+
+=item B<-F> or B<--first>
+
+Output the first unique row. 
+(This is the default.)
+
+=item B<-B> or B<--both>
+
+Output both the first and last unique rows. 
 
 =back
 
@@ -141,9 +163,11 @@ end_standard_fsdb_options
 
 =head1 SAMPLE USAGE 2
 
+Retaining the last unique row as an example.
+
 =head2 Input:
 
-	#h event i
+	#fsdb event i
 	_null_getpage+128 10
 	_null_getpage+128 11
 	_null_getpage+128 12
@@ -171,6 +195,33 @@ end_standard_fsdb_options
 	#  | /home/johnh/BIN/DB/dbsort event
 	_null_getpage+4	21	6
 	#   | dbrowuniq -c 
+
+=head1 SAMPLE USAGE 3
+
+Incremental counting.
+
+=head2 Input:
+
+    #fsdb	event	count
+    _null_getpage+128	6
+    _null_getpage+128	6
+    _null_getpage+4	6
+    _null_getpage+4	6
+    #  /home/johnh/BIN/DB/dbcol	event
+    #  | /home/johnh/BIN/DB/dbrowuniq -c
+
+=head2 Command:
+
+    cat data.fsdb | dbrowuniq -I -c event
+
+=head2 Output:
+
+	#fsdb event count
+	_null_getpage+128   12
+	_null_getpage+4     12
+	#  /home/johnh/BIN/DB/dbcol	event
+	#  | /home/johnh/BIN/DB/dbrowuniq -c
+	#   | dbrowuniq -I -c event
 
 =head1 SEE ALSO
 
@@ -224,7 +275,8 @@ sub set_defaults ($) {
     my($self) = @_;
     $self->SUPER::set_defaults();
     $self->{_count} = undef;
-    $self->{_last} = undef;
+    $self->{_which} = 'F';
+    $self->{_incremental} = undef;
     $self->{_uniquifying_cols} = [];
     $self->{_destination_column} = 'count';
 }
@@ -246,8 +298,11 @@ sub parse_options ($@) {
  	'help|?' => sub { pod2usage(1); },
 	'man' => sub { pod2usage(-verbose => 2); },
 	'autorun!' => \$self->{_autorun},
+	'B|both' => sub { $self->{_which} = 'B' },
 	'c|count!' => \$self->{_count},
-	'L|last!' => \$self->{_last},
+	'F|first|nolast' => sub { $self->{_which} = 'F' },
+	'I|incremental!' => \$self->{_incremental},
+	'L|last' => sub { $self->{_which} = 'L' },
 	'close!' => \$self->{_close},
 	'd|debug+' => \$self->{_debug},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
@@ -272,7 +327,10 @@ sub setup ($) {
     $self->finish_io_option('input', -comment_handler => $self->create_pass_comments_sub);
 
     if ($#{$self->{_uniquifying_cols}} == -1) {
-	push (@{$self->{_uniquifying_cols}}, @{$self->{_in}->cols});
+	foreach (@{$self->{_in}->cols}) {
+	    push (@{$self->{_uniquifying_cols}}, $_)
+		if ($_ ne $self->{_destination_column});
+	};
     } else {
 	foreach (@{$self->{_uniquifying_cols}}) {
 	    croak $self->{_prog} . ": unknown column ``$_''.\n"
@@ -282,8 +340,15 @@ sub setup ($) {
 
     $self->finish_io_option('output', -clone => $self->{_in}, -outputheader => 'delay');
     if ($self->{_count}) {
-        $self->{_out}->col_create($self->{_destination_column})
-	    or croak $self->{_prog} . ": cannot create column " . $self->{_destination_column} . " (maybe it already existed?)\n";
+	if ($self->{_out}->col_to_i($self->{_destination_column})) {
+	    if (!$self->{_incremental}) {
+		croak $self->{_prog} . ": cannot create column " . $self->{_destination_column} . " (it already exists)\n";
+	    };
+	} else {
+	    $self->{_out}->col_create($self->{_destination_column})
+		or croak $self->{_prog} . ": cannot create column " . $self->{_destination_column} . " (maybe it already existed?)\n";
+	    $self->{_incremental} = undef;   
+	};
     };
 }
 
@@ -299,7 +364,7 @@ sub run ($) {
 
     my $read_fastpath_sub = $self->{_in}->fastpath_sub();
     my $write_fastpath_sub = $self->{_out}->fastpath_sub();
-    my $count_coli = $self->{_out}->col_to_i('count');
+    my $count_coli = $self->{_out}->col_to_i($self->{_destination_column});
 
     my $first_prev_fref = [];
     my $last_prev_fref = [];
@@ -316,26 +381,38 @@ sub run ($) {
     };
     print $check_code if ($self->{_debug});
 
+    my $count_increment_code = ($self->{_incremental} ? '$this_fref->[' . $count_coli . ']' : '1');
     my $handle_new_key_code = q'
 	@{$first_prev_fref} = @{$this_fref};
-	$count = 1;
-    ';
+	$count = ' . $count_increment_code . ';';
     my $remember_prev_row_code = q'
 	@{$last_prev_fref} = @{$this_fref};
     ';
-    $remember_prev_row_code = '' if (!$self->{_last});  # optimization
-    my $handle_end_of_prev_code =
-	'@{$output_fref} = ' . ($self->{_last} ? '@{$last_prev_fref}' : '@{$first_prev_fref}') . ";\n" . 
-	(defined($self->{_count}) ? '$output_fref->[' . $count_coli . '] = $count;' . "\n" : '') .
-	'&$write_fastpath_sub($output_fref) if ($count > 0);' . "\n";
+    $remember_prev_row_code = '' if ($self->{_which} eq 'F'); # optimize
+
+    my $remember_count_code = (defined($self->{_count}) ? '$output_fref->[' . $count_coli . '] = $count;' . "\n" : '');
+
+    my $handle_end_of_prev_code = '';
+    if ($self->{_which} ne 'L') {
+	$handle_end_of_prev_code .= '
+	    @{$output_fref} = @{$first_prev_fref};
+	    ' . $remember_count_code .
+	    '&$write_fastpath_sub($output_fref) if ($count > 0);' . "\n";
+    };
+    if ($self->{_which} ne 'F') {
+	$handle_end_of_prev_code .= '
+	    @{$output_fref} = @{$last_prev_fref};
+	    ' . $remember_count_code .
+	    '&$write_fastpath_sub($output_fref) if ($count > 0);' . "\n";
+    };
 
     my $loop_code = q'
 	while ($this_fref = &$read_fastpath_sub()) {
 	    if ($count > 0) {
 		if (' . $check_code . q') {
 		    # identical, so just update prev
-		    ' . $remember_prev_row_code . q'
-		    $count++;
+		    ' . $remember_prev_row_code .
+		    '$count += ' . $count_increment_code . q';
 		    next;
 		} else {
 		    # not identical
@@ -358,7 +435,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING
