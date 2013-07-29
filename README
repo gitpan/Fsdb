@@ -143,17 +143,33 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.40, 2013-07-13 small bug fixes[0m
-       BUG FIX
-           dbsort now has more respect for a user-given temporary directory;
-           it no longer is ignored for merging.
-
-       IMPROVEMENT
-           dbrowuniq now has options to output the first, last, and both first
-           and last rows of a run ("-F", "-L", and "-B").
+   [1m2.41, 2013-07-29 small bug and packaging fixes[0m
+       ENHANCEMENT
+           Documentation to dbrvstatdiff improved (inspired by questions from
+           Qian Kun).
 
        BUG FIX
-           dbrowuniq now correctly handles "-N".  Sigh, it didn't work before.
+           dbrowuniq no longer duplicates singleton unique lines when
+           outputing both (with "-B").
+
+       BUG FIX
+           Add missing "XML::Simple" dependency to [4mMakefile.PL[24m.
+
+       ENHANCEMENT
+           Tests now show the diff of the failing output if run with "make
+           test TEST_VERBOSE=1".
+
+       ENHANCEMENT
+           dbroweval now includes documentation for how to output extra rows.
+           Suggestion from Yuri Pradkin.
+
+       BUG FIX
+           Several improvements to the Fedora package from Michael Schwendt
+           via <https://bugzilla.redhat.com/show_bug.cgi?id=877096>, and from
+           the harsh master that is [4mrpmlint[24m.  (I am stymied at teaching it
+           that "outliers" is spelled correctly.  Maybe I should send it
+           Schneier's book.  And an unresolvable invalid-spec-name lurks in
+           the SRPM.)
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -857,10 +873,10 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        Varadahan [4mkannan@isi.edu[24m, Lars Eggert [4mlarse@isi.edu[24m, Arkadi Gelfond
        [4markadig@dyna.com[24m, David Graff [4mgraff@ldc.upenn.edu[24m, Haobo Yu
        [4mhaoboy@packetdesign.com[24m, Pavlin Radoslavov [4mpavlin@catarina.usc.edu[24m,
-       Graham Phillips, Yuri Pradkin, Alefiya Hussain, Ya Xu, Fabio Silva
-       [4mfabio@isi.edu[24m, Jerry Zhao [4mzhaoy@isi.edu[24m, Ning Xu [4mnxu@aludra.usc.edu[24m,
-       Martin Lukac [4mmlukac@lecs.cs.ucla.edu[24m, Xue Cai, Michael McQuaid,
-       Christopher Meng.
+       Graham Phillips, Yuri Pradkin, Alefiya Hussain, Ya Xu, Michael
+       Schwendt, Fabio Silva [4mfabio@isi.edu[24m, Jerry Zhao [4mzhaoy@isi.edu[24m, Ning Xu
+       [4mnxu@aludra.usc.edu[24m, Martin Lukac [4mmlukac@lecs.cs.ucla.edu[24m, Xue Cai,
+       Michael McQuaid, Christopher Meng.
 
        Fsdb includes datasets contributed from NIST (DATA/nist_zarr13.fsdb),
        from
@@ -1827,6 +1843,18 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        ENHANCEMENT
            dbrowuniq now supports "-I" for incremental counting.
 
+   [1m2.40, 2013-07-13 small bug fixes[0m
+       BUG FIX
+           dbsort now has more respect for a user-given temporary directory;
+           it no longer is ignored for merging.
+
+       IMPROVEMENT
+           dbrowuniq now has options to output the first, last, and both first
+           and last rows of a run ("-F", "-L", and "-B").
+
+       BUG FIX
+           dbrowuniq now correctly handles "-N".  Sigh, it didn't work before.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -1858,4 +1886,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.16.3                      2013-07-13                           Fsdb(3)
+perl v5.16.3                      2013-07-29                           Fsdb(3)

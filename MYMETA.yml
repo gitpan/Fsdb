@@ -4,6 +4,8 @@ author:
   - unknown
 build_requires:
   ExtUtils::MakeMaker: 0
+  Test::Pod: 0
+  Test::Pod::Coverage: 0
 dynamic_config: 0
 generated_by: 'ExtUtils::MakeMaker version 6.30, CPAN::Meta::Converter version 2.120921'
 license: unknown
@@ -15,6 +17,7 @@ requires:
   HTML::Parser: 0
   Test::More: 0
   Text::CSV_XS: 0
+  XML::Simple: 0
   threads: 1
 version: 1.14
 x_installdirs: site

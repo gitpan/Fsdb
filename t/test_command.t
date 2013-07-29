@@ -397,14 +397,28 @@ sub run_test {
     # finally do the compare
     #
     my($out_ok) = 1;
-    $out_ok = diff_output($cmd_base, $out, "$cmd_base.trial", $optref->{cmp}, 'altout');
+    my $trial_fn = "$cmd_base.trial";
+    $out_ok = diff_output($cmd_base, $out, $trial_fn, $optref->{cmp}, 'altout');
     if (!$out_ok && defined($optref->{altcmp})) {
-        $out_ok = diff_output($cmd_base, $out, "$cmd_base.trial", $optref->{altcmp}, 'altout');
+        $out_ok = diff_output($cmd_base, $out, $trial_fn, $optref->{altcmp}, 'altout');
     };
     if (!$out_ok && defined($optref->{altout}) && $optref->{altout} eq 'true') {
-	$out_ok = diff_output($cmd_base, "$cmd_base.altout", "$cmd_base.trial", $optref->{cmp}, 'out');
+	$out_ok = diff_output($cmd_base, "$cmd_base.altout", $trial_fn, $optref->{cmp}, 'out');
     };
-    return undef if (!$out_ok);
+    if (!$out_ok) {
+	my $diff_fn = "$cmd_base.diff";
+	if (-f $diff_fn) {
+	    open(DIFF, "< $diff_fn") || return undef;
+	    print "# $cmd_base\n";
+	    my $lines = 0;
+	    while (<DIFF>) {
+		print "\t$_";
+		last if ($lines++ > 16);
+	    };
+	    close DIFF;
+	};
+        return undef;
+    };
 
     system($optref->{cleanup}) if (defined($optref->{cleanup}));
 

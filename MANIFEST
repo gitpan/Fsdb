@@ -637,6 +637,9 @@ TEST/dbrowenumerate_ex_S.cmd
 TEST/dbrowenumerate_ex_S.out
 TEST/dbrowenumerate_new_name.cmd
 TEST/dbrowenumerate_new_name.out
+TEST/dbroweval_duplicate.cmd
+TEST/dbroweval_duplicate.code
+TEST/dbroweval_duplicate.out
 TEST/dbroweval_ex.cmd
 TEST/dbroweval_ex.code
 TEST/dbroweval_ex.in
@@ -690,6 +693,9 @@ TEST/dbrowuniq_specific_last.out
 TEST/dbrvstatdiff_hogg.cmd
 TEST/dbrvstatdiff_hogg.in
 TEST/dbrvstatdiff_hogg.out
+TEST/dbrvstatdiff_paired_tests.cmd
+TEST/dbrvstatdiff_paired_tests.in
+TEST/dbrvstatdiff_paired_tests.out
 TEST/dbrvstatdiff_scheaffer_6_12.cmd
 TEST/dbrvstatdiff_scheaffer_6_12.in
 TEST/dbrvstatdiff_scheaffer_6_12.out

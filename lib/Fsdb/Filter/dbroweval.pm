@@ -116,6 +116,32 @@ Show full manual.
 end_standard_fsdb_options
 
 
+=head1 ADVANCED USAGE
+
+Typically L<dbroweval> outputs a line in the same schema for each input line.
+For advanced usage, one can violate each of these assumptions.
+
+Some fun:
+
+=over 4
+
+=item B<omitting a line>
+
+Add the code C<next row if ($your condition);>
+
+=item B<outputting an extra line>
+
+Call C<&$write_fastpath_sub($fref)>.
+You may find C<$fref>, the input row, useful.
+
+=item B<changing the schema>
+
+See the examples below in L</Command 2: Changing the Schema>
+
+=back
+
+
+
 =head1 SAMPLE USAGE
 
 =head2 Input:
@@ -219,6 +245,14 @@ which are copied from C<$lfref>, the hereby documented
 internal representation of the last row.
 Yes, this is a bit unappetizing, but,
 in for a penny with C<$ofref>, in for a pound.
+
+=head2 Command 4: Extra Ouptut
+
+Calling C<&$write_fastpath_sub($fref)> will do etra output,
+so this simple program will duplicate each line of input
+(one extra output, plus one regular output for each line of input):
+
+    dbroweval  '&$write_fastpath_sub($fref)'
 
 
 =head1 BUGS

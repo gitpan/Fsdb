@@ -393,17 +393,23 @@ sub run ($) {
     my $remember_count_code = (defined($self->{_count}) ? '$output_fref->[' . $count_coli . '] = $count;' . "\n" : '');
 
     my $handle_end_of_prev_code = '';
-    if ($self->{_which} ne 'L') {
+    if ($self->{_which} eq 'F' || $self->{_which} eq 'B') {
 	$handle_end_of_prev_code .= '
 	    @{$output_fref} = @{$first_prev_fref};
 	    ' . $remember_count_code .
 	    '&$write_fastpath_sub($output_fref) if ($count > 0);' . "\n";
     };
-    if ($self->{_which} ne 'F') {
+    if ($self->{_which} eq 'L') {
 	$handle_end_of_prev_code .= '
 	    @{$output_fref} = @{$last_prev_fref};
 	    ' . $remember_count_code .
 	    '&$write_fastpath_sub($output_fref) if ($count > 0);' . "\n";
+    };
+    if ($self->{_which} eq 'B') {
+	$handle_end_of_prev_code .= '
+	    @{$output_fref} = @{$last_prev_fref};
+	    ' . $remember_count_code .
+	    '&$write_fastpath_sub($output_fref) if ($count > 1);' . "\n";
     };
 
     my $loop_code = q'

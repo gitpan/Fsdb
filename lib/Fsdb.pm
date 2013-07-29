@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.40';
+our $VERSION = '2.41';
 
 =head1 SYNOPSIS
 
@@ -231,25 +231,44 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.40, 2013-07-13
-small bug fixes
+=head2 2.41, 2013-07-29
+small bug and packaging fixes
 
 =over 4
 
-=item BUG FIX
+=item ENHANCEMENT
 
-L<dbsort> now has more respect for a user-given temporary directory;
-it no longer is ignored for merging.
-
-=item IMPROVEMENT
-
-L<dbrowuniq> now has options to output the first, last, and both first
-and last rows of a run (C<-F>, C<-L>, and C<-B>).
+Documentation to L<dbrvstatdiff> improved
+(inspired by questions from Qian Kun).
 
 =item BUG FIX
 
-L<dbrowuniq> now correctly handles C<-N>.  Sigh, it didn't work before.
+L<dbrowuniq> no longer duplicates
+singleton unique lines when outputing both (with C<-B>).
 
+=item BUG FIX
+
+Add missing C<XML::Simple> dependency to F<Makefile.PL>.
+
+=item ENHANCEMENT
+
+Tests now show the diff of the failing output
+if run with C<make test TEST_VERBOSE=1>.
+
+=item ENHANCEMENT
+
+L<dbroweval> now includes documentation for how to output extra rows.
+Suggestion from Yuri Pradkin.
+
+=item BUG FIX
+
+Several improvements to the Fedora package
+from Michael Schwendt
+via L<https://bugzilla.redhat.com/show_bug.cgi?id=877096>,
+and from the harsh master that is F<rpmlint>.
+(I am stymied at teaching it that "outliers" is spelled correctly.
+Maybe I should send it Schneier's book.  And an unresolvable
+invalid-spec-name lurks in the SRPM.)
 
 =back
 
@@ -1129,6 +1148,7 @@ Graham Phillips,
 Yuri Pradkin,
 Alefiya Hussain,
 Ya Xu,
+Michael Schwendt,
 Fabio Silva F<fabio@isi.edu>,
 Jerry Zhao F<zhaoy@isi.edu>,
 Ning Xu F<nxu@aludra.usc.edu>,
@@ -2723,6 +2743,27 @@ unless one specifies C<-encoding> to C<Fsdb::IO>.
 =item ENHANCEMENT
 
 L<dbrowuniq> now supports C<-I> for incremental counting.
+
+=back
+
+=head2 2.40, 2013-07-13
+small bug fixes
+
+=over 4
+
+=item BUG FIX
+
+L<dbsort> now has more respect for a user-given temporary directory;
+it no longer is ignored for merging.
+
+=item IMPROVEMENT
+
+L<dbrowuniq> now has options to output the first, last, and both first
+and last rows of a run (C<-F>, C<-L>, and C<-B>).
+
+=item BUG FIX
+
+L<dbrowuniq> now correctly handles C<-N>.  Sigh, it didn't work before.
 
 =back
 

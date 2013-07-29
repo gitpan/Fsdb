@@ -29,6 +29,8 @@ OR
 =head1 DESCRIPTION
 
 Produce statistics on the difference of sets of random variables.
+If a hypothesized difference is given
+(with C<-h>), to does a Student's t-test.
 
 Random variables are specified by:
 
@@ -217,9 +219,50 @@ from two experiments, and to use dbrvstatdiff to see if they are different.
     cat two_trial.fsdb | 
 	dbmultistats -k case value |
 	dbcolcopylast mean stddev n |
-	dbrvstatdiff mean stddev n copylast_mean copylast_stddev copylast_n
+	dbrow '_case eq "b"' |
+	dbrvstatdiff -h '=0' mean stddev n copylast_mean copylast_stddev copylast_n |
+	dblistize
 
 =head3 Output 3:
+
+	#fsdb -R C case mean stddev pct_rsd conf_range conf_low conf_high conf_pct sum sum_squared min max n copylast_mean copylast_stddev copylast_n diff diff_pct diff_conf_half diff_conf_low diff_conf_high diff_conf_pct_half diff_conf_pct_low diff_conf_pct_high t_test t_test_result t_test_break t_test_break_pct
+	case: b
+	mean: 1.98
+	stddev: 0.083666
+	pct_rsd: 4.2256
+	conf_range: 0.10387
+	conf_low: 1.8761
+	conf_high: 2.0839
+	conf_pct: 0.95
+	sum: 9.9
+	sum_squared: 19.63
+	min: 1.9
+	max: 2.1
+	n: 5
+	copylast_mean: 1.02
+	copylast_stddev: 0.083666
+	copylast_n: 5
+	diff: -0.96
+	diff_pct: -48.485
+	diff_conf_half: 0.12202
+	diff_conf_low: -1.082
+	diff_conf_high: -0.83798
+	diff_conf_pct_half: 6.1627
+	diff_conf_pct_low: -54.648
+	diff_conf_pct_high: -42.322
+	t_test: -18.142
+	t_test_result: rejected
+	t_test_break: -1.082
+	t_test_break_pct: -54.648
+	
+	#  | dbmultistats -k case value
+	#   | dbcolcopylast mean stddev n
+	#   | dbrow _case eq "b"
+	#   | dbrvstatdiff -h =0 mean stddev n copylast_mean copylast_stddev copylast_n
+	#   | dbfilealter -R C
+
+(So one cannot say that they are statistically equal.)
+
 
 =head1 SEE ALSO
 

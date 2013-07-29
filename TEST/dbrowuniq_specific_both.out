@@ -1,4 +1,5 @@
 #fsdb event i count
+singleton	9	1
 _null_getpage+128	10	6
 _null_getpage+128	15	6
 #  | /home/johnh/BIN/DB/dbcol event

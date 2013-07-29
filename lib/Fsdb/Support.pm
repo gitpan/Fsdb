@@ -98,9 +98,28 @@ Convert db-code into "pretty code".
 
 =cut
 sub code_prettify (@) {
-    local($prettycode) = join(";", @_);
+    my($prettycode) = join(";", @_);
     $prettycode =~ s/\n/ /g;   # newlines will break commenting
     return $prettycode;
+}
+
+=head1 CONVERSION FUNCTIONS
+
+=head2 number_prettify 
+
+Add-thousands-separators to numbers.
+
+xxx: should consider locale.
+
+(This code is from F<http://www.perlmonks.org/?node_id=653>,
+contributed by Andrew Johnson from University of Alberta.)
+
+=cut
+sub number_prettify($) {
+	my $input = shift;
+        $input = reverse $input;
+        $input =~ s<(\d\d\d)(?=\d)(?!\d*\.)><$1,>g;
+        return reverse $input;
 }
 
 =head2 force_numeric
