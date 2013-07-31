@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.41';
+our $VERSION = '2.42';
 
 =head1 SYNOPSIS
 
@@ -231,44 +231,33 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.41, 2013-07-29
-small bug and packaging fixes
+=head2 2.42, 2013-07-31
+A bug fix and packaging release.
 
 =over 4
 
 =item ENHANCEMENT
 
-Documentation to L<dbrvstatdiff> improved
-(inspired by questions from Qian Kun).
+Documentation to L<dbjoin> improved
+to better memory usage.
+(Based on problem report by Lin Quan.)
 
 =item BUG FIX
 
-L<dbrowuniq> no longer duplicates
-singleton unique lines when outputing both (with C<-B>).
+The F<.spec> is now F<perl-Fsdb.spec>
+to satisfy F<rpmlint>.
+Thanks to Christopher Meng for a specific bug report.
 
 =item BUG FIX
 
-Add missing C<XML::Simple> dependency to F<Makefile.PL>.
-
-=item ENHANCEMENT
-
-Tests now show the diff of the failing output
-if run with C<make test TEST_VERBOSE=1>.
-
-=item ENHANCEMENT
-
-L<dbroweval> now includes documentation for how to output extra rows.
-Suggestion from Yuri Pradkin.
+Test F<dbroweval_last.cmd> no longer has a column
+that caused failures because of numerical instability.
 
 =item BUG FIX
 
-Several improvements to the Fedora package
-from Michael Schwendt
-via L<https://bugzilla.redhat.com/show_bug.cgi?id=877096>,
-and from the harsh master that is F<rpmlint>.
-(I am stymied at teaching it that "outliers" is spelled correctly.
-Maybe I should send it Schneier's book.  And an unresolvable
-invalid-spec-name lurks in the SRPM.)
+Some tests now better handle bugs in old versions of perl (5.10, 5.12).
+Thanks to Calvin Ardi for help debugging this on a Mac with perl-5.12,
+but the fix should affect other platforms.
 
 =back
 
@@ -1056,7 +1045,8 @@ may cause larege memory consumption.)
 All Fsdb tools should run in constant or at worst C<n log n> time.
 
 All Fsdb tools use normal Perl math routines for computation.
-Although I make every attempt to choose numerically stable algorithms,
+Although I make every attempt to choose numerically stable algorithms
+(although I also welcome feedback and suggestions for improvement),
 normal rounding due to computer floating point approximations
 can result in inaccuracies when data spans a large range of precisions.
 (See for example the F<dbcolstats_extrema> test cases.)
@@ -1067,6 +1057,25 @@ is documented on its manual page.
 If any Fsdb program violates these assumptions,
 that is a bug that should be documented
 on the tool's manual page or ideally fixed.
+
+Fsdb does depend on Perl's correctness, and Perl (and Fsdb) have
+some bugs.  Fsdb should work on perl from version 5.10 onward,
+but its use of threads gives bogus warnings in some versions of perl:
+
+=over 4
+
+=item *
+perl-5.10 and 5.12 generate warnings "unbalanced string table refcount" and "scalars leaked"
+in L<dbmapreduce>
+
+=item *
+perl-5.10 generates warning "Attempt to free unreferenced scalar"
+in L<dbmultistats>.
+
+=back
+
+To my knowledge these do not the correctness of the output,
+other than cluttering it up with warnings.
 
 
 =head1 HISTORY
@@ -1155,7 +1164,8 @@ Ning Xu F<nxu@aludra.usc.edu>,
 Martin Lukac F<mlukac@lecs.cs.ucla.edu>,
 Xue Cai,
 Michael McQuaid,
-Christopher Meng.
+Christopher Meng,
+Calvin Ardi.
 
 Fsdb includes datasets contributed from NIST (DATA/nist_zarr13.fsdb),
 from
@@ -2767,6 +2777,46 @@ L<dbrowuniq> now correctly handles C<-N>.  Sigh, it didn't work before.
 
 =back
 
+=head2 2.41, 2013-07-29
+small bug and packaging fixes
+
+=over 4
+
+=item ENHANCEMENT
+
+Documentation to L<dbrvstatdiff> improved
+(inspired by questions from Qian Kun).
+
+=item BUG FIX
+
+L<dbrowuniq> no longer duplicates
+singleton unique lines when outputing both (with C<-B>).
+
+=item BUG FIX
+
+Add missing C<XML::Simple> dependency to F<Makefile.PL>.
+
+=item ENHANCEMENT
+
+Tests now show the diff of the failing output
+if run with C<make test TEST_VERBOSE=1>.
+
+=item ENHANCEMENT
+
+L<dbroweval> now includes documentation for how to output extra rows.
+Suggestion from Yuri Pradkin.
+
+=item BUG FIX
+
+Several improvements to the Fedora package
+from Michael Schwendt
+via L<https://bugzilla.redhat.com/show_bug.cgi?id=877096>,
+and from the harsh master that is F<rpmlint>.
+(I am stymied at teaching it that "outliers" is spelled correctly.
+Maybe I should send it Schneier's book.  And an unresolvable
+invalid-spec-name lurks in the SRPM.)
+
+=back
 
 
 =head1 AUTHOR

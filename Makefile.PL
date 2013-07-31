@@ -165,22 +165,21 @@ README.html: lib/Fsdb.pm
 
 all :: README README.html
 
-SPEC_PREFIX=Fsdb
 RPM_ARCH=noarch
 RPM_PREFIX=perl-Fsdb
+SPEC_PREFIX=$(RPM_PREFIX)
 RPM_DIST=$(shell rpm --eval '%{dist}')
 
 # the whole changelog nonesense is for the benefit of rpmlint
-Fsdb.spec: lib/Fsdb.pm
-	cp Fsdb.spec Fsdb.spec~ && \
-	sed -e "s/^Version: .*$$/Version: $(VERSION)/" -e '/^%changelog/,$$d' <Fsdb.spec >Fsdb.spec+ && \
-	{ echo "%changelog"; echo '* '`date +'%a %b %d %Y'`' John Heidemann <johnh@isi.edu> '$(VERSION)-1; echo '- See http://www.isi.edu/~johnh/SOFTWARE/FSDB/'; } >>Fsdb.spec+ && \
-	cp Fsdb.spec+ Fsdb.spec
-	
+$(SPEC_PREFIX).spec: lib/Fsdb.pm
+	cp $(SPEC_PREFIX).spec $(SPEC_PREFIX).spec~ && \
+	sed -e "s/^Version: .*$$/Version: $(VERSION)/" -e '/^%changelog/,$$d' <$(SPEC_PREFIX).spec >$(SPEC_PREFIX).spec+ && \
+	{ echo "%changelog"; echo '* '`date +'%a %b %d %Y'`' John Heidemann <johnh@isi.edu> '$(VERSION)-1; echo '- See http://www.isi.edu/~johnh/SOFTWARE/FSDB/'; } >>$(SPEC_PREFIX).spec+ && \
+	mv $(SPEC_PREFIX).spec+ $(SPEC_PREFIX).spec
 
 
-rpms: $(SPEC_PREFIX).spec Fsdb.spec
-	cp $(SPEC_PREFIX)-$(VERSION).tar.gz $$HOME/rpmbuild/SOURCES
+rpms: $(SPEC_PREFIX).spec
+	cp Fsdb-$(VERSION).tar.gz $$HOME/rpmbuild/SOURCES
 	cp $(SPEC_PREFIX).spec $$HOME/rpmbuild/SPECS
 	( cd $$HOME/rpmbuild; rpmbuild --sign -ba SPECS/$(SPEC_PREFIX).spec; )
 	cp $$HOME/rpmbuild/RPMS/$(RPM_ARCH)/$(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).$(RPM_ARCH).rpm .
@@ -196,16 +195,16 @@ release:
 	-make signrpms
 	cp $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).$(RPM_ARCH).rpm $(WEBDIR)
 	cp $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).src.rpm $(WEBDIR)
-	cp $(SPEC_PREFIX)-$(VERSION).tar.gz $(WEBDIR)
-	cp Fsdb.spec $(WEBDIR)
+	cp Fsdb-$(VERSION).tar.gz $(WEBDIR)
+	cp $(SPEC_PREFIX).spec $(WEBDIR)
 	cp README.html $(WEBDIR)/$(SPEC_PREFIX)-$(VERSION)_README.html
-	cd $(WEBDIR); git add $(RPM_PREFIX)-$(VERSION)*.rpm $(SPEC_PREFIX)-$(VERSION).tar.gz $(SPEC_PREFIX)-$(VERSION)_README.html
-	cd $(WEBDIR); rm Fsdb-current.tar.gz; ln -s Fsdb-$(VERSION).tar.gz Fsdb-current.tar.gz; rm perl-Fsdb-current.noarch.rpm; ln -s perl-Fsdb-$(VERSION)-1.noarch.rpm perl-Fsdb-current.noarch.rpm; rm perl-Fsdb-current.src.rpm; ln -s perl-Fsdb-$(VERSION)-1.src.rpm perl-Fsdb-current.src.rpm; 
+	cd $(WEBDIR); git add $(RPM_PREFIX)-$(VERSION)*.rpm Fsdb-$(VERSION).tar.gz $(SPEC_PREFIX)-$(VERSION)_README.html
+	cd $(WEBDIR); rm Fsdb-current.tar.gz; ln -s Fsdb-$(VERSION).tar.gz Fsdb-current.tar.gz; rm $(RPM_PREFIX)-current.noarch.rpm; ln -s $(RPM_PREFIX)-$(VERSION)-1.noarch.rpm $(RPM_PREFIX)-current.noarch.rpm; rm $(RPM_PREFIX)-current.src.rpm; ln -s $(RPM_PREFIX)-$(VERSION)-1.src.rpm $(RPM_PREFIX)-current.src.rpm; 
 	@echo "to finish: git commit -am $(VERSION)-release; git tag -s -u johnh@isi.edu -m $(VERSION)-release fsdb-$(VERSION); cd $(WEBDIR); git commit -am \"release $(RPM_PREFIX)-$(VERSION)\""
 
 rpmlint:
-	rpmlint perl-Fsdb-$(VERSION)-1$(RPM_DIST).noarch.rpm
-	rpmlint perl-Fsdb-$(VERSION)-1$(RPM_DIST).src.rpm
+	rpmlint $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).noarch.rpm
+	rpmlint $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).src.rpm
 
 END
 close (MF);

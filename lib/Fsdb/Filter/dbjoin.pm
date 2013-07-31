@@ -50,6 +50,24 @@ and there is no disk consumption.
 If data is not sorted, then L<dbjoin> requires
 disk storage the size of both input files.
 
+One can minimize memory consumption by making sure
+each record of table1 matches relatively few records in table2.
+Typically this means that table2 should be the smaller.
+For example, given two files: people.fsdb (schema: name iso_country_code)
+and countries.fsdb (schema: iso_country_code full_country_name),
+then
+
+    dbjoin -i people.fsdb -i countries.fsdb iso_country_code
+
+will require less memory than
+
+    dbjoin -i countries.fsdb -i people.fsdb iso_country_code
+
+if there are many people per country (as one would expect).
+If warning "lots of matching rows accumulating in memory" appears,
+this is the cause and try swapping join order.
+
+
 =head1 OPTIONS
 
 =over 4
@@ -538,7 +556,7 @@ until_match:
 accumulate_rights:
 	for (;;) {
 	    push(@right_frefs, $fref[1]);
-	    warn "internal warning: dbjoin: lots of matching rows accumulating in memory, should really extend to spill to disk\n"
+	    warn "internal warning: dbjoin: lots of matching rows accumulating in memory. Fixes: dbjoin code can spill to disk (not implemented) or dbjoin user can perhaps swap file orders.\n"
 		if ($#right_frefs == 2000);   # just emit warning once
 	    &{$advance_right}();
 	    last accumulate_rights if (!defined($fref[1]));

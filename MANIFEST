@@ -23,7 +23,7 @@ DATA/short_kitrace.jdb
 DATA/stats.fsdb
 DATA/students.jdb
 DATA/xy.jdb
-Fsdb.spec
+perl-Fsdb.spec
 lib/Fsdb.pm
 lib/Fsdb/BoundedQueue.pm
 lib/Fsdb/Filter.pm

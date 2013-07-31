@@ -26,4 +26,4 @@ requires:
   Text::CSV_XS: 0
   XML::Simple: 0
   threads: 1
-version: 2.41
+version: 2.42

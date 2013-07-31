@@ -320,10 +320,10 @@ sub run_test {
 	$suppress_warnings_regexp = '';
 	my $this_perl_version = sprintf("%vd", $^V);
 	foreach (split(/;/, $optref->{suppress_warnings})) {
-	    my($version, $warning) = (/^([.0-9]+):(.*)$/);
+	    my($version, $warning) = (/^([\[\-\]\.0-9]+):(.*)$/);
 	    die "test_command.t: bad suppress warning entry: $_\n"
 		if (!defined($version) || !defined($warning));
-	    $version = quotemeta($version);
+	    $version =~ s/\./\\\./g;   # allow [] to pass through; could be expaneded in the future.
 	    if ($this_perl_version =~ /^$version/) {
 		$suppress_warnings_regexp .= (quotemeta($warning) . "|")
 	    };
