@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.42';
+our $VERSION = '2.43';
 
 =head1 SYNOPSIS
 
@@ -231,35 +231,59 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.42, 2013-07-31
-A bug fix and packaging release.
+=head2 2.43, 2013-08-27
+Adds in-file compression.
 
 =over 4
 
+=item BUG FIX
+
+Changed the sort on F<TEST/dbsort_merge.cmd> to strings
+(from numerics) so we're less succeptable to false test-failures
+due to floating point IO differences.
+
+=item EXPERIMENTAL ENHANCEMENT
+
+Yet more parallelism in L<dbmerge>:
+new "endgame-mode" builds a merge tree of processes at the end
+of large merge tasks to get maximally parallelism.
+Currently this feature is off by default
+because it can hang for some inputs.
+Enable this experimental feature with C<--endgame>.
+
 =item ENHANCEMENT
 
-Documentation to L<dbjoin> improved
-to better memory usage.
-(Based on problem report by Lin Quan.)
+C<Fsdb::IO> now handles being given C<IO::Pipe> objects
+(as exercised by L<dbmerge>).
 
 =item BUG FIX
 
-The F<.spec> is now F<perl-Fsdb.spec>
-to satisfy F<rpmlint>.
-Thanks to Christopher Meng for a specific bug report.
+Handling of NamedTmpfiles now supports concurrency.
+This fix will hopefully fix occasional
+"Use of uninitialized value $_ in string ne at ...NamedTmpfile.pm line 93."
+errors.
 
 =item BUG FIX
 
-Test F<dbroweval_last.cmd> no longer has a column
-that caused failures because of numerical instability.
+Fsdb now requires perl 5.10.
+This is a bug fix because some test cases used to require it,
+but this fact was not properly documented.
+(Back-porting to 5.008 would require removing all C<//> operators.)
 
-=item BUG FIX
+=item ENHANCEMENT
 
-Some tests now better handle bugs in old versions of perl (5.10, 5.12).
-Thanks to Calvin Ardi for help debugging this on a Mac with perl-5.12,
-but the fix should affect other platforms.
+Fsdb now handles automatic compression of file contents.
+Enable compression with C<dbfilealter -Z xz>
+(or C<gz> or C<bz2>).
+All programs should operate on compressed files
+and leave the output with the same level of copmresion.
+C<xz> is recommended as fastest and most efficient.
+C<gz> is produces unrepeatable output (and so has no
+output test), it seems to insist on adding a timestamp.
+
 
 =back
+
 
 =head1 README CONTENTS
 
@@ -2818,6 +2842,36 @@ invalid-spec-name lurks in the SRPM.)
 
 =back
 
+=head2 2.42, 2013-07-31
+A bug fix and packaging release.
+
+=over 4
+
+=item ENHANCEMENT
+
+Documentation to L<dbjoin> improved
+to better memory usage.
+(Based on problem report by Lin Quan.)
+
+=item BUG FIX
+
+The F<.spec> is now F<perl-Fsdb.spec>
+to satisfy F<rpmlint>.
+Thanks to Christopher Meng for a specific bug report.
+
+=item BUG FIX
+
+Test F<dbroweval_last.cmd> no longer has a column
+that caused failures because of numerical instability.
+
+=item BUG FIX
+
+Some tests now better handle bugs in old versions of perl (5.10, 5.12).
+Thanks to Calvin Ardi for help debugging this on a Mac with perl-5.12,
+but the fix should affect other platforms.
+
+=back
+
 
 =head1 AUTHOR
 
@@ -2846,7 +2900,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 A copy of the GNU General Public License can be found in the file
 ``COPYING''.
-
 
 
 

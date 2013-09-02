@@ -273,7 +273,7 @@ sub setup ($) {
     $self->{_compare_code} = $self->create_compare_code(@{$self->{_ins}});;
     croak $self->{_prog} . ": no merge field specified.\n"
 	if (!defined($self->{_compare_code}));
-    print "COMPARE CODE:\n\t" . $self->{_compare_code} . "\n" if ($self->{_debug});
+    print "COMPARE CODE:\n\t" . $self->{_compare_code} . "\n" if ($self->{_debug} && $self->{_debug} > 1);
 }
 
 
@@ -325,6 +325,7 @@ sub run ($) {
 	&{$out_fastpath_sub}($b);
 	$b = &{$fastpath_subs[1]}();
     };
+    # print "# dbmerge2: both inputs done\n" if ($self->{_debug});
     foreach (0..1) {
 	$self->{_ins}[$_]->close;
     };

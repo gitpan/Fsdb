@@ -2,7 +2,7 @@
 
 #
 # dbfilealter.pm
-# Copyright (C) 2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2008-2013 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -18,16 +18,18 @@ dbfilealter - alter the format of an Fsdb file, changing the row/column seperato
 
 =head1 SYNOPSIS
 
-dbfilealter [-c] [-F x] [-R x] [column...]
+dbfilealter [-c] [-F fs] [-R rs] [-Z compression] [column...]
 
 =head1 DESCRIPTION
 
 This program reformats a Fsdb file,
-altering the row or column separator.
+altering the row (C<-R rs>) or column (C<-F fs>) separator.
 It verifies that this action does not violate the
 file constraints (for example, if spaces appear in data and 
 the new format has space as a separator),
 and optionally corrects things.
+
+With C<-Z copmression> it controls copmression on the file
 
 =head1 OPTIONS
 
@@ -42,6 +44,15 @@ See below for valid field separators.
 
 Specify the row separator as C<S>.
 See below for valid row separators.
+
+=item B<-Z> or B<--compression> S
+
+Specify file compression as given by file extension C<S>.
+Supported compressions are F<gz> for gzip,
+F<bz2> for bzip2,
+F<xz> for xz,
+or "none" or undef to disable compression.
+Default is none.
 
 =item B<-c> or B<--correct>
 
@@ -260,6 +271,7 @@ sub set_defaults ($) {
     $self->SUPER::set_defaults();
     $self->{_fscode} = undef;
     $self->{_rscode} = undef;
+    $self->{_compression} = undef;
     $self->{_correct} = undef;
 }
 
@@ -288,6 +300,7 @@ sub parse_options ($@) {
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	'R|rs|rowseperator=s' => \$self->{_rscode},
+	'Z|compression=s' => \$self->{_compression},
 	) or pod2usage(2);
     push (@{$self->{_cols}}, @argv);
 }
@@ -311,6 +324,8 @@ sub setup ($) {
 	if (defined($self->{_fscode}));
     push (@out_args, -rscode => $self->{_rscode})
 	if (defined($self->{_rscode}));
+    push (@out_args, -compression => $self->{_compression})
+	if (defined($self->{_compression}));
     $self->finish_io_option('output', -clone => $self->{_in}, @out_args);
 }
 
@@ -346,7 +361,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2008-2013 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

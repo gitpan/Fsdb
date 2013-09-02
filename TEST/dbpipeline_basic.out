@@ -5,5 +5,5 @@ c	70
 d	95
 e	75
 f	95
-#   | dbcol name test1 --output [Fsdb::BoundedQueue] --input -
+#   | dbcol name test1 --output [::FsdbIPC] --input -
 #   | dbroweval   { _test1 += 5; }

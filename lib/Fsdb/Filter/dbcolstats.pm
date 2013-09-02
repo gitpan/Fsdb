@@ -226,7 +226,6 @@ use Pod::Usage;
 use threads;
 use threads::shared;
 
-use Fsdb::BoundedQueue;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
 use Fsdb::Filter;

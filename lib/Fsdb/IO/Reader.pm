@@ -4,7 +4,7 @@
 # Fsdb::IO::Reader.pm
 # $Id$
 #
-# Copyright (C) 2005-2012 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2005-2013 by John Heidemann <johnh@isi.edu>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License,
@@ -37,6 +37,7 @@ use IO::File;
 use Carp;
 use threads;
 # use threads::shared;
+use IO::Uncompress::AnyUncompress;
 
 use Fsdb::IO;
 
@@ -124,9 +125,13 @@ sub new {
 	$self->{_error} = "cannot setup filehandle";
 	return $self;
     };
+    if ($self->{_fh} && ref($self->{_fh}) eq 'IO::Pipe') {
+	# don't do this if we're IO::Pipe::End, since it's already been done
+	$self->{_fh}->reader();
+    };
     $self->comment_handler_to_sub;
     # Note: reader/writer difference: readers have io subs before headers; writers only after.
-    $self->create_io_subs;
+    $self->create_io_subs();
 
     if (!defined($self->{_headerrow})) {
 	# get the header from the file (must not have been specified by the user)
@@ -136,7 +141,10 @@ sub new {
     if (defined($self->{_headerrow})) {
 	$self->{_header_set} = 1;   # go read-only
 	# rebuild io subs in case the fscode changed
-	$self->create_io_subs;
+	$self->create_io_subs();
+    } else {
+	$self->{_error} = "no header line";
+	return $self;
     };
 
     return $self;
@@ -203,25 +211,39 @@ sub comment_handler_to_sub {
     };
 }
 
+=head2 _enable_compression
+
+    $self->_enable_compression
+
+internal use only: switch from uncompressed to compressed.
+
+=cut
+sub _enable_compression($) {
+    my($self) = @_;
+    return if (!$self->{_compression});
+
+    my $phy_fh = $self->{_fh};
+    binmode($phy_fh, ":raw");
+    $self->{_fh} = new IO::Uncompress::AnyUncompress $phy_fh
+	or croak "Fsdb::IO::Reader: cannot switch to compression " . $self->{_compression};
+    # xxx: we now should push our encoding onto this new fh,
+    # but not clear how IO::Uncompress handles that.
+}
+
 
 =head2 create_io_subs
 
-    $self->create_io_subs
+    $self->create_io_subs()
 
 internal use only: create a thunk that returns rowobjs.
 
 =cut
-sub create_io_subs {
+sub create_io_subs() {
     my($self) = @_;
     return if ($self->{_error});
     croak "confusion: too many IO sources" if (defined($self->{_fh}) && defined($self->{_queue}));
-    if (defined($self->{_queue})) {
-	# data is preformatted from a queue
-	my $queue = $self->{_queue};
-	$self->{_read_rowobj_sub} = sub {
-	    return $queue->dequeue;
-	};
-    } elsif (defined($self->{_fh})) {
+    if (defined($self->{_fh})) {
+	$self->_enable_compression() if ($self->{_compression} && $self->{_header_set});
 	# need to unserialize data from a file handle
 	if ($self->{_rscode} eq 'D') {
 	    #
@@ -287,6 +309,12 @@ sub create_io_subs {
 	    };
 	} else {
 	    croak "undefined rscode " . $self->{_rscode} . "\n";
+	};
+    } elsif (defined($self->{_queue})) {
+	# data is preformatted from a queue
+	my $queue = $self->{_queue};
+	$self->{_read_rowobj_sub} = sub {
+	    return $queue->dequeue;
 	};
     } else {
 	croak "confusion: no IO source\n";

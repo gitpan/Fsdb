@@ -1,2 +1,2 @@
-thread for module #1 failed to setup with error: dbcolcreate: cannot open input: no header line (saw: ARRAY)
+thread for module #1 failed to setup with error: dbcolcreate: cannot open input: no header line
 

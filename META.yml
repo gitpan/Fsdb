@@ -22,8 +22,12 @@ no_index:
     - inc
 requires:
   HTML::Parser: 0
+  IO::Compress::Bzip2: 0
+  IO::Compress::Gzip: 0
+  IO::Compress::Xz: 0
+  IO::Uncompress::AnyUncompress: 0
   Test::More: 0
   Text::CSV_XS: 0
   XML::Simple: 0
   threads: 1
-version: 2.42
+version: 2.43

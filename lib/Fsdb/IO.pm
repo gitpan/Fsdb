@@ -4,7 +4,7 @@
 # Fsdb::IO.pm
 # $Id$
 #
-# Copyright (C) 2005-2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2005-2013 by John Heidemann <johnh@isi.edu>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License,
@@ -177,6 +177,10 @@ See L<dbfilealter> for a list of valid row separators.
 =item -cols CODE
 Define just the columns of the header.
 
+=item -compression CODE
+Define the compression mode for the file 
+that will take effect after the header.
+
 =item -clone $fsdb
 Copy the stream's configuration from $FSDB, another Fsdb::IO object.
 
@@ -190,6 +194,7 @@ sub new {
 	# i/o source: one of:
 	_fh => undef,	# filehandle to file
 	_encoding => undef, # encoding (defaults to :utf8)
+	_compression => undef,
 	_queue => undef,# ref to queue
 
 	_headerrow => undef,
@@ -288,11 +293,20 @@ sub config_one {
 	foreach (@{$clone->cols()}) {
 	    $self->_internal_col_create($_);
 	};
-	$self->update_headerrow;
 	$self->{_encoding} = $clone->{_encoding};
+	$self->{_compression} = $clone->{_compression};
+	$self->update_headerrow;
     } elsif ($aaref->[0] eq '-encoding') {
 	shift @$aaref;
 	$self->{_encoding} = shift @$aaref;
+    } elsif ($aaref->[0] eq '-compression') {
+	shift @$aaref;
+	$self->{_compression} = shift @$aaref;
+	$self->{_compression} = undef if ($self->{_compression} && $self->{_compression} eq 'none');
+	my(%valid_compressions) = qw(bz2 1 gz 1 xz 1);
+	$self->{_error} = "bad compression mode: " . $self->{_compression}
+	    if ($self->{_compression} && !defined($valid_compressions{$self->{_compression}}));
+	$self->update_headerrow;
     } elsif ($aaref->[0] eq '-debug') {
 	shift @$aaref;
 	$self->{_debug} = shift @$aaref;
@@ -319,11 +333,13 @@ sub config ($@) {
 
 =head2 default_binmode
 
-    $fsdb->binmode();
+    $fsdb->default_binmode();
 
 Set the file to the correct binmode,
 either given by C<-encoding> at setup,
 or defaulting from C<LC_CTYPE> or C<LANG>.
+
+If the file is compressed, we will reset binmode after reading the header.
 
 =cut
 
@@ -385,7 +401,10 @@ sub close {
         $self->{_fh}->close;
 	delete $self->{_fh};   # help garbage collect auto-generated Symbols from IO::Handle
     };
-    $self->{_queue}->enqueue(undef) if (defined($self->{_queue}));
+    if (defined($self->{_queue})) {
+	$self->{_queue}->enqueue(undef);
+	delete $self->{_queue};
+    };
     $self->{_error} = 'closed';
 }
 
@@ -472,6 +491,9 @@ sub update_headerrow {
     if ($self->{_rscode} && $self->{_rscode} ne 'D') {  # xxx: should be ne 'D'
 	$h .= "-R " . $self->{_rscode} . " ";
     };
+    if ($self->{_compression} && $self->{_compression} ne 'none') {  # xxx: should be ne 'D'
+	$h .= "-Z " . $self->{_compression} . " ";
+    };
     $self->{_header_prequel} = $h;   # save this aside for dbcolneaten
     $h .= join(" ", @{$self->{_cols}});
     $self->{_headerrow} = $h;
@@ -483,7 +505,7 @@ sub update_headerrow {
 internal: interpet the v2 header.
 Format is:
 
-    #fsdb [-F x] [-R x] columns
+    #fsdb [-F x] [-R x] [-Z x] columns
 
 All options must come first, start with dashes, and have an argument.
 (More regular than the v1 header.)
@@ -513,6 +535,8 @@ sub parse_headerrow($) {
 	    $self->parse_fscode($value);
         } elsif ($key eq '-R') {
 	    $self->parse_rscode($value);
+        } elsif ($key eq '-Z') {
+	    $self->parse_compression($value);
 	} else {
 	    $self->{_error} = "header has unknown option " . $key;
 	    return;
@@ -593,13 +617,27 @@ Internal: Interpret rscodes.
 See L<dbfilealter> for a list of valid values.
 
 =cut
-sub parse_rscode {
-    my $self = shift @_;
-    my $code = shift @_;
+sub parse_rscode($$) {
+    my($self, $code) = @_;
     $code = 'D' if (!defined($code));
     $self->{_error} = "invalid rscode: $code"
 	if (!($code eq 'D' || $code eq 'C' || $code eq 'I'));
     $self->{_rscode} = $code;
+}
+
+=head2 parse_compression
+
+Internal: Interpret compression.
+
+See L<dbfilealter> for a list of valid values.
+
+=cut
+sub parse_compression($$) {
+    my($self, $code) = @_;
+    $code = 'none' if (!defined($code));
+    $self->{_error} = "invalid compression: $code"
+	if (!($code eq 'none' || $code eq 'gz' || $code eq 'xz' || $code eq 'bz2'));
+    $self->{_compression} = $code;
 }
 
 

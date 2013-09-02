@@ -4,7 +4,7 @@
 # Fsdb::IO::Writer.pm
 # $Id$
 #
-# Copyright (C) 2005-2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2005-2013 by John Heidemann <johnh@isi.edu>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License,
@@ -36,13 +36,18 @@ use strict;
 use IO::File;
 use Carp;
 
+# do these only when needed:
+# use IO::Compress::Bzip2;
+# use IO::Compress::Gzip;
+# use IO::Compress::Xz;
+
 use Fsdb::IO;
 
 
 =head2 new
 
     $fsdb = new Fsdb::IO::Writer(-file => $filename);
-    $fsdb = new Fsdb::IO::Writer(-header => "#h -Ft foo bar",
+    $fsdb = new Fsdb::IO::Writer(-header => "#h -F t foo bar",
 				    -fh => $file_handle);
     $fsdb = new Fsdb::IO::Writer(-file => '-',
 				    -fscode => 'S',
@@ -92,6 +97,10 @@ sub new {
 	$self->{_error} = "failed to set up output stream";
 	return $self;
     };
+    if ($self->{_fh} && ref($self->{_fh}) eq 'IO::Pipe') {
+	# don't do this if we're IO::Pipe::End, since it's already been done
+	$self->{_fh}->writer();
+    };
     # Default to agressively generating header.
     # Call it for never (!) so we call create_io_subs.
     $self->{_outputheader} = 'now' if (!defined($self->{_outputheader}));
@@ -135,19 +144,57 @@ sub config_one {
     };
 }
 
+=head2 _enable_compression
+
+    $self->_enable_compression
+
+internal use only: switch from uncompressed to compressed.
+
+=cut
+sub _enable_compression($) {
+    my($self) = @_;
+    return if (!$self->{_compression});
+
+    my $phy_fh = $self->{_fh};
+    $phy_fh->flush;
+    binmode($phy_fh, ":raw");
+    my $cooked_fh = undef;
+    if ($self->{_compression} eq 'gz') {
+	require IO::Compress::Gzip;
+	# We use "Minimal" on next line, otherwise
+	# we get a timestamp in the output,
+	# making output non-repeatable.
+	$cooked_fh = new IO::Compress::Gzip($phy_fh, time => 0, minimal => 1);
+    } elsif ($self->{_compression} eq 'xz') {
+	require IO::Compress::Xz;
+	$cooked_fh = new IO::Compress::Xz $phy_fh;
+    } elsif ($self->{_compression} eq 'bz2') {
+	require IO::Compress::Bzip2;
+	$cooked_fh = new IO::Compress::Bzip2 $phy_fh;
+    } else {
+	croak "Fsbb::IO::Writer:_enable_compression: unknown compression type.\n";
+    };
+    $cooked_fh or croak "Fsdb::IO::Reader: cannot switch to compression " . $self->{_compression};
+    $self->{_fh} = $cooked_fh;
+    # xxx: we now should push our encoding onto this new fh,
+    # but not clear how IO::Uncompress handles that.
+}
+
+
 =head2 create_io_subs
 
-    $self->create_io_subs
+    $self->create_io_subs($with_compression)
 
 internal use only: create a thunk that writes rowobjs.
 
 =cut
-sub create_io_subs {
-    my $self = shift @_;
+sub create_io_subs() {
+    my($self) = @_;
     return if ($self->{_error});
 
     croak "confusion: too many IO sinks" if (defined($self->{_fh}) && defined($self->{_queue}));
     if (defined($self->{_fh})) {
+	$self->_enable_compression() if ($self->{_compression} && $self->{_header_set});
 	if ($self->{_rscode} eq 'D') {
 	    my $fh = $self->{_fh};
 	    my $fs = $self->{_fs};
@@ -209,14 +256,13 @@ internal use only; write the header.
 As a side-effect, we also instantiate the _write_io_sub.
 
 =cut
-sub write_headerrow {
+sub write_headerrow() {
     my($self) = @_;
     croak "double header write.\n" if ($self->{_header_set});
-    $self->{_header_set} = 1;
 
     # Note: reader/writer difference: readers have io subs before headers; writers only after.
     # We therefore make them here and immediately call them.
-    $self->create_io_subs;
+    $self->create_io_subs();
 
     return if ($self->{_outputheader} eq 'never');
     # Note, this is the default path when outputheader eq 'delay'.
@@ -228,6 +274,10 @@ sub write_headerrow {
     die "internal error: Fsdb::IO::Writer undefined header.\n"
 	if (!defined($self->{_headerrow}));
     &{$self->{_write_rowobj_sub}}($self->{_headerrow} . "\n");
+
+    $self->{_header_set} = 1;
+    # switch modes
+    $self->create_io_subs() if ($self->{_compression});
 };
 
 # =head2 write_attributes
@@ -365,11 +415,10 @@ sub fastpath_sub {
     $fsdb->close;
 
 Close the file and kill the saved writer sub.
-(This hopefully helps garbage collect the file handle.)
 
 =cut
 
-sub close {
+sub close() {
     my($self) = @_;
     $self->{_write_rowobj_sub} = sub { die; };
     $self->SUPER::close(@_);

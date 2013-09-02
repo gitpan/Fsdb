@@ -60,7 +60,7 @@ use strict;
 use Carp qw(carp croak);
 use IO::Handle;
 use IO::File;
-use Getopt::Long qw(:config no_ignore_case bundling permute passthrough);
+use Getopt::Long qw(GetOptionsFromArray :config no_ignore_case bundling permute passthrough);
 
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
@@ -297,26 +297,23 @@ It also saves _orig_argv in itself.
 
 =cut
 
-sub get_options ($$@) {
+sub get_options($$@) {
     my $self = shift @_;
     my $argv_ref = shift @_;
     my @opt_specs = @_;
     # hacky interface to GetOptions, we have to copy to and from ARGV
-    my @saved_argv = @ARGV;   # paranoia
     foreach my $p (@$argv_ref) {
 	my $p_copy = $p;
 	if (ref($p_copy) =~ /\:\:/) {
 	    # remove the internal memory cruft for internal perl objects
 	    $p_copy = ref($p_copy);
 	    $p_copy =~ s/\=.*$//;
+	    $p_copy = "::FsdbIPC" if ($p_copy =~ /^(Fsdb::BoundedQueue|IO::Pipe)/);
 	    $p_copy = "[$p_copy]";
         };
 	push (@{$self->{_orig_argv}}, $p_copy);
     };
-    @ARGV = @$argv_ref;
-    my $result = GetOptions(@opt_specs);
-    @$argv_ref = @ARGV;   # copy out unused arguments
-    @ARGV = @saved_argv;
+    my $result = GetOptionsFromArray($argv_ref, @opt_specs);
     return $result;
 }
 
@@ -610,6 +607,7 @@ sub compute_program_log($) {
     my $self = shift @_;
 
     my $args = '';
+    # most refs were cleaned in Fsdb::Filter::get_options
     if (defined($self->{_orig_argv}) && $#{$self->{_orig_argv}} != -1) {
        foreach (@{$self->{_orig_argv}}) {
 	    if (ref($_) eq 'CODE') {
@@ -652,7 +650,7 @@ sub finish($) {
 
     if ($self->{_logprog}) {
 	# ick, OO programming with broken objects...
-	if (ref($self->{_out}) eq '' || ref($self->{_out}) =~ /^IO::Handle/) {
+	if (ref($self->{_out}) eq '' || ref($self->{_out}) =~ /^IO::/) {  
 	    $self->{_out}->print("# " . $self->compute_program_log() . "\n");
 	} else {
 	    $self->{_out}->write_comment($self->compute_program_log());
@@ -835,7 +833,7 @@ sub create_compare_code ($$;$$) {
 	} elsif ($arg eq '-N') {
 	    $numeric = 0;
         } elsif ($arg =~ /^-/) {
-	    croak $self->{_prog} . ": internal error: unknown option $_ in sort key\n";
+	    croak $self->{_prog} . ": internal error: unknown option $arg in sort key\n";
 	} else {
 	    my ($left) = ($reverse ? $b_name : $a_name);
 	    my ($right) = ($reverse ? $a_name : $b_name);

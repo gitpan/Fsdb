@@ -1,0 +1,4 @@
+prog='dbfilealter'
+args='-Z bz2'
+in=TEST/dbfilealter_ex.in
+cmp='cmp '

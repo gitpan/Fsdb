@@ -143,23 +143,38 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.42, 2013-07-31 A bug fix and packaging release.[0m
+   [1m2.43, tbd tbd[0m
+       BUG FIX
+           Changed the sort on [4mTEST/dbsort_merge.cmd[24m to strings (from
+           numerics) so we're less succeptable to false test-failures due to
+           floating point IO differences.
+
+       EXPERIMENTAL ENHANCEMENT
+           Yet more parallelism in dbmerge: new "endgame-mode" builds a merge
+           tree of processes at the end of large merge tasks to get maximally
+           parallelism.  Currently this feature is off by default because it
+           can hang for some inputs.  Enable this experimental feature with
+           "--endgame".
+
        ENHANCEMENT
-           Documentation to dbjoin improved to better memory usage.  (Based on
-           problem report by Lin Quan.)
+           "Fsdb::IO" now handles being given "IO::Pipe" objects (as exercised
+           by dbmerge).
 
        BUG FIX
-           The [4m.spec[24m is now [4mperl-Fsdb.spec[24m to satisfy [4mrpmlint[24m.  Thanks to
-           Christopher Meng for a specific bug report.
+           Handling of NamedTmpfiles now supports concurrency.  This fix will
+           hopefully fix occasional "Use of uninitialized value $_ in string
+           ne at ...NamedTmpfile.pm line 93."  errors.
 
        BUG FIX
-           Test [4mdbroweval_last.cmd[24m no longer has a column that caused failures
-           because of numerical instability.
+           Fsdb now requires perl 5.10.  This is a bug fix because some test
+           cases used to require it, but this fact was not properly
+           documented.  (Back-porting to 5.008 would require removing all "//"
+           operators.)
 
-       BUG FIX
-           Some tests now better handle bugs in old versions of perl (5.10,
-           5.12).  Thanks to Calvin Ardi for help debugging this on a Mac with
-           perl-5.12, but the fix should affect other platforms.
+       ENHANCEMENT
+           Fsdb now handles automatic compression of file contents.  Enable
+           compression with "dbfilealter -Z xz" (or "gz" or "bz2").  All
+           programs shoudl operate on compressed files.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -1887,6 +1902,24 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            Schneier's book.  And an unresolvable invalid-spec-name lurks in
            the SRPM.)
 
+   [1m2.42, 2013-07-31 A bug fix and packaging release.[0m
+       ENHANCEMENT
+           Documentation to dbjoin improved to better memory usage.  (Based on
+           problem report by Lin Quan.)
+
+       BUG FIX
+           The [4m.spec[24m is now [4mperl-Fsdb.spec[24m to satisfy [4mrpmlint[24m.  Thanks to
+           Christopher Meng for a specific bug report.
+
+       BUG FIX
+           Test [4mdbroweval_last.cmd[24m no longer has a column that caused failures
+           because of numerical instability.
+
+       BUG FIX
+           Some tests now better handle bugs in old versions of perl (5.10,
+           5.12).  Thanks to Calvin Ardi for help debugging this on a Mac with
+           perl-5.12, but the fix should affect other platforms.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -1918,4 +1951,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.16.3                      2013-07-31                           Fsdb(3)
+perl v5.16.3                      2013-08-17                           Fsdb(3)

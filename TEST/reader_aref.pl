@@ -10,6 +10,7 @@
 # in $dblibdir for details.
 #
 
+use v5.10;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
 

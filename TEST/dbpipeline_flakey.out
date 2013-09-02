@@ -1,7 +1,7 @@
 die#fsdb name test1
 a	85
 b	75
-#   | dbcol name test1 --output [Fsdb::BoundedQueue] --input -
+#   | dbcol name test1 --output [::FsdbIPC] --input -
 #   | dbroweval   { _test1 += 1; }
 #   | dbroweval   { _test1 += 1; }
 #   | dbroweval   { _test1 += 1; select(undef,undef,undef,0.1); }

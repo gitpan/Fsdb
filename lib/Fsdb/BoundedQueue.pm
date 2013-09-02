@@ -103,7 +103,9 @@ sub set_bound {
 sub dequeue  {
     my $q = shift;
     lock(@$q);
-    cond_wait @$q until @$q;
+    while (!@$q) {
+	cond_wait @$q;
+    };
     my $elem = shift @$q;
     cond_signal @$q;   #  if @$q > 1;
     return $elem;

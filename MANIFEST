@@ -23,7 +23,6 @@ DATA/short_kitrace.jdb
 DATA/stats.fsdb
 DATA/students.jdb
 DATA/xy.jdb
-perl-Fsdb.spec
 lib/Fsdb.pm
 lib/Fsdb/BoundedQueue.pm
 lib/Fsdb/Filter.pm
@@ -83,6 +82,7 @@ lib/Fsdb/Support.pm
 lib/Fsdb/Support/DelayPassComments.pm
 lib/Fsdb/Support/NamedTmpfile.pm
 lib/Fsdb/Support/OS.pm
+lib/Fsdb/Support/Pipe.pm
 lib/Fsdb/Support/TDistribution.pm
 Makefile.PL
 MANIFEST
@@ -90,6 +90,7 @@ MANIFEST.SKIP
 META.yml
 MYMETA.json
 MYMETA.yml
+perl-Fsdb.spec
 programize_module
 README
 README.html
@@ -360,6 +361,12 @@ TEST/dbfilealter_colize_ex.out
 TEST/dbfilealter_colize_tabs.cmd
 TEST/dbfilealter_colize_tabs.in
 TEST/dbfilealter_colize_tabs.out
+TEST/dbfilealter_compress_bzip2.cmd
+TEST/dbfilealter_compress_bzip2.out
+TEST/dbfilealter_compress_gzip.cmd
+TEST/dbfilealter_compress_gzip.out
+TEST/dbfilealter_compress_xz.cmd
+TEST/dbfilealter_compress_xz.out
 TEST/dbfilealter_ex.cmd
 TEST/dbfilealter_ex.in
 TEST/dbfilealter_ex.out
@@ -383,6 +390,12 @@ TEST/dbfilealter_listize_ex.out
 TEST/dbfilealter_listize_ex_S.cmd
 TEST/dbfilealter_listize_ex_S.in
 TEST/dbfilealter_listize_ex_S.out
+TEST/dbfilealter_uncompress_bzip2.cmd
+TEST/dbfilealter_uncompress_bzip2.out
+TEST/dbfilealter_uncompress_gzip.cmd
+TEST/dbfilealter_uncompress_gzip.out
+TEST/dbfilealter_uncompress_xz.cmd
+TEST/dbfilealter_uncompress_xz.out
 TEST/dbfilediff_epsilon.cmd
 TEST/dbfilediff_epsilon.out
 TEST/dbfilediff_epsilon_cases.cmd
@@ -527,6 +540,7 @@ TEST/dbmerge2_ex_R.cmd
 TEST/dbmerge2_ex_R.out
 TEST/dbmerge2_two_input.cmd
 TEST/dbmerge2_two_input.out
+TEST/dbmerge_16k.in
 TEST/dbmerge_17_input.cmd
 TEST/dbmerge_17_input.out
 TEST/dbmerge_17_xargs.cmd
@@ -537,6 +551,14 @@ TEST/dbmerge_20_delayed.cmd
 TEST/dbmerge_20_delayed.out
 TEST/dbmerge_20_input.cmd
 TEST/dbmerge_20_input.out
+TEST/dbmerge_20_input_parallel.cmd
+TEST/dbmerge_20_input_parallel.out
+TEST/dbmerge_2_input.cmd
+TEST/dbmerge_2_input.out
+TEST/dbmerge_3_input.cmd
+TEST/dbmerge_3_input.out
+TEST/dbmerge_3_input_parallel.cmd
+TEST/dbmerge_3_input_parallel.out
 TEST/dbmerge_ex.cmd
 TEST/dbmerge_ex.in
 TEST/dbmerge_ex.out
@@ -548,10 +570,6 @@ TEST/dbmerge_ex_R.out
 TEST/dbmerge_ex_R_b.in
 TEST/dbmerge_inputs.cmd
 TEST/dbmerge_inputs.out
-TEST/dbmerge_three_input.cmd
-TEST/dbmerge_three_input.out
-TEST/dbmerge_two_input.cmd
-TEST/dbmerge_two_input.out
 TEST/dbmultistats_ex.cmd
 TEST/dbmultistats_ex.out
 TEST/dbmultistats_ex_S.cmd
@@ -577,6 +595,9 @@ TEST/dbpipeline_flakey.cmd
 TEST/dbpipeline_flakey.in
 TEST/dbpipeline_flakey.out
 TEST/dbpipeline_flakey.pl
+TEST/dbpipeline_sink.cmd
+TEST/dbpipeline_sink.out
+TEST/dbpipeline_sink.pl
 TEST/dbrecolize_ex.cmd
 TEST/dbrecolize_ex.in
 TEST/dbrecolize_ex.out
@@ -601,6 +622,9 @@ TEST/dbrow_ex_R.out
 TEST/dbrow_ex_S.cmd
 TEST/dbrow_ex_S.in
 TEST/dbrow_ex_S.out
+TEST/dbrow_ex_xz.cmd
+TEST/dbrow_ex_xz.in
+TEST/dbrow_ex_xz.out
 TEST/dbrow_negate.cmd
 TEST/dbrow_negate.out
 TEST/dbrowaccumulate_constant.cmd

@@ -1,4 +1,3 @@
-
 #
 # Makefile.PL
 # $Id: 74e29a26589ae1dceb822b593f6e7ac79c32273c $
@@ -109,7 +108,8 @@ my @backwards_db_programs = qw(
 
 my @programs_to_install = (@modularized_db_programs, @modularized_db_converters, @helper_db_programs, @backwards_db_programs);
 
-require 5.008;
+require 5.010;
+# We work on 5.008, except for use of the // operator.
 
 WriteMakefile(
     NAME                => 'Fsdb',
@@ -126,6 +126,10 @@ WriteMakefile(
         'Text::CSV_XS' => 0,
         'HTML::Parser' => 0,
         'XML::Simple' => 0,
+        'IO::Compress::Bzip2' => 0,
+        'IO::Compress::Gzip' => 0,
+        'IO::Compress::Xz' => 0,
+        'IO::Uncompress::AnyUncompress' => 0,
     },
     TEST_REQUIRES => {
 	'Test::Pod::Coverage' => 0,

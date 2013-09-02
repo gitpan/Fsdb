@@ -2,7 +2,7 @@
 
 #
 # dbpipeline.pm
-# Copyright (C) 2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2007-2013 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -23,6 +23,14 @@ dbpipeline - allow db commands to be assembled as pipelines in Perl
         dbrow(qw(name test1)),
         dbroweval('_test1 += 5;')
     );
+
+Or for more customized versions, see
+L</dbpipeline_filter>,
+L</dbpipeline_sink>,
+L</dbpipeline_open2>,
+and
+L</dbpipeline_close2_hash>.
+
 
 =head1 DESCRIPTION
 
@@ -174,11 +182,13 @@ use Thread::Semaphore;
 use Thread::Queue;
 use Carp;
 use Pod::Usage;
+use IO::Pipe;
 
 use Fsdb::BoundedQueue;
 use Fsdb::Filter;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
+use Fsdb::Support::Pipe;
 
 #
 # First off, create all the bindings we promise in EXPORT_TAGS.
@@ -386,16 +396,23 @@ sub dbpipeline_sink ($@) {
     my($writer_aref) = shift @_;
     
     my $queue = new Fsdb::BoundedQueue;  # buffer from caller into pipeline
-    my $writer = new Fsdb::IO::Writer(-queue => $queue, @$writer_aref);
+
+    my($read_side) = new IO::Handle;
+    my($write_side) = new IO::Handle;
+    pipe($read_side, $write_side) or croak "dbpipeline_sink: pipe failed\n";
 
     my $pipeline = new Fsdb::Filter::dbpipeline(
 		    '--noautorun',
-		    '--input' => $queue,
+		    '--input' => $read_side,
 		    @_);
     my $pipeline_thread = threads->new(
 	sub {
+	    $write_side = undef;
 	    $pipeline->setup_run_finish;
 	} );
+
+    $read_side = undef;
+    my $writer = new Fsdb::IO::Writer(-fh => $write_side, @$writer_aref);
     return ($writer, $pipeline_thread);
 }
 
@@ -566,9 +583,12 @@ sub setup ($) {
 		if ($prev_mod->info('output_type') ne $mod->info('input_type'));
 	    # xxx: above is a bit too strict, since fsdbtext should match fsdb*
 
-	    my $queue = new Fsdb::BoundedQueue;
-	    $prev_mod->parse_options("--output" => $queue);
-	    $mod->parse_options("--input" => $queue);
+	    my $queue = my $write_side = my $read_side = new Fsdb::BoundedQueue;
+#	    my $queue = new IO::Pipe;
+#	    my $write_side = $queue->write_side();
+#	    my $read_side = $queue->read_side();
+	    $prev_mod->parse_options("--output" => $write_side);
+	    $mod->parse_options("--input" => $read_side);
 	    if ($self->{_debug}) {
 		print STDERR $self->{_prog} . "threading IO with queue between modules $i and " . ($i+1) . "\n";
 	    };
@@ -697,6 +717,15 @@ sub setup ($) {
 	if ($setup_error) {
 	    sleep 0.1;   # give child time to clear their __DIE__ handler
 	    die "thread for module #$mod_num failed to setup with error: $setup_error\n";
+	};
+	# Dispose of our write side pipe since the thread now has it,
+	# and if we hang on to it we become a potention writer that 
+	# prevents EOF.
+	if (ref($mod->{_input}) =~ /^IO::Pipe/) {
+	    $mod->{_output} = undef;
+	};
+	if (ref($mod->{_output}) =~ /^IO::Pipe/) {
+	    $mod->{_output} = undef;
 	};
     };
 }

@@ -53,6 +53,7 @@ use threads::shared;
 use Carp;
 use File::Temp qw(tempfile);
 
+my $named_tmpfiles_lock : shared;
 my @named_tmpfiles : shared;
 my $tmpdir = undef;
 my $template = undef;
@@ -71,7 +72,10 @@ sub alloc {
     croak "tmpdir $tmpdir is not writable\n" if (! -w $tmpdir);
     my($fh, $fn) = tempfile($template, SUFFIX => "~", DIR => $tmpdir);
     close $fh;
-    push @named_tmpfiles, $fn;
+    {
+	lock($named_tmpfiles_lock);
+	push @named_tmpfiles, $fn;
+    }
 
     return $fn;
 }
@@ -90,7 +94,10 @@ sub cleanup_one {
     return if (!defined($fn));
     # xxx: doesn't check for inclusion first
     unlink($fn) if (-f $fn);
-    @named_tmpfiles = grep { defined($_) && $_ ne $fn } @named_tmpfiles;
+    {
+	lock($named_tmpfiles_lock);
+	@named_tmpfiles = grep { defined($_) && $_ ne $fn } @named_tmpfiles;
+    }
 }
 
 
@@ -104,7 +111,14 @@ Not a method.
 =cut
 
 sub cleanup_all {
-    while ($fn = shift @named_tmpfiles) {
+    my(@named_tmpfiles_copy);
+    {
+	lock($named_tmpfiles_lock);
+	@named_tmpfiles_copy = @named_tmpfiles;
+	@named_tmpfiles = ();
+    }
+
+    while ($fn = shift @named_tmpfiles_copy) {
 	unlink($fn) if (-f $fn);
     };
 }
