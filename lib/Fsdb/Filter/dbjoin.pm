@@ -320,10 +320,10 @@ sub setup ($) {
     # automatic input sorting?
     if (!$self->{_pre_sorted}) {
 	foreach (0..1) {
-	    my($new_reader, $new_thread) = dbpipeline_filter($self->{_inputs}[$_], [-comment_handler => $self->create_delay_comments_sub], dbsort('--nolog', @{$self->{_sort_argv}}));
+	    my($new_reader, $new_fred) = dbpipeline_filter($self->{_inputs}[$_], [-comment_handler => $self->create_delay_comments_sub], dbsort('--nolog', @{$self->{_sort_argv}}));
 	    $self->{_pre_sorted_inputs}[$_] = $self->{_inputs}[$_];
 	    $self->{_ins}[$_] = $new_reader;
-	    $self->{_in_threads}[$_] = $new_thread;
+	    $self->{_in_freds}[$_] = $new_fred;
 	};
     } else {
 	$self->finish_io_option('inputs', -comment_handler => $self->create_delay_comments_sub);
@@ -614,7 +614,7 @@ walk_lefts:
     # because they gave us eof, but who knows).
     if (!$self->{_pre_sorted}) {
 	foreach (0..1) {
-	    $self->{_in_threads}[$_]->join;
+	    $self->{_in_freds}[$_]->join();
 	};
     };
 }

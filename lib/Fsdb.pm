@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.43';
+our $VERSION = '2.46';
 
 =head1 SYNOPSIS
 
@@ -231,56 +231,24 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.43, 2013-08-27
-Adds in-file compression.
+=head2 2.46, 2013-10-08
+continuing cleanup of our no-threads version
 
 =over 4
 
 =item BUG FIX
 
-Changed the sort on F<TEST/dbsort_merge.cmd> to strings
-(from numerics) so we're less succeptable to false test-failures
-due to floating point IO differences.
+Fixed some packaging details.
+(Really, threads are no longer required,
+missing tests in the MANIFEST.)
 
-=item EXPERIMENTAL ENHANCEMENT
+=item IMPROVEMENT
 
-Yet more parallelism in L<dbmerge>:
-new "endgame-mode" builds a merge tree of processes at the end
-of large merge tasks to get maximally parallelism.
-Currently this feature is off by default
-because it can hang for some inputs.
-Enable this experimental feature with C<--endgame>.
+L<dbsort> now better communicates with the merge process to avoid
+bursty parallelism.
 
-=item ENHANCEMENT
-
-C<Fsdb::IO> now handles being given C<IO::Pipe> objects
-(as exercised by L<dbmerge>).
-
-=item BUG FIX
-
-Handling of NamedTmpfiles now supports concurrency.
-This fix will hopefully fix occasional
-"Use of uninitialized value $_ in string ne at ...NamedTmpfile.pm line 93."
-errors.
-
-=item BUG FIX
-
-Fsdb now requires perl 5.10.
-This is a bug fix because some test cases used to require it,
-but this fact was not properly documented.
-(Back-porting to 5.008 would require removing all C<//> operators.)
-
-=item ENHANCEMENT
-
-Fsdb now handles automatic compression of file contents.
-Enable compression with C<dbfilealter -Z xz>
-(or C<gz> or C<bz2>).
-All programs should operate on compressed files
-and leave the output with the same level of copmresion.
-C<xz> is recommended as fastest and most efficient.
-C<gz> is produces unrepeatable output (and so has no
-output test), it seems to insist on adding a timestamp.
-
+L<Fsdb::IO::Writer> now can take C<-autoflush => 1>
+for line-buffered IO.
 
 =back
 
@@ -2869,6 +2837,158 @@ that caused failures because of numerical instability.
 Some tests now better handle bugs in old versions of perl (5.10, 5.12).
 Thanks to Calvin Ardi for help debugging this on a Mac with perl-5.12,
 but the fix should affect other platforms.
+
+=back
+
+=head2 2.43, 2013-08-27
+Adds in-file compression.
+
+=over 4
+
+=item BUG FIX
+
+Changed the sort on F<TEST/dbsort_merge.cmd> to strings
+(from numerics) so we're less succeptable to false test-failures
+due to floating point IO differences.
+
+=item EXPERIMENTAL ENHANCEMENT
+
+Yet more parallelism in L<dbmerge>:
+new "endgame-mode" builds a merge tree of processes at the end
+of large merge tasks to get maximally parallelism.
+Currently this feature is off by default
+because it can hang for some inputs.
+Enable this experimental feature with C<--endgame>.
+
+=item ENHANCEMENT
+
+C<Fsdb::IO> now handles being given C<IO::Pipe> objects
+(as exercised by L<dbmerge>).
+
+=item BUG FIX
+
+Handling of NamedTmpfiles now supports concurrency.
+This fix will hopefully fix occasional
+"Use of uninitialized value $_ in string ne at ...NamedTmpfile.pm line 93."
+errors.
+
+=item BUG FIX
+
+Fsdb now requires perl 5.10.
+This is a bug fix because some test cases used to require it,
+but this fact was not properly documented.
+(Back-porting to 5.008 would require removing all C<//> operators.)
+
+=item ENHANCEMENT
+
+Fsdb now handles automatic compression of file contents.
+Enable compression with C<dbfilealter -Z xz>
+(or C<gz> or C<bz2>).
+All programs should operate on compressed files
+and leave the output with the same level of copmresion.
+C<xz> is recommended as fastest and most efficient.
+C<gz> is produces unrepeatable output (and so has no
+output test), it seems to insist on adding a timestamp.
+
+=back
+
+=head2 2.44, 2013-10-02
+A major change--all threads are gone.
+
+=over 4
+
+=item ENHANCEMENT
+
+Fsdb is now thread free and only uses processes for parallelism.
+This change is a big change--the entire motivation for Fsdb-2
+was to exploit parallelism via threading.
+Parallelism--good, but perl threading--bad for performance.
+Horribly bad for performance.
+About 20x worse than pipes on my box.
+(See perl bug #119445 for the discussion.)
+
+=item NEW
+
+C<Fsdb::Support::Freds> provides a thread-like abstraction over forking,
+with some nice support for callbacks in the parent upon child termination.
+
+=item ENHANCEMENT
+
+Details about removing theads:
+C<dbpipeline> is thread free,
+and new tests to verify each of its parts.
+The easy cases are C<dbcolpercentile>, 
+C<dbcolstats>, C<dbfilepivot>, C<dbjoin>, and
+C<dbcolstatscores>, each of which use it in simple ways (2013-09-09).
+C<dbmerge> is now thread free (2013-09-13),
+but was a signficant rewrite,
+which brought C<dbsort> along.
+C<dbmapreduce> is partly thread free (2013-09-21),
+again as a rewrite,
+and it brings C<dbmultistats> along.
+Full C<dbmapreduce> support took much longer (2013-10-02).
+
+=item BUG FIX
+
+When running with user-only output (C<-n>),
+L<dbroweval> now resets the output vector C<$ofref> 
+after it has been output.
+
+=item NEW
+
+L<dbcolcreate> will create all columns at the head of each row
+with the C<--first> option.
+
+=item NEW
+
+L<dbfilecat> will concatinate two files,
+verifying that thye have the same schema.
+
+=item ENHANCEMENT
+
+L<dbmapreduce> now passes comments through, 
+rather than eating them as before.
+
+Also, L<dbmapreduce> now supports a C<--> option to prevent misinterpreting
+sub-program parameters as for dbmapreduce.
+
+=item INCOMAPTIBLE CHANGE
+
+L<dbmapreduce> no longer figures out if it needs to add the key
+to the output.  For multi-key-aware reducers, it never does
+(and cannot).  For non-multi-key-aware reducers,
+it defaults to add the key and will now fail if the reducer adds the key
+(with error "dbcolcreate: attempt to create pre-existing column...").
+In such cases, one must disable adding the key with the new
+option C<--no-prepend-key>.
+
+=item INCOMAPTIBLE CHANGE
+
+L<dbmapreduce> no longer copies the input field separator by default.
+For multi-key-aware reducers, it never does
+(and cannot).  For non-multi-key-aware reducers,
+it defaults to I<not> copying the field separator,
+but it will copy it (the old default) with the C<--copy-fs> option
+
+=back
+
+=head2 2.45, 2013-10-07
+cleanup from de-thread-ification
+
+=over 4
+
+=item BUG FIX
+
+Corrected a fast busy-wait in L<dbmerge>.
+
+=item ENHANCEMENT
+
+Endgame mode enabled in L<dbmerge>; it (and also large cases of L<dbsort>)
+should now exploit greater parallelism.
+
+=item BUG FIX
+
+Test case with C<Fsdb::BoundedQueue> (gone since 2.44) now removed.
 
 =back
 

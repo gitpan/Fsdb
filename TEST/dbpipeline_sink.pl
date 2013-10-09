@@ -10,12 +10,12 @@
 # in $dblibdir for details.
 #
 
-use threads;
 use Fsdb::Support::NamedTmpfile;
 use Fsdb::Filter::dbpipeline qw(dbpipeline_sink dbsort);
 use Fsdb::Filter::dbcol;
+use Fsdb::Filter::dbsort;
 use Fsdb::Filter::dbroweval;
-use v5.10;
+use 5.010;
 
 # do the equivalent of
 #
@@ -27,12 +27,12 @@ my($save_out, $sorter_thread) = dbpipeline_sink(\@writer_args,
 			'--output' => $save_out_filename,
 			dbsort(qw(-n data)));
 #			dbroweval('_data += 1;'));
-foreach (9..0, 10..19) {
+foreach (9, 8, 7, 6, 5, 10, 11, 12, 13, 14) {
     my(@row) = ($_);
     $save_out->write_rowobj(\@row);
 };
 $save_out->close;
-$sorter_thread->join;
+$sorter_thread->join();
 
 # read it back, sorted
 my $save_in = new Fsdb::IO::Reader(-file => $save_out_filename);

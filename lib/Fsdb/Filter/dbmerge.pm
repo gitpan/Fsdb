@@ -89,8 +89,7 @@ Default is the number of CPUs in the machine.
 =item B<--endgame> (or B<--noendgame>)
 
 Enable endgame mode, extra parallelism when finishing up.
-Still in devleopment.
-Off by default.
+(On by default.)
 
 =back
 
@@ -208,25 +207,21 @@ L<Fsdb(3)>
 @ISA = qw(Fsdb::Filter);
 ($VERSION) = 2.0;
 
+use 5.010;
 use strict;
 use Carp qw(croak);
 use Pod::Usage;
 
-use threads;
-use threads::shared;
-use Thread::Semaphore;
-use Thread::Queue;
-
 use IO::Pipe;
-use Fsdb::Support::Pipe;
+use IO::Select;
 
 use Fsdb::Filter;
 use Fsdb::Filter::dbmerge2;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
-use Fsdb::BoundedQueue;
 use Fsdb::Support::NamedTmpfile;
-use Fsdb::Support::OS qw($parallelism_available);
+use Fsdb::Support::OS;
+use Fsdb::Support::Freds;
 
 
 =head2 new
@@ -263,9 +258,10 @@ sub set_defaults($) {
     $self->{_info}{input_count} = 2;
     $self->{_sort_argv} = [];
     $self->{_max_parallelism} = undef;
+    $self->{_parallelism_available} = undef;
     $self->{_test} = '';
     $self->{_xargs} = undef;
-    $self->{_endgame} = undef;
+    $self->{_endgame} = 1;
     $self->set_default_tmpdir;
 }
 
@@ -327,53 +323,6 @@ sub _pretty_fn {
     return $fn;
 }
 
-=head2 _remember_ipc_item
-
-    $hint = $self->_remember_ipc_item($item)
-
-Internal: return a string "hint" that can be passed through
-threads safely, and later recovered via C<_recall_ipc_item($HINT)>.
-
-(This nonsense is because a worker thread must send a pipe over
-IPC to the main thread, but that generates "glob" errors.)
-
-=cut
-
-sub _remember_ipc_item($$) {
-    my($self, $item) = @_;
-    $self->{_work_memory_next_hint} = 0 if (!defined($self->{_work_memory_next_hint}));
-    my $hint = "///hint" . $self->{_work_memory_next_hint}++;
-    my $clean_item = $item;
-    if (ref($clean_item) =~ /^IO::Pipe/) {
-	# Hack:
-	# Convert the pipe to a reader, so that we don't get excess open writers
-	# that prevent EOF.
-	# (Do this by hand, rather than via ->reader(),
-	# so we don't distrurb either end.)
-	$clean_item =  $clean_item->read_side();
-    };
-    $self->{_work_memory}{$hint} = $clean_item;
-    return $hint;
-}
-
-=head2 _recall_ipc_item
-
-    $token = $self->_recall_ipc_item($item)
-
-Internal: recover a memorized work item.
-Only works once.
-
-=cut
-
-sub _recall_ipc_item($$) {
-    my($self, $hint) = @_;
-    my $memory = $self->{_work_memory}{$hint};
-    croak "dbmerge::_recall_ipc_item: forgotten $hint\n"
-	if (!defined($memory));
-    delete $self->{_work_memory}{$hint};
-    return $memory;
-}
-
 
 =head2 segment_next_output
 
@@ -403,7 +352,10 @@ sub segment_next_output($$) {
     } elsif ($output_type eq 'ipc') {
 	# endgame-mode: send stuff down in-memory queues
 	# $out = shared_clone(new Fsdb::BoundedQueue);
-	$out = new IO::Pipe;
+	my $read_fh = new IO::Handle;
+	my $write_fh = new IO::Handle;
+	pipe $read_fh, $write_fh;
+	$out = [ $read_fh, $write_fh ];
     } else {
 	die "internal error: dbmege.pm:segment_next_output bad output_type: $output_type\n";
     };
@@ -425,7 +377,7 @@ sub segment_cleanup($$) {
     my($self, $file) = @_;
     if (ref($file)) {
 	if (ref($file) =~ /^IO::/) {
-	    print "# closing IO::Pipe\n" if ($self->{_debug});
+	    print "# closing IO::*\n" if ($self->{_debug});
 	    $file->close;
 	} elsif (ref($file) eq 'Fsdb::BoundedQueue') {
 	    # nothing to do
@@ -451,6 +403,19 @@ sub segment_cleanup($$) {
     };
 }
 
+=head2 _unique_id
+
+    $id = $self->_unique_id()
+
+Generate a sequence number for debugging.
+
+=cut
+sub _unique_id() {
+    my($self) = @_;
+    $self->{_unique_id} //= 0;
+    return $self->{_unique_id}++;
+};
+
 
 =head2 segments_merge2_run
 
@@ -462,10 +427,8 @@ Internal: do the actual merge2 work (maybe our parent put us in a
 thread, maybe not).
 
 =cut
-our $unique_id :shared;
-sub segments_merge2_run($$$$$) {
-    my($self, $out_fn, $is_final_output, $in0, $in1) = @_;
-    my $id = $unique_id++;
+sub segments_merge2_run($$$$$$) {
+    my($self, $out_fn, $is_final_output, $in0, $in1, $id) = @_;
 
     my @merge_options = qw(--autorun --nolog);
     push(@merge_options, '--noclose', '--saveoutput' => \$self->{_out})
@@ -487,47 +450,10 @@ sub segments_merge2_run($$$$$) {
 
     $self->segment_cleanup($in0);
     $self->segment_cleanup($in1);
-    if (ref($out_fn) =~ /^IO::/ && !$is_final_output) {
-        print "# segments_merge2_run: merge closing out " . ref($out_fn) . " h$debug_msg\n"
+    if (!$is_final_output) {
+        print "# segments_merge2_run: merge closing out " . ref($out_fn) . " $debug_msg\n"
 	    if ($self->{_debug});
-	$out_fn->close;
     };
-}
-
-=head2 segments_merge2_prepare
-
-    $out = $self->segments_merge2_prepare($go_sem, $filename, $force_start);
-
-Internal: release a forked thread (bound by $GO_SEM).
-Always if $FORCE_START, otherwise only if we have free parallelism.
-
-Returns either the semaphore (if it's not started)
-or the thread (if it is started).
-
-=cut
-
-sub segments_merge2_prepare($$$$) {
-    my($self, $go_sem, $out_fn, $force_start) = @_;
-    #
-    # Note there's a race in our check of parallelism available
-    # and letting it go.
-    # It's not REALLY a race because only one thread releases threads,
-    # and it doesn't matter because an extra active thread is not
-    # the end of the world.
-    #
-    my($out_to_queue) = (ref($out_fn) =~ m@^(Fsdb::BoundedQueue|IO::)@) ? 1 : 0;
-    $force_start = 1 if ($out_to_queue);
-    if ($parallelism_available <= 0 && !$force_start) {
-	print "# segments_merge2_prepare: merge thread for " . _pretty_fn($out_fn) . " postponed\n" if ($self->{_debug});
-	return [$go_sem, $out_fn];
-    };
-    # send it off!
-    if ($self->{_debug}) {
-	my $reason = ($parallelism_available <= 0) ? 'forced' : 'free';
-        print "# segments_merge2_prepare: merge thread for " . _pretty_fn($out_fn) . " started, $reason\n";
-    };
-    $go_sem->up() if (defined($go_sem));
-    return [$out_to_queue, $out_fn];
 }
 
 
@@ -541,7 +467,7 @@ Internal: put $WORK on the queue at $DEPTH, updating the max count.
 
 sub enqueue_work($$$) {
     my($self, $depth, $work) = @_;
-    $self->{_work_max_files}[$depth] = 0 if (!defined($self->{_work_max_files}[$depth]));
+    $self->{_work_max_files}[$depth] //= 0;
     $self->{_work_max_files}[$depth]++;
     push(@{$self->{_work}[$depth]}, $work);
 };
@@ -559,9 +485,10 @@ Also release any queued threads.
 sub segments_merge_one_depth($$) {
     my($self, $depth) = @_;
 
-    my $work_ref = $self->{_work}[$depth];
+    my $work_depth_ref = $self->{_work}[$depth];
+    return if ($#$work_depth_ref == -1);   # no work at this dpeth for now
+
     my $closed = $self->{_work_closed}[$depth];
-    my $ipc = $self->{_ipc};
 
     print "# segments_merge_one_depth: scanning $depth\n" if ($self->{_debug});
     #
@@ -576,39 +503,43 @@ sub segments_merge_one_depth($$) {
     # and complicated,
     # so it was dropped when paralleism was added.
     #
-    while ($#{$work_ref} >= ($closed ? 0 : 3)) {
-	if ($#{$work_ref} == 0) {
+    while ($#{$work_depth_ref} >= ($closed ? 0 : 3)) {
+	if ($#{$work_depth_ref} == 0) {
 	    last if (!$closed);
 	    # one left, just punt it next
 	    print "# segments_merge_one_depth: runt at depth $depth pushed to next depth.\n" if ($self->{_debug});
-	    $self->enqueue_work($depth + 1, shift @{$work_ref});
-	    die "internal error\n" if ($#{$work_ref} != -1);
+	    $self->enqueue_work($depth + 1, shift @{$work_depth_ref});
+	    die "internal error\n" if ($#{$work_depth_ref} != -1);
 	    last;
 	};
 	# are they blocked?  force-start them if they are
 	my $waiting_on_inputs = 0;
 	foreach my $i (0..1) {
-	    my($status, $fn) = ($work_ref->[$i][0], $work_ref->[$i][1]);
-	    if (ref($status) eq 'Thread::Semaphore') {
-		print "# segments_merge_one_depth: depth $depth forced start on $fn.\n" if ($self->{_debug});
-		$self->segments_merge2_prepare($status, $fn, 1);
-		$work_ref->[$i][0] = undef;   # note that it's started
-	    } elsif ($status == 0) {
-		print "# segments_merge_one_depth: depth $depth waiting on working " . _pretty_fn($fn) . ".\n" if ($self->{_debug});
+	    my $work_ref = $work_depth_ref->[$i];
+	    if ($work_ref->[0] == -1) {
+		print "# segments_merge_one_depth: depth $depth forced start on $work_ref->[1].\n" if ($self->{_debug});
+		&{$work_ref->[2]}($work_ref);  # start it
 		$waiting_on_inputs++;
-	    } elsif ($status == 1) {
+	    } elsif ($work_ref->[0] == 0) {
+		print "# segments_merge_one_depth: depth $depth waiting on working " . _pretty_fn($work_ref->[1]) . ".\n" if ($self->{_debug});
+		$waiting_on_inputs++;
+	    } elsif ($work_ref->[0] == 1) {
+		# running, so move fred to zombie queue; otherwise ok
+		print "# segments_merge_one_depth: pushing job to zombie list.\n" if ($self->{_debug});
+		push(@{$self->{_zombie_work}}, $work_ref);
+	    } elsif ($work_ref->[0] == 2) {
 		# input is done
 	    } else {
-		die "interal error: unknown status $status\n";
+		die "interal error: unknown status $work_ref->[0]\n";
 	    };
 	};
 	# bail out if inputs are not done yet.
 	return if ($waiting_on_inputs);
 
 	# now we KNOW we do not have blocked work
-	my(@two_fn) = (shift @${work_ref}, shift @${work_ref});
+	my(@two_fn) = (shift @${work_depth_ref}, shift @${work_depth_ref});
 	my $output_type = 'file';
-	if ($closed && $#{$work_ref} == -1 && $depth == $#{$self->{_work}}) {
+	if ($closed && $#{$work_depth_ref} == -1 && $depth == $#{$self->{_work}}) {
 	    $output_type = 'final';
 	} elsif ($self->{_endgame} && $closed && $self->{_work_max_files}[$depth] <= $self->{_endgame_max_files}) {
 	    # endgame mode currently disabled... its' 10x slower than writing to files (!)
@@ -627,32 +558,48 @@ sub segments_merge_one_depth($$) {
 	if ($output_type eq 'final') {
 		# last time: do it here, in-line
 		# so that we update $self->{_out} in the main thread
-		$self->segments_merge2_run($out_fn, 1, $two_fn[0][1], $two_fn[1][1]);
-		# signal ourselves that we're really done
-		$ipc->enqueue([-1, 'merge-final']);
+		$self->segments_merge2_run($out_fn, 1, $two_fn[0][1], $two_fn[1][1], $self->_unique_id());
 		return;
 	};
 	#
-	# fork a thread to do the merge
+	# fork a Fred to do the merge
 	#
-	my $go_sem = Thread::Semaphore->new(0);
-	my $out_fn_hint = $self->_remember_ipc_item($out_fn);
-	my $merge_thread = threads->new(
-	    sub {
-		$go_sem->down();  # wait to be told to start
-		$parallelism_available--;
-		$self->segments_merge2_run($out_fn, 0, $two_fn[0][1], $two_fn[1][1]);
-		sleep(1) if (defined($self->{_test}) && $self->{_test} eq 'delay-finish');
-		$parallelism_available++;
-		$ipc->enqueue([$depth+1, $out_fn_hint]);
-		return $out_fn;
-	    }
-        );
-	# Put the thread in our queue, and maybe run it.
-	$merge_thread->detach();
- 	$self->enqueue_work($depth + 1, $self->segments_merge2_prepare($go_sem, $out_fn, $output_type ne 'file'));
-	print "# segments_merge_one_depth: looping after depth $depth planning " . _pretty_fn($two_fn[0][1]) . " and " . _pretty_fn($two_fn[1][1]) . " to " . _pretty_fn($out_fn) . ".\n" if ($self->{_debug});
-    }; 
+	my $out_fn_reader = (ref($out_fn) eq 'ARRAY') ? $out_fn->[0] : $out_fn;
+	my $out_fn_writer = (ref($out_fn) eq 'ARRAY') ? $out_fn->[1] : $out_fn;
+	$out_fn = undef;
+	my $new_work_ref = [-1, $out_fn_reader, undef];
+	my $unique_id = $self->_unique_id();
+	my $desc = "dbmerge2($two_fn[0][1],$two_fn[1][1]) => $out_fn_reader (id $unique_id)";
+	my $start_sub = sub {
+		$self->{_parallelism_available}--;
+		$new_work_ref->[0] = ($output_type eq 'ipc' ? 1 : 0);   # running
+		my $fred = new Fsdb::Support::Freds($desc, sub {
+			$out_fn_reader->close if ($output_type eq 'ipc');
+			print "# segments_merge_one_depth: Fred start $desc\n" if ($self->{_debug});
+			$self->segments_merge2_run($out_fn_writer, 0, $two_fn[0][1], $two_fn[1][1], $unique_id);
+			sleep(1) if (defined($self->{_test}) && $self->{_test} eq 'delay-finish');
+			print "# segments_merge_one_depth: Fred end $desc\n" if ($self->{_debug});
+			exit 0;
+		    }, sub {
+			my($done_fred, $exit_code) = @_;
+			# we're done!
+			print "# segments_merge_one_depth: Fred post-mortem $desc\n" if ($self->{_debug});
+			# xxx: with TEST/dbmerge_3_input.cmd I sometimes get exit code 255 (!) although things complete. 
+			# turned out Fsdb::Support::Freds::END was messing with $?.
+			croak "dbmerge: merge2 subprocess $desc, exit code: $exit_code\n" if ($exit_code != 0);
+			$new_work_ref->[0] = 2;  # done
+		    });
+		$new_work_ref->[2] = $fred;
+		$out_fn_writer->close if ($output_type eq 'ipc');  # discard
+	    };
+	$new_work_ref->[2] = $start_sub;
+	# Put the thread in our queue,
+	# and run it if it's important (pipe or final),
+	# or if we have the capacity.
+ 	$self->enqueue_work($depth + 1, $new_work_ref);
+	&$start_sub() if ($output_type ne 'file' || $self->{_parallelism_available} > 0);
+	print "# segments_merge_one_depth: looping after $desc.\n" if ($self->{_debug});
+    };
     # At this point all possible work has been queued and maybe started.
     # If the depth is closed, the work should be empty.
     # if not, there may be some files in the queue
@@ -665,11 +612,14 @@ sub segments_merge_one_depth($$) {
 Internal: read new filenames to process (from stdin)
 and send them to the work queue.
 
+Making a separate Fred to handle xargs is a lot of work, 
+but it guarantees it comes in on an IO::Handle that is selectable.
+
 =cut
 
 sub segments_xargs($) {
     my($self) = @_;
-    my $ipc = $self->{_ipc};
+    my $ipc = $self->{_xargs_ipc_writer};
 
     my $num_inputs = 0;
 
@@ -683,13 +633,14 @@ sub segments_xargs($) {
     while (my $fref = &$read_fastpath_sub()) {
 	# send each file for processing as level zero
 	print "# dbmerge: segments_xargs: got $fref->[0]\n" if ($self->{_debug});
-	$ipc->enqueue([0, $fref->[0]]);
+	$ipc->print($fref->[0] . "\n");
 	$num_inputs++;
     };
-    if ($num_inputs <= 1) {
-	$ipc->enqueue([-1, "error: --xargs, but zero or one input files; dbmerge needs at least two."]);  # signal eof-f
-    };
-    $ipc->enqueue([-1, 'xargs-eof']);
+#    if ($num_inputs <= 1) {
+#	$ipc->print("-1\terror: --xargs, but zero or one input files; dbmerge needs at least two.\n");  # signal eof-f
+#    };
+    $ipc->close;
+    $self->{_ipc_writer} = undef;
 }
 
 
@@ -746,37 +697,28 @@ can handle the output stream and recording the merge action.
 sub segments_merge_all($) {
     my($self) = @_;
 
-    # queue to handle inter-thread communication
-    my $ipc = Thread::Queue->new();
-    $self->{_ipc} = $ipc;
-
-    my $xargs_thread = undef;
+    my $xargs_select;
     if ($self->{_xargs}) {
-	$xargs_thread = threads->new(
-	    sub {
-		$self->segments_xargs();
-	    }
-	);
-	$xargs_thread->detach();
+	$xargs_select = IO::Select->new();
+	$xargs_select->add($self->{_xargs_ipc_reader});
     };
 
     #
-    # Alternate forking off new merges from finished files,
-    # and checking $ipc for finished work or new files.
+    # Alternate forking off new merges from finished files
+    # and reaping finished processes.
     #
-    # $ipc gets pairs [$depth, $item]
-    # if $depth == -1: it's a special message and item is a stirng
-    # if $depth == 0: item is a filename
-    #  if $depth > 0: item is a _remember_ipc_item that wraps either a file or a pipe or bounded queue
-    #
+    my $overall_progress = 0;
+    my $PROGRESS_START = 0.001;
+    my $PROGRESS_MAX = 2;
+    my $PROGRESS_MULTIPLIER = 2;
+    my $progress_backoff = $PROGRESS_START;
     for (;;) {
-	# test for done by signal that is_final_output has run
-#	# done?
-#	my $deepest = $#{$self->{_work}};
-#	last if ($self->{_work_closed}[$deepest] && $#{$self->{_work}[$deepest]} <= 0);
+	# done?
+	my $deepest = $#{$self->{_work}};
+	last if ($self->{_work_closed}[$deepest] && $#{$self->{_work}[$deepest]} <= 0);
 
 	#
-	# First, fork off new threads, where possible.
+	# First, put more work on the queue, where possible.
 	#
 	# Go through this loop multiple times because closing the last depth
 	# can actually allow work to start at the last+1 depth,
@@ -794,6 +736,7 @@ sub segments_merge_all($) {
 		    if (!$self->{_work_closed}[$next_depth]) {
 		        $self->{_work_closed}[$next_depth] = 1;
 			$try_again = 1;
+			$overall_progress++;
 		        print "# segments_merge_all: closed work depth $next_depth\n" if ($self->{_debug});
 		    };
 		};
@@ -801,71 +744,95 @@ sub segments_merge_all($) {
 	};
 
 	#
-	# Next, handle stuff that's finished.
-	# We do ONE thing, maybe blocking, then go back and see
-	# if we can fork off more threads.
+	# Next, handle Freds that have finished.
+	# Reap as many as possible.
 	#
-	print "# segments_merge_all: blocking on ipc\n" if ($self->{_debug});
-	my $work_aref = $ipc->dequeue();
-	my($work_depth, $work_fn) = @$work_aref;
-	if ($work_depth == -1) {
-	    if ($work_fn =~ /^error/) {
-		croak $self->{_prog} . ": $work_fn\n";
-	    } elsif ($work_fn eq 'xargs-eof') {
-		# eof from xargs, propagate it
-		print "# segments_merge_all: eof from xargs\n" if ($self->{_debug});
-		$self->{_work_closed}[0] = 1;
-		next;
-	    } elsif ($work_fn eq 'merge-final') {
-		print "# segments_merge_all: got is_final_output signal\n" if ($self->{_debug});
-		last;
-	    } else {
-		croak $self->{_prog} . ": internal error: suprising ipc signal $work_fn\n";
+	print "# segments_merge_all: reaping threads\n" if ($self->{_debug});
+	for (;;) {
+	    my $fred_or_code = Fsdb::Support::Freds::join_any();
+	    last if (ref($fred_or_code) eq '');
+	    $overall_progress++;
+	    croak "dbmerge: merge thread failed\n"
+		if ($fred_or_code->exit_code() != 0);
+	    print "# segments_merge_all: merged fred " . $fred_or_code->info() . "\n" if ($self->{_debug});
+	};
+
+	#
+	# Now start up more parallelism, if possible.
+	#
+	my $depth = 0;
+	my $i = 0;
+	while ($self->{_parallelism_available} > 0) {
+	    my $work_ref = $self->{_work}[$depth][$i];
+	    if (defined($work_ref) && $work_ref->[0] == -1) {
+		# start it (it will decrement parallelism)
+		&{$work_ref->[2]}($work_ref);
+		$overall_progress++;
+	    };
+	    # walk the whole work queue
+	    if (++$i > $#{$self->{_work}[$depth]}) {
+		last if (++$depth > $#{$self->{_work}});
+		$i = 0;
 	    };
 	};
-	croak "dbmerge: failed assert(work_depth!=-1)\n" if ($work_depth == -1);
-	$work_fn = $self->_recall_ipc_item($work_fn)
-	    if ($work_depth > 0);
-	print "# segments_merge_all: new file for " . _pretty_fn($work_fn) . " at $work_depth\n" if ($self->{_debug});
 
-	if ($work_depth == 0) {
-	    # queue first level files here
-	    $self->enqueue_work($work_depth, [1, $work_fn]);
-	    $self->{_files_cleanup}{$work_fn} = 'unlink'
-		if ($self->{_remove_inputs});
-	} else {
-	    #
-	    # If we get a new deeper file, then 
-	    # some thread finished.  We therefore need to
-	    # (1) find that file in the work queue and make it finished,
-	    # and (2) to try to release a pending thread, if any. 
-	    #
-	    my $found_finished = undef;
-	    my $found_new = undef;
-	    CLEANUP:
-	    foreach my $depth (0..$#{$self->{_work}}) {
-	        foreach my $i (0..$#{$self->{_work}[$depth]}) {
-		    last CLEANUP if ($found_finished && $found_new);
-		    my($status, $fn) = @{$self->{_work}[$depth][$i]};
-		    croak "internal error: suprise that remembered hint leaked out.\n" if ($fn =~ m@^///hint@);
-		    if (ref($status) eq 'Thread::Semaphore') {
-			next if ($found_new);
-			# release it
-			print "# segments_merge_all: merge thread released, depth $depth, file $fn\n" if ($self->{_debug});
-			$status->up();
-			$self->{_work}[$depth][$i][0] = 0;
-			$found_new = 1;
-		    } elsif ($status == 0) {
-			next if ($found_finished);
-			next if ($fn ne $work_fn);
-			print "# segments_merge_all: merge thread for $depth, $i reports $fn is done\n" if ($self->{_debug});
-			$self->{_work}[$depth][$i][0] = 1;
-			$found_finished = 1;
-		    };
+	#
+	# Handle xargs, if any.
+	#
+	# Unfortunately, we busy-loop here,
+	# because we need to alternate reaping finished processes
+	# and xargs.
+	#
+	# Fortunately, this terminates when xargs are complete.
+       	#
+	if ($self->{_xargs_ipc_status}) {
+	    my(@ready) = $xargs_select->can_read($progress_backoff);
+	    foreach my $fh (@ready) {
+		my ($fn) = $fh->getline;
+		if (defined($fn)) {
+		    chomp($fn);
+		    $self->{_files_cleanup}{$fn} = 'unlink'
+			if ($self->{_remove_inputs});
+		    $self->enqueue_work(0, [2, $fn, undef]);
+		    print "# xargs receive $fn\n" if ($self->{_debug});
+		} else {
+		    # eof, so no more xargs
+		    $self->{_work_closed}[0] = 1;
+		    $self->{_xargs_ipc_status} = undef;
 		};
-	    };
+		$overall_progress++;
+            };
+	};
+	#
+	# Avoid spinlooping.
+	#
+	if (!$overall_progress) {
+	    # No progress, so stall.
+	    print "# segments_merge_all: stalling for $progress_backoff\n" if ($self->{_debug});
+	    sleep($progress_backoff);
+	    $progress_backoff *= $PROGRESS_MULTIPLIER;  # exponential backoff
+	    $progress_backoff = $PROGRESS_MAX if ($progress_backoff > $PROGRESS_MAX);
+	} else {
+	    # Woo-hoo, did something.  Rush right back and try again.
+	    $overall_progress = 0;
+	    $progress_backoff = $PROGRESS_START;
 	};
     };
+
+    # reap endgame zombies
+    while (my $zombie_work_ref = shift(@{$self->{_zombie_work}})) {
+	next if ($zombie_work_ref->[0] == 2);
+	print "# waiting on zombie " . $zombie_work_ref->[2]->info() . "\n" if ($self->{_debug});
+	$zombie_work_ref->[2]->join();
+	croak "internal error: zombie didn't reset status\n" if ($zombie_work_ref->[0] != 2);
+    };
+
+    # reap xargs (if it didn't already get picked up)
+    if ($self->{_xargs_fred}) {
+	print "# waiting on xargs fred\n" if ($self->{_debug});
+	$self->{_xargs_fred}->join();
+    };
+    # 
 }
 
 
@@ -909,9 +876,12 @@ sub setup($) {
     };
     #
     # the _work queue consists of
-    # 1. [1, filenames] that for completed files need to be merged.
-    # 2. [$go_sem, filename] for blocked threads that, when started, will go to filename.
-    # 3. [0, filename] for files still being computed.
+    # 1. [2, filenames, fred] that for completed files need to be merged.
+    # 1a. [1, IO::Handle::Pipe, fred] for files that are being processed
+    #	    and can be merged (but are not yet done).
+    # 2. [-1, filename, $start_sub] for blocked threads that, when started
+    #       by evaling $start_sub, will go to filename.
+    # 3. [0, filename, fred] for files in the process of being computed
     #
     # Filename can be an Fsdb::BoundedQueue or IO::Pipe objects for endgame mode threads
     #
@@ -924,11 +894,33 @@ sub setup($) {
     $self->{_work}[0] = [];
     $self->{_work_closed}[0] = 0;
     $self->{_work_depth_files}[0] = 0;
+    $self->{_xargs_ipc_status} = undef;
+    $self->{_zombie_work} = [];   # collect in-process but not-yet-done freds
     if (!$self->{_xargs}) {
 	foreach (@{$self->{_inputs}}) {
-	    $self->enqueue_work(0, [1, $_]);
+	    $self->enqueue_work(0, [2, $_, undef]);
 	};
 	$self->{_work_closed}[0] = 1;
+    } else {
+        my $xargs_ipc_reader = new IO::Handle;
+	my $xargs_ipc_writer = new IO::Handle;
+	pipe($xargs_ipc_reader, $xargs_ipc_writer) or croak "cannot open pipe\n";
+	$self->{_xargs_ipc_status} = 'running';
+	$self->{_xargs_fred} = new Fsdb::Support::Freds('dbmerge:xargs',
+	    sub {
+		$SIG{PIPE} = 'IGNORE';   # in case we finish before main reads anything
+		$xargs_ipc_reader->close;
+	    	$xargs_ipc_writer->autoflush(1);
+		$self->{_xargs_ipc_writer} = $xargs_ipc_writer;
+		$self->segments_xargs();
+		exit 0;
+	    }, sub {
+	    	$self->{_xargs_ipc_status} = 'completed';
+	    });
+	$xargs_ipc_reader->autoflush(1);
+	$xargs_ipc_writer->close;
+	$self->{_xargs_ipc_reader} = $xargs_ipc_reader;
+	# actual xargs reception happens in our main loop in segments_merge_all()
     };
     #
     # control parallelism
@@ -936,21 +928,17 @@ sub setup($) {
     # For the endgame, we overcommit by a large factor
     # because in the merge tree many become blocked on the IO pipeline.
     #
-    if (!defined($self->{_max_parallelism})) {
-	$self->{_max_parallelism} = Fsdb::Support::OS::max_parallelism();
-    };
+    $self->{_max_parallelism} //= Fsdb::Support::OS::max_parallelism();
+    $self->{_parallelism_available} //= $self->{_max_parallelism};
     my $viable_endgame_processes = $self->{_max_parallelism};
     my $files_to_merge = 1;
     while ($viable_endgame_processes > 0) {
 	$viable_endgame_processes -= $files_to_merge;
 	$files_to_merge *= 2;
     };
-    $self->{_endgame_max_files} = int($files_to_merge / 2);
+    $self->{_endgame_max_files} = int($files_to_merge);
     STDOUT->autoflush(1) if ($self->{_debug});
     print "# dbmerge: endgame_max_files: " . $self->{_endgame_max_files} . "\n" if($self->{_debug});
-    if (!defined($parallelism_available)) {
-	$parallelism_available = $self->{_max_parallelism};
-    };
 }
 
 =head2 run

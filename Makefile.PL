@@ -13,8 +13,8 @@ use ExtUtils::MakeMaker;
 # from http://www.nntp.perl.org/group/perl.module-authors/2008/02/msg6277.html
 use Config;
 BEGIN {
-    die("perl without threads unsupported:  ERROR: This Perl is not built to support threads\n")
-        if (! $Config{'useithreads'});
+#    die("perl without threads unsupported:  ERROR: This Perl is not built to support threads\n")
+#        if (! $Config{'useithreads'});
     die("OS unsupported:  ERROR: Windows support is desired, but needs a tester.  Please contact the fsdb developer if you're that person\n")
         if ($Config{'osname'} =~ /^MSWin/i);
 };
@@ -41,6 +41,7 @@ my @modularized_db_programs = qw(
 	dbcolstats
 	dbcolstatscores
 	dbfilealter
+	dbfilecat
 	dbfilediff
 	dbfilepivot
 	dbfilestripcomments 
@@ -121,7 +122,7 @@ WriteMakefile(
     EXE_FILES       => [ map "bin/$_", @programs_to_install ],
     PL_FILES            => {},
     PREREQ_PM => {
-	'threads' => 1.0,
+#	'threads' => 1.0,
         'Test::More' => 0,
         'Text::CSV_XS' => 0,
         'HTML::Parser' => 0,
@@ -203,7 +204,7 @@ release:
 	cp $(SPEC_PREFIX).spec $(WEBDIR)
 	cp README.html $(WEBDIR)/$(SPEC_PREFIX)-$(VERSION)_README.html
 	cd $(WEBDIR); git add $(RPM_PREFIX)-$(VERSION)*.rpm Fsdb-$(VERSION).tar.gz $(SPEC_PREFIX)-$(VERSION)_README.html
-	cd $(WEBDIR); rm Fsdb-current.tar.gz; ln -s Fsdb-$(VERSION).tar.gz Fsdb-current.tar.gz; rm $(RPM_PREFIX)-current.noarch.rpm; ln -s $(RPM_PREFIX)-$(VERSION)-1.noarch.rpm $(RPM_PREFIX)-current.noarch.rpm; rm $(RPM_PREFIX)-current.src.rpm; ln -s $(RPM_PREFIX)-$(VERSION)-1.src.rpm $(RPM_PREFIX)-current.src.rpm; 
+	cd $(WEBDIR); rm Fsdb-current.tar.gz; ln -s Fsdb-$(VERSION).tar.gz Fsdb-current.tar.gz; rm $(RPM_PREFIX)-current.noarch.rpm; ln -s $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).noarch.rpm $(RPM_PREFIX)-current.noarch.rpm; rm $(RPM_PREFIX)-current.src.rpm; ln -s $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).src.rpm $(RPM_PREFIX)-current.src.rpm; 
 	@echo "to finish: git commit -am $(VERSION)-release; git tag -s -u johnh@isi.edu -m $(VERSION)-release fsdb-$(VERSION); cd $(WEBDIR); git commit -am \"release $(RPM_PREFIX)-$(VERSION)\""
 
 rpmlint:

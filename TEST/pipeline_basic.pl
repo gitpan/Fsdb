@@ -13,7 +13,7 @@
 # next line is just to suppress the comment about threads::shared
 use threads;
 
-use Fsdb::BoundedQueue;
+use IO::Handle;
 use Fsdb::Filter::dbcol;
 use Fsdb::Filter::dbroweval;
 
@@ -21,9 +21,12 @@ use Fsdb::Filter::dbroweval;
 #
 #   cat DATA/grades.jdb | dbcol name test1 | dbroweval '_test1 += 5;'
 
-my $pipe = new Fsdb::BoundedQueue;
-my $dbcol = new Fsdb::Filter::dbcol('--output' => $pipe, qw(name test1));
-my $dbrow = new Fsdb::Filter::dbroweval('--input' => $pipe, '_test1 += 5;');
+my $read_fh = new IO::Handle;
+my $write_fh = new IO::Handle;
+pipe $read_fh, $write_fh;
+
+my $dbcol = new Fsdb::Filter::dbcol('--output' => $write_fh, qw(name test1));
+my $dbrow = new Fsdb::Filter::dbroweval('--input' => $read_fh, '_test1 += 5;');
 
 #
 # first, just see if it works without threads

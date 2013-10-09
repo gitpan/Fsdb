@@ -143,38 +143,17 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.43, tbd tbd[0m
+   [1m2.46, 2013-10-08 continuing cleanup of our no-threads version[0m
        BUG FIX
-           Changed the sort on [4mTEST/dbsort_merge.cmd[24m to strings (from
-           numerics) so we're less succeptable to false test-failures due to
-           floating point IO differences.
+           Fixed some packaging details.  (Really, threads are no longer
+           required, missing tests in the MANIFEST.)
 
-       EXPERIMENTAL ENHANCEMENT
-           Yet more parallelism in dbmerge: new "endgame-mode" builds a merge
-           tree of processes at the end of large merge tasks to get maximally
-           parallelism.  Currently this feature is off by default because it
-           can hang for some inputs.  Enable this experimental feature with
-           "--endgame".
+       IMPROVEMENT
+           dbsort now better communicates with the merge process to avoid
+           bursty parallelism.
 
-       ENHANCEMENT
-           "Fsdb::IO" now handles being given "IO::Pipe" objects (as exercised
-           by dbmerge).
-
-       BUG FIX
-           Handling of NamedTmpfiles now supports concurrency.  This fix will
-           hopefully fix occasional "Use of uninitialized value $_ in string
-           ne at ...NamedTmpfile.pm line 93."  errors.
-
-       BUG FIX
-           Fsdb now requires perl 5.10.  This is a bug fix because some test
-           cases used to require it, but this fact was not properly
-           documented.  (Back-porting to 5.008 would require removing all "//"
-           operators.)
-
-       ENHANCEMENT
-           Fsdb now handles automatic compression of file contents.  Enable
-           compression with "dbfilealter -Z xz" (or "gz" or "bz2").  All
-           programs shoudl operate on compressed files.
+           Fsdb::IO::Writer now can take "-autoflush =" 1> for line-buffered
+           IO.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -1920,6 +1899,109 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            5.12).  Thanks to Calvin Ardi for help debugging this on a Mac with
            perl-5.12, but the fix should affect other platforms.
 
+   [1m2.43, 2013-08-27 Adds in-file compression.[0m
+       BUG FIX
+           Changed the sort on [4mTEST/dbsort_merge.cmd[24m to strings (from
+           numerics) so we're less succeptable to false test-failures due to
+           floating point IO differences.
+
+       EXPERIMENTAL ENHANCEMENT
+           Yet more parallelism in dbmerge: new "endgame-mode" builds a merge
+           tree of processes at the end of large merge tasks to get maximally
+           parallelism.  Currently this feature is off by default because it
+           can hang for some inputs.  Enable this experimental feature with
+           "--endgame".
+
+       ENHANCEMENT
+           "Fsdb::IO" now handles being given "IO::Pipe" objects (as exercised
+           by dbmerge).
+
+       BUG FIX
+           Handling of NamedTmpfiles now supports concurrency.  This fix will
+           hopefully fix occasional "Use of uninitialized value $_ in string
+           ne at ...NamedTmpfile.pm line 93."  errors.
+
+       BUG FIX
+           Fsdb now requires perl 5.10.  This is a bug fix because some test
+           cases used to require it, but this fact was not properly
+           documented.  (Back-porting to 5.008 would require removing all "//"
+           operators.)
+
+       ENHANCEMENT
+           Fsdb now handles automatic compression of file contents.  Enable
+           compression with "dbfilealter -Z xz" (or "gz" or "bz2").  All
+           programs should operate on compressed files and leave the output
+           with the same level of copmresion.  "xz" is recommended as fastest
+           and most efficient.  "gz" is produces unrepeatable output (and so
+           has no output test), it seems to insist on adding a timestamp.
+
+   [1m2.44, 2013-10-02 A major change--all threads are gone.[0m
+       ENHANCEMENT
+           Fsdb is now thread free and only uses processes for parallelism.
+           This change is a big change--the entire motivation for Fsdb-2 was
+           to exploit parallelism via threading.  Parallelism--good, but perl
+           threading--bad for performance.  Horribly bad for performance.
+           About 20x worse than pipes on my box.  (See perl bug #119445 for
+           the discussion.)
+
+       NEW "Fsdb::Support::Freds" provides a thread-like abstraction over
+           forking, with some nice support for callbacks in the parent upon
+           child termination.
+
+       ENHANCEMENT
+           Details about removing theads: "dbpipeline" is thread free, and new
+           tests to verify each of its parts.  The easy cases are
+           "dbcolpercentile", "dbcolstats", "dbfilepivot", "dbjoin", and
+           "dbcolstatscores", each of which use it in simple ways
+           (2013-09-09).  "dbmerge" is now thread free (2013-09-13), but was a
+           signficant rewrite, which brought "dbsort" along.  "dbmapreduce" is
+           partly thread free (2013-09-21), again as a rewrite, and it brings
+           "dbmultistats" along.  Full "dbmapreduce" support took much longer
+           (2013-10-02).
+
+       BUG FIX
+           When running with user-only output ("-n"), dbroweval now resets the
+           output vector $ofref after it has been output.
+
+       NEW dbcolcreate will create all columns at the head of each row with
+           the "--first" option.
+
+       NEW dbfilecat will concatinate two files, verifying that thye have the
+           same schema.
+
+       ENHANCEMENT
+           dbmapreduce now passes comments through, rather than eating them as
+           before.
+
+           Also, dbmapreduce now supports a "--" option to prevent
+           misinterpreting sub-program parameters as for dbmapreduce.
+
+       INCOMAPTIBLE CHANGE
+           dbmapreduce no longer figures out if it needs to add the key to the
+           output.  For multi-key-aware reducers, it never does (and cannot).
+           For non-multi-key-aware reducers, it defaults to add the key and
+           will now fail if the reducer adds the key (with error "dbcolcreate:
+           attempt to create pre-existing column...").  In such cases, one
+           must disable adding the key with the new option "--no-prepend-key".
+
+       INCOMAPTIBLE CHANGE
+           dbmapreduce no longer copies the input field separator by default.
+           For multi-key-aware reducers, it never does (and cannot).  For non-
+           multi-key-aware reducers, it defaults to [4mnot[24m copying the field
+           separator, but it will copy it (the old default) with the
+           "--copy-fs" option
+
+   [1m2.45, 2013-10-07 cleanup from de-thread-ification[0m
+       BUG FIX
+           Corrected a fast busy-wait in dbmerge.
+
+       ENHANCEMENT
+           Endgame mode enabled in dbmerge; it (and also large cases of
+           dbsort) should now exploit greater parallelism.
+
+       BUG FIX
+           Test case with "Fsdb::BoundedQueue" (gone since 2.44) now removed.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -1951,4 +2033,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.16.3                      2013-08-17                           Fsdb(3)
+perl v5.16.3                      2013-10-08                           Fsdb(3)

@@ -1,5 +1,5 @@
 prog='dbmapreduce'
-args='-k experiment dbcolstats duration'
+args='--prepend-key --copy-fs -k experiment -- dbcolstats --nolog duration'
 cmp='diff -cb '
 subprogs=dbcolstats
 altcmp='dbfilediff -E --exit '

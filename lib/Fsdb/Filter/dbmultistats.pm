@@ -175,7 +175,6 @@ $VERSION = 2.0;
 use strict;
 use Pod::Usage;
 use Carp;
-# use threads::shared;
 
 use Fsdb::Filter;
 use Fsdb::Filter::dbmapreduce;
@@ -293,7 +292,7 @@ sub setup ($) {
     # Added by hand below.
 
     # sigh, noclose/saveoutput didn't work
-    my @dbmapreduce_argv = (qw(--nolog --noclose)); # --noclose --saveoutput), \$self->{_out});
+    my @dbmapreduce_argv = (qw(--nolog --noclose --copy-fs)); # --noclose --saveoutput), \$self->{_out});
     # pass input and output
     push (@dbmapreduce_argv, "--input", $self->{_input});
     push (@dbmapreduce_argv, "--output", $self->{_output});

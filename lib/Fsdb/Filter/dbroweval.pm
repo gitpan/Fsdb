@@ -72,6 +72,10 @@ See example 2 below for details.
 
 Enable warnings in user supplied code.
 
+=item B<--saveoutput $OUT_REF>
+
+Save output writer (for integration with other fsdb filters).
+
 =back
 
 =for comment
@@ -205,26 +209,34 @@ Note that newly created columns I<do not> have underscore-names
 
 Thus a third equivalent is:
 
-    cat data.fsdb |
-	dbroweval -m -b '@out_args = ( -clone => $in, -cols => ($in->cols, divisible_by_ten); ' \
-	    'my $div_by_10 = (_size % 10 == 0); $ofref = [ @$fref, $div_by_10 ] if ($div_by_ten);' |
+    cat data.fsdb | \
+	dbroweval -m -b '@out_args = ( -clone => $in, \
+	         -cols => ($in->cols, divisible_by_ten); ' \
+	    'my $div_by_10 = (_size % 10 == 0); \
+	    $ofref = [ @$fref, $div_by_10 ] if ($div_by_ten);' |
 	dbcol size mean divisible_by_ten
 
 or
 
-    cat data.fsdb |
-	dbroweval -m -b '@out_args = ( -clone => $in, -cols => [qw(size mean divisible_by_ten)] ); ' \
-	    'my $div_by_10 = (_size % 10 == 0); $ofref = [ _mean, _size, $div_by_10 ] if ($div_by_ten);'
+    cat data.fsdb | \
+	dbroweval -m -b '@out_args = ( -clone => $in, \
+		-cols => [qw(size mean divisible_by_ten)] ); ' \
+	    'my $div_by_10 = (_size % 10 == 0);  \
+	    $ofref = [ _mean, _size, $div_by_10 ] if ($div_by_ten);'
 
 
 Finally, one can write different a completely different schema, although
 it's more work:
 
-    cat data.fsdb | dbroweval -m -b '@out_args = (-cols => [qw(size n)]);' '$ofref = [ _size, 1 ];'
+    cat data.fsdb | \
+	dbroweval -m -b '@out_args = (-cols => [qw(size n)]);' \
+	    '$ofref = [ _size, 1 ];'
 
 writes different columns, and
 
-    cat data.fsdb | dbroweval -n -m -b '@out_args = (-cols => [qw(n)]); my $count = 0;' -e '$ofref = [ $count ];' '$count++;'
+    cat data.fsdb | \
+	dbroweval -n -m -b '@out_args = (-cols => [qw(n)]);  \
+	    my $count = 0;' -e '$ofref = [ $count ];' '$count++;'
 
 Is a fancy way to count lines.
 
@@ -355,6 +367,7 @@ sub parse_options ($@) {
 	'n|no-output' => \$self->{_no_output}, 
 	'N|no-output-even-comments' => \$self->{_no_output_even_comments},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
+	'saveoutput=s' => \$self->{_save_output},
         'w|warnings!' => \$self->{_warnings},
 	) or pod2usage(2);
     # rest is code
@@ -433,7 +446,7 @@ sub setup ($) {
 		&$write_fastpath_sub($ofref) if (defined($ofref));
 	    ';
 	if ($self->{_manual_output}) {
-	    $row_output_code = '&$write_fastpath_sub($ofref) if (defined($ofref));';
+	    $row_output_code = 'if (defined($ofref)) { &$write_fastpath_sub($ofref); $ofref = undef; };';
 	} else {
 	    @out_args = (-clone => $self->{_in});
 	    $row_output_code = ($self->{_no_output}) ? '' :

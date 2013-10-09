@@ -267,7 +267,7 @@ sub setup ($) {
     $self->finish_io_option('inputs', -comment_handler => $self->create_pass_comments_sub);
     $self->finish_io_option('output', -clone => $self->{_ins}[0]);
 
-    croak $self->{_prog} . ": intput streams have different schemas; cannot merge\n"
+    croak $self->{_prog} . ": input streams have different schemas; cannot merge\n"
 	if ($self->{_ins}[0]->compare($self->{_ins}[1]) ne 'identical');
 
     $self->{_compare_code} = $self->create_compare_code(@{$self->{_ins}});;

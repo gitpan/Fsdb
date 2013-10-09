@@ -2,7 +2,7 @@
 
 #
 # dbcolcreate.pm
-# Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -37,6 +37,11 @@ with an optional C<DefaultValue>.
 =item B<-e> EmptyValue or B<--emtpy>
 
 Specify the value newly created columns get.
+
+=item B<-f> or B<--first>
+
+Put all new columns as the first columns of each row.
+By default, they go at the end of each row.
 
 =back
 
@@ -153,6 +158,7 @@ sub set_defaults ($) {
     my($self) = @_;
     $self->SUPER::set_defaults();
     $self->{_creations} = [];
+    $self->{_first} = undef;
     $self->{_create_values} = {};
 }
 
@@ -176,6 +182,7 @@ sub parse_options ($@) {
 	'close!' => \$self->{_close},
 	'd|debug+' => \$self->{_debug},
 	'e|empty=s' => \$self->{_empty},
+	'f|first!' => \$self->{_first},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
@@ -210,13 +217,17 @@ sub setup ($) {
     foreach (@new_cols) {
 	$existing_cols{$_} = 1;
     };
-    my $coli = $#new_cols;
-    my $insert_code = '';
+    my $coli = ($self->{_first} ? 0 : $#new_cols);
+    my $insert_args = '';
     foreach (@{$self->{_creations}}) {
 	croak $self->{_prog} . ": attempt to create pre-existing column $_.\n"
 	    if (defined($existing_cols{$_}));
 	$coli++;
-	push @new_cols, $_;
+	if ($self->{_first}) {
+	    unshift @new_cols, $_;
+	} else {
+	    push @new_cols, $_;
+	};
 	$existing_cols{$_} = 2;
 	my $val = $self->{_create_values}{$_};
 	my $quote = "'";
@@ -225,8 +236,9 @@ sub setup ($) {
 	    croak $self->{_prog} . ": internal error: cannot find reasonable way to do quoting.\n"
 		if ($val =~ /\|/);
 	};
-	$insert_code .= "\t" . '$fref->[' . $coli . '] = q' . $quote . $val . $quote . ";\n";
+	$insert_args .= "\t\t, q" . $quote . $val . $quote . "\n";
     };
+    my $insert_code = "\t" . ($self->{_first} ? "unshift" : "push") . '(@$fref' . $insert_args . ");\n";
 
     $self->finish_io_option('output', -clone => $self->{_in}, -cols => \@new_cols);
     
@@ -268,7 +280,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

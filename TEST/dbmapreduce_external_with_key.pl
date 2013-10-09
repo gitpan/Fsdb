@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
 # sleep 1;
-print "#h key\n";
-print $ARGV[0], "\n";
+print "#fsdb key\n";
+print $ARGV[0]. "-x" . "\n";
 exit 0;

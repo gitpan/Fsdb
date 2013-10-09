@@ -5,5 +5,5 @@ c	70
 d	95
 e	75
 f	95
-#   | dbcol --output [::FsdbIPC] name test1
+#   | dbcol --output [IO::Handle] name test1
 #   | dbroweval   { _test1 += 5; }

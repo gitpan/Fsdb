@@ -2,7 +2,7 @@
 
 #
 # dbsubprocess.pm
-# Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -18,13 +18,17 @@ dbsubprocess - invoke a subprocess as a Fsdb filter object
 
 =head1 SYNOPSIS
 
-dbsubprocess program [arguments...]
+    dbsubprocess [--] program [arguments...]
 
 =head1 DESCRIPTION
 
 Run PROGRAM as a process, with optional ARGUMENTS as program arguments,
 feeding its standard input and standard output
-as fsdb streams.
+as fsdb streams.  A "--" can separate arguments to dbsubprocess
+from the program and its arguments.
+
+As with similar tools, like open2, the caller is expected to take
+care that the subprocess does not deadlock.
 
 This program is primarily for internal use by dbmapreduce.
 
@@ -56,7 +60,8 @@ Enable debugging output.
 =item B<-i> or B<--input> InputSource
 
 Read from InputSource, typically a file, or - for standard input,
-or (if in Perl) a IO::Handle, Fsdb::IO or Fsdb::BoundedQueue objects.
+or (if in Perl) a IO::Handle, Fsdb::IO objects.
+(For this case, it cannot be Fsdb::BoundedQueue).
 
 =item B<-o> or B<--output> OutputDestination
 
@@ -132,8 +137,11 @@ use strict;
 use Pod::Usage;
 # use IPC::Open2;
 use Carp;
+use IO::Pipe;
 
+use Fsdb::Support::Freds;
 use Fsdb::Filter;
+use Fsdb::Filter::dbfilecat;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
 
@@ -211,103 +219,61 @@ Internal: setup, parse headers.
 sub setup ($) {
     my($self) = @_;
 
+    shift @{$self->{_external_command_argv}}
+	if ($#{$self->{_external_command_argv}} >= 0 && $self->{_external_command_argv}[0] eq '--');
     croak $self->{_prog} . ": no program given.\n"
         if ($#{$self->{_external_command_argv}} < 0);
 
-    $self->finish_io_option('input', -comment_handler => $self->create_pass_comments_sub('_to_subproc_out'));
-}
-
-=head2 _subproc_preprocessor
-
-    $filter->_subproc_preprocessor
-
-(internal)
-Send output to the subprocess.
-
-=cut
-
-sub _subproc_preprocessor ($) {
-    my($self) = @_;
-
-    $self->{_from_subproc_fh}->close;
-    delete $self->{_from_subproc_fh};
-
-    #
-    # Here we're going to send the subproc stuff (as text).
-    #
-    my $read_fastpath_sub = $self->{_in}->fastpath_sub();
-    $self->{_to_subproc_out} = new Fsdb::IO::Writer(-fh => $self->{_to_subproc_fh}, -clone => $self->{_in});
-    my $to_subproc_fastpath_sub = $self->{_to_subproc_out}->fastpath_sub();
-    my $fref;
-    while ($fref = &$read_fastpath_sub()) {
-	&$to_subproc_fastpath_sub($fref);
+    my $input_ref = ref($self->{_input});
+    if ($input_ref =~ /^Fsdb::BoundedQueue/) {
+	croak $self->{_prog} . ": cannot handle BoundedQueue any more.\n"
+    } elsif ($input_ref =~ /^IO::/) {
+	$self->{_in_fileno} = $self->{_input}->fileno;
+    } elsif ($input_ref =~ /^Fsdb::IO::Reader/) {
+	# start up a converter Fred
+        my $pipe = new IO::Pipe;
+	my $input = $self->{_input};
+	my $input_fred = new Fsdb::Support::Freds('dbsubprocess_Fsdb::IO::Reader_converter',
+	    sub {
+		$pipe->writer();
+		new Fsdb::Filter::dbfilecat(
+		    '--autorun',
+		    '--nolog',
+		    '--input' => $input,
+		    '--output' => $pipe);
+		exit 0;
+	    });
+	$self->{_input_fred} = $input_fred;
+	$pipe->reader();
+	$self->{_in_fileno} = $pipe->fileno;
+    } elsif ($input_ref eq '' && $self->{_input} eq '-') {
+	$self->{_in_fileno} = 0;   # stdin
+    } elsif ($input_ref eq '') {
+	# a file
+	my $fh = IO::File->new($self->{_input}, "r");
+	$fh->binmode;
+	$self->{_in_fileno} = $fh->fileno;
+    } else {
+	croak $self->{_prog} . ": unknown input method (ref: $input_ref).\n"
     };
-    $self->{_to_subproc_out}->close;
-    $self->{_to_subproc_fh}->close;
-    delete $self->{_to_subproc_fh};
-}
 
-=head2 _subproc_postprocessor
-
-    $filter->_subproc_postprocessor
-
-(internal)
-Read output from the subprocess and convert back to a fsdb stream.
-
-=cut
-
-sub _subproc_postprocessor ($) {
-    my($self) = @_;
-
-    $self->{_from_subproc_fsdb} =  new Fsdb::IO::Reader(-fh => $self->{_from_subproc_fh}, -comment_handler => $self->create_pass_comments_sub);
-    $self->finish_io_option('output', -clone => $self->{_from_subproc_fsdb});
-
-    my $from_subproc_fastpath_sub = $self->{_from_subproc_fsdb}->fastpath_sub();
-    my $write_fastpath_sub = $self->{_out}->fastpath_sub();
-    my $fref;
-
-    while ($fref = &{$from_subproc_fastpath_sub}()) {
-	&{$write_fastpath_sub}($fref);
+    my $output_ref = ref($self->{_output});
+    if ($output_ref =~ /^Fsdb::BoundedQueue/) {
+	croak $self->{_prog} . ": cannot handle BoundedQueue any more.\n"
+    } elsif ($output_ref =~ /^IO::/) {
+	$self->{_out_fileno} = $self->{_output}->fileno;
+    } elsif ($output_ref =~ /^Fsdb::IO::Writer/) {
+	croak $self->{_prog} . ": cannot handle Fsdb::IO::Writer yet.\n"
+    } elsif ($output_ref eq '' && $self->{_output} eq '-') {
+	$self->{_out_fileno} = 1;   # stdout
+    } elsif ($output_ref eq '') {
+	# a file
+	my $fh = IO::File->new($self->{_output}, "w");
+	$fh->binmode;
+	$self->{_out_fileno} = $fh->fileno;
+    } else {
+	croak $self->{_prog} . ": unknown output method.\n"
     };
-}
-
-=head2 _dbsubprocess_open2
-
-    ($pid, $from_child, $to_child) = _open2('some', 'cmd', 'and', 'args');
-
-Cribbed off of L<IPC::Open3.pm> to avoid leaking symbols in perl-5.10.0,
-but simplified considerably.
-Basically the C<Symbol.pm> GENnn symbols were leaking, for whatever reason.
-
-This command cannot fail (it will die if it fails).
-
-=cut
-
-sub _dbsubprocess_open2 {
-    my $parent_rdr = new IO::Handle;
-    my $parent_wtr = new IO::Handle;
-    pipe CHILD_RDR, $parent_wtr or die "cannot pipe\n";
-    pipe $parent_rdr, CHILD_WTR or die "cannot pipe\n";
-
-    my $pid = fork;
-    croak "dbsubprocess: fork failed\n" if (!defined($pid));
-    if ($pid == 0) {
-	# in child
-	untie *STDIN;
-	untie *STDOUT;
-	$parent_wtr->close;
-	open \*STDIN, "<&=" . fileno CHILD_RDR;
-	$parent_rdr->close;
-	open \*STDOUT, ">&=" . fileno CHILD_WTR;
-	# ignore stderr
-	exec @_ or croak "cannot exec: " . join(" ", @_) . "\n";
-	# never returns, either way.
-	die;   # just in case
-    };
-    # in parent
-    close CHILD_RDR;
-    close CHILD_WTR;
-    return ($pid, $parent_rdr, $parent_wtr);
 }
 
 =head2 run
@@ -329,47 +295,59 @@ sub run ($) {
 	$SIG{'PIPE'} = sub { };
     };
 
+    #
     # run the subproc
-    my $subproc_pid;
-    my $from_child;
-    my $to_child;
-    ($subproc_pid, $from_child, $to_child) = _dbsubprocess_open2(@{$self->{_external_command_argv}});
-    $self->{_from_subproc_fh} = $from_child;
-    $self->{_to_subproc_fh} = $to_child;
-    # open2 must write those variables
-#    $subproc_pid = IPC::Open2($self->{_from_subproc_fh}, $self->{_to_subproc_fh}, @{$self->{_external_command_argv}});
-
+    # most of this is cribbed from IPC::Open2, but simplified.
     #
-    # Deadlock warning: we've now forked (in open2)
-    # and need separate threads to read and write to the subproc.
-    # We fork a subprocessor thread to write to the subproc.
-    # and we stick around to get stuff from the subproc.
-    # (We used to do this the other way,
-    # but we want output to be in the main thread so we can save _out.)
-    #
-
-    # Need a thread to send input to subproc
-    my $subproc_preprocessor_thread = threads->new( sub {
-	$self->_subproc_preprocessor;
-    } );
-    $self->{_subproc_preprocessor_thread} = $subproc_preprocessor_thread;
-
-    # Convert the output back to fsdb here.
-    $self->{_to_subproc_fh}->close;
-    delete $self->{_to_subproc_fh};
-    $self->_subproc_postprocessor;
-    $self->{_from_subproc_fh}->close;  # clean up the other out of paranoia
-    delete $self->{_from_subproc_fh};
-
-    $self->{_subproc_preprocessor_thread}->join;
-    # and reap the subprocess
-    waitpid $subproc_pid, 0 if (defined($subproc_pid));
+    my $child_rdr_fd = $self->{_in_fileno};
+    croak $self->{_prog} . ": internal error, in_fileno not ready.\n" if (!defined($child_rdr_fd));
+    my $child_wtr_fd = $self->{_out_fileno};
+    croak $self->{_prog} . ": internal error, out_fileno not ready.\n" if (!defined($child_wtr_fd));
+    my $args_ref = \@{$self->{_external_command_argv}};
+    my $fred = new Fsdb::Support::Freds('dbsubprocess', 
+	sub {
+	    # in child
+	    untie *STDIN;
+	    untie *STDOUT;
+	    open \*STDIN, "<&=", $child_rdr_fd or croak $self->{_prog} . ": cannot reopen stdin from $child_rdr_fd\n";
+	    open \*STDOUT, ">&=", $child_wtr_fd or croak $self->{_prog} . ": cannot reopen stdout to $child_wtr_fd\n";
+	    # ignore stderr
+	    exec @$args_ref or croak $self->{_prog} . ": cannot exec: " . join(" ", @$args_ref) . "\n";
+	    # never returns, either way.
+	    die;   # just in case
+	});
+    $self->{_fred} = $fred;
 }
 
+=head2 finish
+
+    $filter->finish();
+
+Internal: run over all data rows.
+
+=cut
+sub finish($) {
+    my($self) = @_;
+
+    # and reap the subprocess
+    foreach my $fred ($self->{_input_fred}, $self->{_fred}) {
+	if (defined($fred)) {
+	    $fred->join();
+	    croak $self->{_prog} . ": fred failed: " . $fred->error()
+		if ($fred->error());
+	};
+    };
+    # fake up _out
+    my $out = IO::Handle->new_from_fd($self->{_out_fileno}, "w")
+	    or croak $self->{_prog} . ": cannot write log\n";
+    $self->{_out} = $out;
+    $self->SUPER::finish();  # will close it
+#	$out->print("# " . $self->compute_program_log() . "\n");
+}
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

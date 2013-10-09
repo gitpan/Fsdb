@@ -29,5 +29,4 @@ requires:
   Test::More: 0
   Text::CSV_XS: 0
   XML::Simple: 0
-  threads: 1
-version: 2.43
+version: 2.46

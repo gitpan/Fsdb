@@ -306,12 +306,18 @@ sub run ($) {
     while ($fref = &$read_fastpath_sub()) {
 	# copy and send to stats
 	$copy_writer->write_rowobj($fref);
+	# with forking we have to close output explicitly
+	# otherwise we block on the pipe(2) to the subprocesses.
 	foreach (0..$#$columns_aref) {
 	    $stats_sinks[$_]->write_row($fref->[$colis_aref->[$_]]);
 	};
     };
     # close up both
     $copy_writer->close;
+    foreach (0..$#$columns_aref) {
+	$stats_sinks[$_]->close;
+	$stats_sinks[$_] = undef;
+    };
     my @means;
     my @stddevs;
     foreach (0..$#$columns_aref) {

@@ -309,16 +309,16 @@ sub setup ($) {
     if ($self->{_pre_sorted}) {
 	# pre-sorted, so just read it
 	$self->finish_io_option('input', -comment_handler => $self->create_delay_comments_sub);
-	$self->{_sorter_thread} = undef;
+	$self->{_sorter_fred} = undef;
     } else {
 	# not sorted, so sort it and read that
 	my @sort_args = ('--nolog', $self->{_target_column});
 	unshift(@sort_args, '--descending') if ($self->{_sort_order} == -1);
 	unshift(@sort_args, ($self->{_sort_as_numeric} ? '--numeric' : '--lexical'));
-	my($new_reader, $new_thread) = dbpipeline_filter($self->{_input}, [-comment_handler => $self->create_delay_comments_sub], dbsort(@sort_args));
+	my($new_reader, $new_fred) = dbpipeline_filter($self->{_input}, [-comment_handler => $self->create_delay_comments_sub], dbsort(@sort_args));
 	$self->{_pre_sorted_input} = $self->{_input};
 	$self->{_in} = $new_reader;
-	$self->{_sorter_thread} = $new_thread;
+	$self->{_sorter_fred} = $new_fred;
     };
     $self->{_target_coli} = $self->{_in}->col_to_i($self->{_target_column});
     croak $self->{_prog} . ": target column " . $self->{_target_column} . " is not in input stream.\n"
@@ -436,9 +436,9 @@ sub run ($) {
 	&$write_fastpath_sub($fref);
     };
 
-    if (defined($self->{_sorter_thread})) {
-	$self->{_sorter_thread}->join;
-	$self->{_sorter_thread} = undef;
+    if (defined($self->{_sorter_fred})) {
+	$self->{_sorter_fred}->join();
+	$self->{_sorter_fred} = undef;
     };
 }
 

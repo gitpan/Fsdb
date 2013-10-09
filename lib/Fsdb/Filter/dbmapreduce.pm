@@ -2,8 +2,8 @@
 
 #
 # dbmapreduce.pm
-# Copyright (C) 1991-2011 by John Heidemann <johnh@isi.edu>
-# $Id$
+# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+# $Id: 1e25691a19e98de45f517c2a454ccd40580c1348 $
 #
 # This program is distributed under terms of the GNU general
 # public license, version 2.  See the file COPYING
@@ -19,38 +19,35 @@ dbmapreduce - reduce all input rows with the same key
 
 =head1 SYNOPSIS
 
-    dbmapreduce [-dMS] [-k KeyField] [-f CodeFile] [-C filter-code] [ReduceCommand [ReduceArguments...]]
+    dbmapreduce [-dMS] [-k KeyField] [-f CodeFile] [-C Filtercode] [--] [ReduceCommand [ReduceArguments...]]
 
 =head1 DESCRIPTION
 
 Group input data by KeyField,
-then reduce each group.
+then apply a function (the "reducer") to each group.
 The reduce function can be an external program
 given by ReduceCommand and ReduceArguments,
-or an Perl subroutine given by CODE.
+or an Perl subroutine given in CodeFile or FilterCode.
 
-This program thus implements Google-style map/reduce,
-but executed sequentially.
-With the C<-M> option, the reducer is given multiple groups
-(as with Google), but not in any guaranteed order
-(while Google guarantees they arive in lexically sorted order).
-However without it, a stronger invariant
-is provided: each reducer is given exactly one group.
+If a "--" appears before reduce command,
+arguments after the -- passed the the command.
+
+
+=head2 Grouping (The Mapper)
 
 By default the KeyField is the first field in the row.
 Unlike Hadoop streaming, the -k KeyField option can explicitly
 name where the key is in any column of each input row.
 
-The KeyField used for each Reduce is added to the beginning of each 
-row of reduce output.
+By default, we sort the data to make sure data is grouped by key.
+If the input is already grouped, the C<-S> option avoids this cost.
 
-The reduce function can do anything, emitting one or more output records.
-However, it must have the same output field separator as the input data.
-(In some cases this case may not occur, for example, input data with -FS
-and a reduce function of dbstats.  This bug needs to be fixed in the future.)
+
+=head2 The Reducer
 
 Reduce functions default to be shell commands.
 However, with C<-C>, one can use arbitrary Perl code
+
 (see the C<-C> option below for details).
 the C<-f> option is useful to specify complex Perl code
 somewhere other than the command line.
@@ -62,24 +59,74 @@ It is expected to generate the output header,
 and it may generate no data rows itself, or a null data row
 of its choosing.
 
+=head2 Output
 
-Assumptions and requirements:	
+For non-multi-key-aware reducers,
+we add the KeyField use for each Reduce
+is in the output stream.
+If this addition is not desired, use C<--no-prepend-key>.
+(Previously this happend autmoatically.)
+We also insure that the output field seperator is the
+same as the input field separator.
+
+Adding the key and adjusting the output field separator
+is not possible for 
+non-multi-key-aware reducers.
+
+
+=head2 Comparison to Related Work
+
+This program thus implements Google-style map/reduce,
+but executed sequentially.
+
+For input, these systems include a map function and apply it to input data
+to generate the key.
+We assume this key generation (the map function)
+has occured head of time.
+
+We also allow the grouping key to be in any column.  
+Hadoop Streaming requires it to be in the first column.
+
+By default, the reducer gets exactly (and only) one key.
+This invariant is stronger than Google and Hadoop.
+They both pass multiple keys to the
+reducer, insuring that each key is grouped together.
+With the C<-M> option, we also pass multiple multiple groups to the reducer.
+
+Unlike those systems, with the C<-S> option
+we do not require the groups arrive in any particular
+order, just that they be grouped together.
+(They guarantees they arive in lexically sorted order).
+However, with C<-S> we create lexical ordering.
+
+With C<--prepend-key> we insure that the KeyField is in the output stream;
+other systems do not enforce this.
+
+
+=head2 Assumptions and requirements
 
 By default, data can be provided in arbitrary order
 and the program consumes O(number of unique tags) memory,
 and O(size of data) disk space.
 
-With the -S option, data must arrive group by tags (not necessarily sorted),
+With the C<-S> option, data must arrive group by tags (not necessarily sorted),
 and the program consumes O(number of tags) memory and no disk space.
 The program will check and abort if this precondition is not met.
 
-With two -S's, program consumes O(1) memory, but doesn't verify
+With two C<-S>'s, program consumes O(1) memory, but doesn't verify
 that the data-arrival precondition is met.
 
-Although painful internally,
-the field seperators of the input and the output
-can be different.
-(Early versions of this tool prohibited such variation.)
+The field seperators of the input and the output
+can now be different
+(early versions of this tool prohibited such variation.)
+With C<--copy-fs> we copy the input field separator to the output,
+but only for non-multi-key-aware reducers.
+(this used to be done automatically).
+
+
+=head2 Known bugs
+
+As of 2013-09-21, we don't verify key order with options C<-M -S>.
 
 
 =head1 OPTIONS
@@ -112,6 +159,18 @@ do not expect an extra argument.
 (Internal, non-map-aware Perl reducers are always given 
 the current key as an argument.)
 
+=item B<--prepend-key>
+
+Add the current key into the reducer output
+for non-multi-key-aware reducers only.
+Not done by default.
+
+=item B<--copy-fs> or B<--copy-fieldseparator>
+
+Change the field separator of a
+non-multi-key-aware reducers to match the input's field separator.
+Not done by default.
+
 =item B<-C FILTER-CODE> or B<--filter-code=FILTER-CODE>
 
 Provide FILTER-CODE, Perl code that generates and returns
@@ -134,7 +193,7 @@ So this command:
 is the same as the example
 
     cat DATA/stats.fsdb | \
-	dbmapreduce -k experiment dbcolstats duration
+	dbmapreduce -k experiment -- dbcolstats duration
 
 except that with C<-C> there is no forking and so things run faster.
 
@@ -148,7 +207,7 @@ and close the output Fsdb stream.  (If this assumption is not
 met the map/reduce will be aborted.)
 
 For non-map-reduce-aware filters,
-when the filter-generator code runs, C<@_[0]> will be the current key.
+when the filter-generator code runs, C<$_[0]> will be the current key.
 
 =item B<-f CODE-FILE> or B<--code-file=CODE-FILE>
 
@@ -164,7 +223,8 @@ Thus, if reducer.pl has the code.
 
 Then the command
 
-    cat DATA/stats.fsdb | dbmapreduce -k experiment -f reducer.pl -C make_reducer
+    cat DATA/stats.fsdb | \
+	dbmapreduce -k experiment -f reducer.pl -C make_reducer
 
 does the same thing as the example.
 
@@ -174,6 +234,13 @@ does the same thing as the example.
 Enable warnings in user supplied code.
 Warnings are issued if an external reducer fails to consume all input.
 (Default to include warnings.)
+
+=item B<-T TmpDir>
+
+where to put tmp files.
+Also uses environment variable TMPDIR, if -T is 
+not specified.
+Default is /tmp.
 
 =back
 
@@ -231,7 +298,8 @@ end_standard_fsdb_options
 
 =head2 Command:
 
-    cat DATA/stats.fsdb | dbmapreduce -k experiment dbcolstats duration
+    cat DATA/stats.fsdb | \
+	dbmapreduce --prepend-key -k experiment -- dbcolstats duration
 
 =head2 Output:
 
@@ -250,12 +318,13 @@ L<dbrowsplituniq>
 
 =head1 CLASS FUNCTIONS
 
+OLD TEXT:
 A few notes about the internal structure:
-L<dbmapreduce> uses two to four threads to run.
-An optional thread C<$self->{_in_thread}> sorts the input.
-The main thread then reads input and groups input by key.
+L<dbmapreduce> uses two to four threads (actually Freds) to run.
+An optional thread C<$self->{_in_fred}> sorts the input.
+The main process reads input and groups input by key.
 Each group is passed to a
-secondary thread C<$self->{_reducer_thread}>
+secondary fred C<$self->{_reducer_thread}>
 that invokes the reducer on each group
 and does any ouptut.
 If the reducer is I<not> map-aware, then
@@ -263,23 +332,53 @@ we create a final postprocessor thread that
 adds the key back to the output.
 Either the reducer or the postprocessor thread do output.
 
+NEW VERSION with Freds:
+
+A few notes about parallelism, since we have fairly different structure
+depending on what we're doing:
+
+1. for multi-key aware reducers, there is no output post-processing.
+
+1a. if input is sorted and there is no input checking (-S -S),
+we run the reducer in our own process.
+(F<TEST/dbmapreduce_multiple_aware_sub.cmd>)
+
+1b. with grouped input and input checking (-S), 
+we fork off an input process that checks grouping,
+then run the reducer in our process.
+(F<TEST/dbmapreduce_multiple_aware_sub_checked.cmd>)
+xxx: case 1b not yet done
+
+1c. with ungrouped input,
+we invoke an input process to do sorting,
+then run the reducer in our process.
+(F<TEST/dbmapreduce_multiple_aware_sub_ungrouped.cmd>)
+
+2. for non-multi-key aware.
+A sorter thread groups content, if necessary.
+We breaks stuff into groups
+and feeds them to a reducer Fred, one per group.
+A dedicated additional Fred merges output and addes the missing key,
+if necessary.
+Either way, output ends up in a file.
+A finally postprocesser thread merges all the output files.
+
 =cut
 
 @ISA = qw(Fsdb::Filter);
 $VERSION = 2.0;
 
-require 5.010;  # sigh, threads in 5.008 are too primitive for The Brave New World
+use 5.010;
 use strict;
 use Pod::Usage;
-use threads;
-use threads::shared;
 use Carp;
 
 use Fsdb::Filter;
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
 use Fsdb::Filter::dbsubprocess;
-use Fsdb::Filter::dbpipeline qw(dbpipeline_filter dbpipeline_open2 dbsort dbsubprocess);
+use Fsdb::Support::NamedTmpfile;
+use Fsdb::Filter::dbpipeline qw(dbpipeline_filter dbpipeline_sink dbsort dbcolcreate dbfilecat dbfilealter dbsubprocess);
 
 my $REDUCER_GROUP_SYNCHRONIZATION_FLAG = 'reducer group synchronization flag';
 
@@ -320,9 +419,12 @@ sub set_defaults ($) {
     $self->{_reducer_is_multikey_aware} = undef;
     $self->{_external_command_argv} = [];
     $self->{_pass_current_key} = undef;
+    $self->{_prepend_key} = undef;
+    $self->{_copy_fscode} = undef;
     $self->{_filter_generator_code} = undef;
     $self->{_code_files} = [];
     $self->{_warnings} = 1;
+    $self->set_default_tmpdir;
 }
 
 =head2 parse_options
@@ -344,15 +446,18 @@ sub parse_options ($@) {
 	'autorun!' => \$self->{_autorun},
 	'C|filter-code|code=s' => \$self->{_filter_generator_code},
 	'close!' => \$self->{_close},
+	'copy-fs|copy-fieldseparator!' => \$self->{_copy_fscode},
 	'd|debug+' => \$self->{_debug},
 	'f|code-files=s@' => $self->{_code_files},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'k|key=s' => \$self->{_key_column},
 	'K|pass-current-key!' => \$self->{_pass_current_key},
+	'prepend-key!' => \$self->{_prepend_key},
 	'log!' => \$self->{_logprog},
 	'M|multiple-ok!' => \$self->{_reducer_is_multikey_aware},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	'S|pre-sorted+' => \$self->{_pre_sorted},
+	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
 	'saveoutput=s' => \$self->{_save_output},
         'w|warnings!' => \$self->{_warnings},
 	) or pod2usage(2);
@@ -367,8 +472,13 @@ Internal: setup, parse headers.
 
 =cut
 
-sub setup ($) {
+sub setup($) {
     my($self) = @_;
+
+    $self->{_prepend_key} = !$self->{_reducer_is_multikey_aware}
+	if (!defined($self->{_prepend_key}));
+    croak $self->{_prog} . ": cannot prepend keys for multikey-aware reducers.\n"
+	if ($self->{_prepend_key} && $self->{_reducer_is_multikey_aware});
 
     my $included_code = '';
     #
@@ -391,72 +501,75 @@ sub setup ($) {
     if ($#{$self->{_external_command_argv}} >= 0) {
 	# external command
 	my @argv = @{$self->{_external_command_argv}};
+	shift @argv if ($argv[0] eq '--');
 	my $empty = $self->{_empty};
-	unshift @argv, ($self->{_warnings} ? '--warnings' : '--nowarnings');
-	my $reducer_sub;
+	my @pre_argv;
+	push @pre_argv, ($self->{_warnings} ? '--warnings' : '--nowarnings'),
+	    '--nolog', '--';
+	my $reducer_generator_sub;
 	if ($self->{_pass_current_key}) {
-	    $reducer_sub = sub { $_[0] = $empty if (!defined($_[0])); dbsubprocess('--nolog', @argv, @_); };
+	    $reducer_generator_sub = sub { dbsubprocess(@pre_argv, @argv, $_[0] // $empty); };
 	} else {
-	    $reducer_sub = sub { dbsubprocess('--nolog', @argv); };
+	    $reducer_generator_sub = sub { dbsubprocess(@pre_argv, @argv); };
 	};
-	$self->{_reducer_generator_sub} = $reducer_sub;
+	$self->{_reducer_generator_sub} = $reducer_generator_sub;
+	print STDERR "# dbmapreduce/setup: external command is " . join(" ", @pre_argv, @argv) . "\n" if ($self->{_debug} > 2);
     } elsif (defined($self->{_filter_generator_code})) { 
-	my $reducer_sub;
+	my $reducer_generator_sub;
 	if (ref($self->{_filter_generator_code}) eq 'CODE') {
-	    print "direct code assignment for reducer sub\n" if ($self->{_debug});
-	    $reducer_sub = $self->{_filter_generator_code};
+	    print STDERR "# dbmapreduce/setup: direct code assignment for reducer sub\n" if ($self->{_debug});
+	    $reducer_generator_sub = $self->{_filter_generator_code};
 	} else {
 	    my $sub_code;
 	    $sub_code = 
 		"use Fsdb::Filter::dbpipeline qw(:all);\n" . 
 		$included_code . 
-		'$reducer_sub = sub {' . "\n" .
+		'$reducer_generator_sub = sub {' . "\n" .
 		$self->{_filter_generator_code} . 
 		"\n\t;\n};\n";
-	    print "$sub_code" if ($self->{_debug});
+	    print STDERR "# dbmapreduce/setup: sub_code: $sub_code" if ($self->{_debug});
 	    eval $sub_code;
 	    $@ && croak $self->{_prog} . ": error evaluating user-provided reducer sub:\n$sub_code\nerror is: $@.\n";
 	};
-	$self->{_reducer_generator_sub} = $reducer_sub;
+	$self->{_reducer_generator_sub} = $reducer_generator_sub;
     } else {
 	croak $self->{_prog} . ": reducer not specified.\n";
     };
 
+    #
     # do we need to group the keys for the user?
+    #
+    my($input_reader_aref) = [-comment_handler => $self->create_tolerant_pass_comments_sub('_cat_writer')];
+    my $raw_to_raw = ($#{$self->{_external_command_argv}} >= 0 && $self->{_reducer_is_multikey_aware});
+    if ($raw_to_raw) {
+	# external and we're good?  just hook it together
+	# (test case: dbmapreduce_cat.cmd)
+	$input_reader_aref = [-raw_fh => 1];
+    };
     if ($self->{_pre_sorted}) {
-	$self->finish_io_option('input', -comment_handler => $self->create_tolerant_pass_comments_sub('_to_reducer_writer'));
+	$self->finish_io_option('input', @$input_reader_aref);
     } else {
 	# not pre-sorted, so do lexical sort
 	my $sort_column = defined($self->{_key_column}) ? $self->{_key_column} : '0';
-        my($new_reader, $new_thread) = dbpipeline_filter(
+        my($new_reader, $new_fred) = dbpipeline_filter(
 		$self->{_input},
-		[-comment_handler => $self->create_tolerant_pass_comments_sub('_to_reducer_writer')],
-		dbsort($sort_column));
+		$input_reader_aref,
+		dbsort('--nolog', $sort_column));
 	$self->{_pre_sorted_input} = $self->{_input};
 	$self->{_in} = $new_reader;
-	$self->{_in_thread} = $new_thread;
+	$self->{_sorter_fred} = $new_fred;
 	#
-	# We detach the sorter here.
+	# We will join the sorter in finish().
 	#
-	# This is OK, sort of, but seems broken.
-	# We do it because otherwise we block joining the thread
-	# at the end of $self->run.
-	# We shouldn't, because the sorter should always terminate.
-	# And we KNOW it's run it's finish(), because it must have
-	# generated EOF.
-	#
-	# So this may indicate a bug in sort or dbpipline_filter
-	# with a lingering thread.
-	# But to debug later, as detaching seems like a plausible work-around
-	# and not TOO evil.
-	#
-	$new_thread->detach;
     };
 
     #
     # figure out key column's name, now that we've done setup
     #
-    if (defined($self->{_key_column})) {
+    if ($raw_to_raw) {
+	# raw, so no parsing input at all
+	$self->{_key_coli} = undef;
+    } elsif (defined($self->{_key_column})) {
 	$self->{_key_coli} = $self->{_in}->col_to_i($self->{_key_column});
 	croak $self->{_prog} . ": key column " . $self->{_key_column} . " is not in input stream.\n"
 	    if (!defined($self->{_key_coli}));
@@ -469,24 +582,20 @@ sub setup ($) {
     #
     # setup the postprocessing thread
     #
-    $self->_setup_reducer;
+    $self->_setup_reducer();
 
     $self->{_reducer_invocation_count} = 0;
-    $SIG{'PIPE'} = sub {
-	# xxx: MacOS 10.6.3 causes failures here,
-	# even though everything seems to run.
-	# As a hack, suppress this message:
-	exit 0 if ($^O eq 'darwin');
-        die $self->{_prog} . ": cannot run external dbmapreduce reduce program (" . join(" ", @{$self->{_external_command_argv}}) . ")\n";
-    };
-
+#    $SIG{'PIPE'} = 'IGNORE';
 }
+
+
 
 =head2 _setup_reducer
 
     _setup_reducer
 
-(internal)  One thread that runs the reducer thread and produces output.
+(internal)  
+One Fred that runs the reducer and produces output.
 C<_reducer_queue> is sends the new key,
 then a Fsdb stream, then EOF (undef)
 for each group.
@@ -495,361 +604,26 @@ and add in the keys if necessary.
 
 =cut
 
-sub _setup_reducer {
+sub _setup_reducer() {
     my($self) = @_;
 
-    $self->{_reducer_queue} = new Fsdb::BoundedQueue;
-    my $reducer_thread = threads->new( 
-	    $self->{_reducer_is_multikey_aware} ? sub {
-		    $self->_multikey_aware_reducer();
-		} : sub {
-		    $self->_multikey_ignorant_reducer();
-		});
-    $self->{_reducer_thread} = $reducer_thread;
-}
-
-=head2 _multikey_aware_reducer 
-
-    _multikey_aware_reducer 
-
-Handle a map-aware reduce process.  We assume the caller
-suppresses signaling about key transition, 
-so we just run the user's reducer in our thread.
-
-=cut
-
-sub _multikey_aware_reducer {
-    my($self) = @_;
-
-    my $from_preprocessor = $self->{_reducer_queue};
-    my $write_fastpath_sub = undef;
-
-    my $sync_marker;
-    my $current_key = undef;
-    my $current_reducer = undef;
-
-    print STDERR "dbmapreduce: _multikey_aware_reducer master thread started\n" if ($self->{_debug} >= 2);
-
-    while ($sync_marker = $from_preprocessor->dequeue) {
-	last if (!defined($sync_marker));
-	croak "dbmapreduce: lost synchronization in queue (perhaps reducer didn't consume data until end-of-file?)\n"
-	    if ($sync_marker ne $REDUCER_GROUP_SYNCHRONIZATION_FLAG);
-	$current_key = $from_preprocessor->dequeue;
-
-	#
-	# Ok, we got a key (maybe null if no input rows).
-	#  The rest of the queue
-	# will have fsdb objects until undef.
-	#
-	print STDERR "dbmapreduce: _multikey_aware_reducer on " . $self->_key_to_string($current_key) . "\n" if ($self->{_debug} >= 2);
-
-	# setup the reducer, if necessary
-	if (!defined($current_reducer)) {
-	    print STDERR "dbmapreduce: _multikey_aware_reducer making reducer\n" if ($self->{_debug} >= 2);
-
-	    my $users_reducer = &{$self->{_reducer_generator_sub}}();
-	    # hook input queue directly to user's reducer
-	    # hook output directly to our output
-	    # Who hoo... an easy case.
-
-	    # just like in dbpipeline, we have to setup output manually,
-	    # and use noclose so we can log our own final bit.
-	    $users_reducer->parse_options('--input' => $from_preprocessor,
+    if ($self->{_reducer_is_multikey_aware}) {
+#	croak "case not yet handled--need to verify correct sort order\n" if ($self->{_pre_sorted} == 1);
+	# No need to do input checking,
+	# and reducer promises to handle whatever we give it,
+	# and we assume it outputs the key, so
+	# just start the reducer on our own input and run it here.
+	my $reducer = &{$self->{_reducer_generator_sub}}();
+	$reducer->parse_options('--input' => $self->{_in},
 		    '--output' => $self->{_output},
 		    '--saveoutput' => \$self->{_out},
 		    '--noclose');
-
-	    # run!  (in the current thread)
-	    $users_reducer->setup_run_finish;
-	} else {
-	    # we assume the caller supresses multiple key signalling
-	    croak $self->{_prog} . ": interal error _multikey_aware_reducer called twice.\n";
-        };
+	$reducer->setup();
+	$self->{_multikey_aware_reducer} = $reducer;
+	return;
+    } else {
+	# do nothing; we do our work below
     };
-
-    $self->{_out}->write_comment("mapreduce reducer: done with all reducers.\n")
-	    if ($self->{_debug});
-    # Done with all reducers.
-    # Finish up the IO.
-    $self->SUPER::finish();
-}
-
-
-=head2 _multikey_ignorant_reducer 
-
-    _multikey_ignorant_reducer 
-
-Handle a map-ignorant reduce process. 
-We handle multiple keys.
-We create a postprocessor thread to add the key back in to
-the output and do our finish().
-We then become a middle-process, just handling key transitions
-and invoking new reducers.
-
-=cut
-
-sub _multikey_ignorant_reducer {
-    my($self) = @_;
-
-    my $from_preprocessor = $self->{_reducer_queue};
-    my $reducer_is_multikey_aware = $self->{_reducer_is_multikey_aware};
-
-    my $sync_marker;
-    my $current_key = undef;
-    my $current_reducer = undef;
-
-    print STDERR "dbmapreduce: _multikey_ignorant_reducer master thread started\n" if ($self->{_debug} >= 2);
-
-    #
-    # Make a post-processor.
-    #
-    # Need a queue to talk to them.
-    # Protocol is the same as with us (key, header+data, undef)*,
-    # except they get final data.
-    #
-    my $postprocessor_thread = undef;
-    my $to_postprocessor = undef;
-    $self->{_postprocessor_queue} = $to_postprocessor = new Fsdb::BoundedQueue;
-    $self->{_postprocessor_thread} = $postprocessor_thread = threads->new( sub {
-	    $self->_multikey_ignorant_postprocessor;
-	});
-
-    while ($sync_marker = $from_preprocessor->dequeue) {
-	last if (!defined($sync_marker));
-	croak "dbmapreduce: lost synchronization in queue (perhaps reducer didn't consume data until end-of-file?)\n"
-	    if ($sync_marker ne $REDUCER_GROUP_SYNCHRONIZATION_FLAG);
-	$current_key = $from_preprocessor->dequeue;
-
-	#
-	# Ok, we got a key (possibly null if no input rows at all).
-	# The rest of the queue
-	# will have fsdb objects until undef.
-	#
-
-	# Tell the postprocessor what's coming.
-	$to_postprocessor->enqueue($REDUCER_GROUP_SYNCHRONIZATION_FLAG);
-	$to_postprocessor->enqueue($current_key);
-
-	# Run the reducer,
-	# hooked up to the postprocessor.
-	print STDERR "dbmapreduce: _multikey_ignorant_reducer making reducer for " . $self->_key_to_string($current_key) . "\n" if ($self->{_debug} >= 2);
-	my $users_reducer = &{$self->{_reducer_generator_sub}}($current_key);
-	# just like in dbpipeline, we have to setup output manually,
-	# Note that here we close (implicitly) when we're done.
-	$users_reducer->parse_options('--input' => $from_preprocessor,
-		    '--output' => $to_postprocessor);
-
-        # run!  (in the current thread)
-	$users_reducer->setup_run_finish;
-	print STDERR "dbmapreduce: _multikey_ignorant_reducer reducer " . $self->_key_to_string($current_key) . " done\n" if ($self->{_debug} >= 2);
-
-	# Loop back and get another group.
-    };
-
-    # if we're really done, 
-    # the tell the postprocessor we're done and
-    # then just wait until the postprocessor is done
-    # (and the main thread waits until we're done)
-    #
-    # (Note: there may be no postprocessor if there was no input data.)
-    $to_postprocessor->enqueue(undef);   # done done
-    $postprocessor_thread->join;
-    if (my $error = $postprocessor_thread->error()) {
-	die $self->{_prog} . ": postprocessor thread erred: $error";
-    };
-}
-
-
-=head2 _multikey_ignorant_postprocessor 
-
-    _multikey_ignorant_postprocessor 
-
-Post-process a map-ignorant reduce process. 
-Add back in our key to each output.
-The one scary bit is we reuse the reducer to postprocessor queue
-past our EOF signal (undef).
-
-=cut
-
-sub _multikey_ignorant_postprocessor {
-    my($self) = @_;
-
-    my $from_reducer_queue = $self->{_postprocessor_queue};
-
-    my $sync_marker;
-    my $current_key = undef;
-    my $write_fastpath_sub = undef;
-    my $key_coli = undef;
-    my $reducer_returns_key_column = undef;
-
-    print STDERR "dbmapreduce: _multikey_ignorant_postprocessor started\n" if ($self->{_debug} >= 2);
-
-    while ($sync_marker = $from_reducer_queue->dequeue) {
-	last if (!defined($sync_marker));
-	croak "dbmapreduce: lost synchronization in queue (perhaps reducer didn't consume data until end-of-file?)\n"
-	    if ($sync_marker ne $REDUCER_GROUP_SYNCHRONIZATION_FLAG);
-	$current_key = $from_reducer_queue->dequeue;
-
-	print STDERR "dbmapreduce: _multikey_ignorant_postprocessor on " . $self->_key_to_string($current_key) . "\n" if ($self->{_debug} >= 2);
-
-	#
-	# build a reader around our queue.
-	# (Creepy---we actually reuse the queue past the eof signal.)
-	#
-	my $from_reducer_fsdb = new Fsdb::IO::Reader(-queue => $from_reducer_queue);
-	my $fscode_alter = undef;
-
-	if (!defined($write_fastpath_sub)) {
-	    # first time, so set up write process
-	    # xxx: this probably fails if we get zero input---should catch that somewhere much earlier.
-	    # xxx: no, we assume the reducer always will give us something.
-
-	    # Does the reducer give us our key back?
-	    # If so, take it, but verify.
-	    $key_coli = $from_reducer_fsdb->col_to_i($self->{_key_column});
-	    $reducer_returns_key_column = defined($key_coli);
-	    my @output_cols;
-
-	    if ($reducer_returns_key_column) {
-		# just pass back what we're given
-		@output_cols = @{$from_reducer_fsdb->cols};
-	    } else {
-		# add in our key at the front (ick, hacky)
-		@output_cols = @{$from_reducer_fsdb->cols};
-		unshift(@output_cols, $self->{_key_column});
-	    };
-
-	    $self->finish_io_option('output', -clone => $from_reducer_fsdb, -cols => \@output_cols, -fscode => $self->{_in}->fscode());
-	    $write_fastpath_sub = $self->{_out}->fastpath_sub();
-	    # Save the first reader object forever
-	    # so we can check for compatibility	
-	    # with future reducers.
-	    $self->{_first_reducer_reader} = $from_reducer_fsdb;
-	    #
-	    # Verify our output is compatible with our input.
-	    # Without this check, one can have -F S input with spaces
-	    # in the key, and -F D output with single spaces,
-	    # and so the output file is not properly formatted.
-	    #
-	    # If it's incompatible, we do our best to fix it up.
-	    #
-	    if ($self->{_in}->fscode() ne $from_reducer_fsdb->fscode()) {
-		$fscode_alter = 1;
-		# carp $self->{_prog} . ": input and reducer outputs do not have compatible fscodes (they are " . $self->{_in}->fscode() . " and " . $from_reducer_fsdb->fscode() . ")\n"
-	    };
-	} else {
-	    print STDERR "dbmapreduce: _multikey_ignorant_reducer reusing writer\n" if ($self->{_debug} >= 2);
-	    # Writer already existed, BUT out of paranoia we check
-	    # that other reducers don't change the schema.
-	    croak $self->{_prog} . ": reducers have non-identical output schema.\n"
-		if ($self->{_first_reducer_reader}->compare($from_reducer_fsdb) ne 'identical');
-	};
-
-	# Log something if we're debugging
-	my $out = $self->{_out};
-	$out->write_comment("dbmapreduce: _multikey_ignorant_reducer new reducer instance on key: " . $self->_key_to_string($current_key))
-	    if ($self->{_debug});
-
-	# The reducer is now sending us stuff.
-	my $fref;
-	my $read_fastpath_sub = $from_reducer_fsdb->fastpath_sub();
-	my $string_current_key = ($reducer_returns_key_column ? undef : $self->_key_to_string($current_key));
-	my $loop_code =  q'
-	    while ($fref = &$read_fastpath_sub()) {
-	    ' .
-		(!$reducer_returns_key_column ? 'unshift (@$fref, $string_current_key);' : '') . # if necessary, add in the key
-		($fscode_alter ? '$out->correct_fref_containing_fs($fref);' : '') .   # or if necessary, check and fix fscode problems
-	    '
-		&$write_fastpath_sub($fref);
-	    };
-	';
-	eval $loop_code;
-	$@ && die $self->{_prog} . ":  internal eval error: $@.\n";
-	$self->{_out}->write_comment("dbmapreduce: _multikey_ignorant_reducer done with non-map-aware reducer on key: " . $self->_key_to_string($current_key))
-	    if ($self->{_debug});
-
-	# Loop back and do next group.
-    };
-
-    #
-    # We're now all done with data, so clean up.
-    #
-    croak $self->{_prog} . ": internal error: never opened output.\n"
-	if (!defined($write_fastpath_sub));
-
-    $self->{_out}->write_comment("dbmapreduce: _multikey_ignorant_reducer done with all reducer groups.\n")
-	if ($self->{_debug});
-    # Done with all reducers.
-    # Finish up the IO.
-    $self->SUPER::finish();
-}
-
-
-=head2 _open_new_key
-
-    _open_new_key
-
-(internal)
-
-=cut
-
-sub _open_new_key {
-    my($self, $new_key) = @_;
-
-    print STDERR "dbmapreduce: _open_new_key on " . $self->_key_to_string($new_key) . "\n" if ($self->{_debug} >= 2);
-
-    $self->{_current_key} = $new_key;
-
-    # If already running and can handle multiple tags, just keep going.
-    if ($self->{_reducer_is_multikey_aware}) {
-	return if (defined($self->{_current_reducer_fastpath_sub}));
-	die "reducer_thread not started, and not our job to start it.\n"
-	    if (!defined($self->{_reducer_thread}));
-	# fall through to setup fastpath
-    };
-
-    #
-    # make the reducer
-    #
-
-    # tell our reducer thread it's coming:
-    $self->{_reducer_queue}->enqueue($REDUCER_GROUP_SYNCHRONIZATION_FLAG);
-    $self->{_reducer_queue}->enqueue($new_key);
-
-    # now, set up our output to go to the reducer
-    my($to_reducer_writer) = new Fsdb::IO::Writer(-queue => $self->{_reducer_queue}, -clone => $self->{_in});
-    $self->{_to_reducer_writer} = $to_reducer_writer;
-    $self->{_current_reducer_fastpath_sub} = $to_reducer_writer->fastpath_sub();
-}
-
-=head2 _close_old_key
-
-    _close_old_key
-
-Internal, finish a tag.
-
-=cut
-
-sub _close_old_key {
-    my($self, $key, $final) = @_;
-
-    print STDERR "dbmapreduce: _close_old_key on " . $self->_key_to_string($key) . "\n" if ($self->{_debug} >= 2);
-
-    if (!defined($key)) {
-	croak $self->{_prog} . ": internal error: _close_old_key called on non-final null-key.\n"
-	    if (!$final);
-    };
-    return if ($self->{_reducer_is_multikey_aware} && !$final);  # can keep handling them in the reducer
-
-    croak $self->{_prog} . ": internal error: current key doesn't equal prior key " . $self->_key_to_string($self->{_current_key}) . " != key " . $self->_key_to_string($key) . "\n"
-	if (defined($key) && $self->{_current_key} ne $key);
-    # finish the reducer
-    print STDERR "dbmapreduce: _close_old_key closing current reducer group\n" if ($self->{_debug} >= 2);
-    $self->{_to_reducer_writer}->close;
-
-    # tell the reducer thread we're really done (if we are)
-    $self->{_reducer_queue}->enqueue(undef)
-	if ($final);
 }
 
 =head2 _key_to_string
@@ -865,18 +639,161 @@ sub _key_to_string($$) {
     return defined($key) ? $key  : $self->{_empty};
 }
 
-=head2 run
 
-    $filter->run();
+=head2 _open_new_key
 
-Internal: run over each rows.
+    _open_new_key
+
+(internal)
 
 =cut
-sub run ($) {
+
+sub _open_new_key {
+    my($self, $new_key) = @_;
+
+    print STDERR "# dbmapreduce: _open_new_key on " . $self->_key_to_string($new_key) . "\n" if ($self->{_debug} >= 2);
+
+    $self->{_current_key} = $new_key;
+
+    # If already running and can handle multiple tags, just keep going.
+    die "internal error: no more multikey here\n" if ($self->{_reducer_is_multikey_aware});
+
+    #
+    # make the reducer
+    #
+    my $output_file = Fsdb::Support::NamedTmpfile::alloc($self->{_tmpdir});
+    my @reducer_modules;
+    push(@reducer_modules, &{$self->{_reducer_generator_sub}}($new_key));
+    if ($self->{_copy_fscode}) {
+	push(@reducer_modules, dbfilealter('--nolog', '-F', $self->{_in}->fscode()));
+    };
+    if ($self->{_prepend_key}) {
+	push(@reducer_modules, dbcolcreate('--nolog', '--first', '-e', $new_key, $self->{_key_column}));
+    };
+    print STDERR "# reducer output to $output_file\n" if ($self->{_debug});
+#    $reducer_modules[$#reducer_modules]->parse_options('--output' => $output_file);
+    unshift(@reducer_modules, '--output' => $output_file);
+    my %work_queue_entry;
+    $work_queue_entry{'status'} = 'running';
+    $work_queue_entry{'output'} = $output_file;
+    my $debug = $self->{_debug};
+    my($to_reducer_writer, $reducer_fred) = dbpipeline_sink([-clone => $self->{_in}], 
+	'--fred_description' => 'dbmapreduce:dbpipeline_sink(to_reducer)',
+	'--fred_exit_sub' => sub {
+	    $work_queue_entry{'status'} = 'done';
+	    print STDERR "# dbmapreduce:reducer: output $output_file\n" if ($debug);
+	    print STDERR "# dbmapreduce:reducer: zero size $output_file\n" if (-z $output_file);
+	}, @reducer_modules); 	
+    $work_queue_entry{'fred'} = $reducer_fred;
+
+    $self->{_to_reducer_writer} = $to_reducer_writer;
+    $self->{_current_reducer_fastpath_sub} = $to_reducer_writer->fastpath_sub();
+    push (@{$self->{_work_queue}}, \%work_queue_entry);
+}
+
+=head2 _close_old_key
+
+    _close_old_key
+
+Internal, finish a tag.
+
+=cut
+
+sub _close_old_key {
+    my($self, $key, $final) = @_;
+
+    print STDERR "# dbmapreduce: _close_old_key on " . $self->_key_to_string($key) . "\n" if ($self->{_debug} >= 2);
+
+    if (!defined($key)) {
+	croak $self->{_prog} . ": internal error: _close_old_key called on non-final null-key.\n"
+	    if (!$final);
+    };
+    die "internal error: no more multikey here\n" if ($self->{_reducer_is_multikey_aware});
+
+    croak $self->{_prog} . ": internal error: current key doesn't equal prior key " . $self->_key_to_string($self->{_current_key}) . " != key " . $self->_key_to_string($key) . "\n"
+	if (defined($key) && $self->{_current_key} ne $key);
+    # finish the reducer
+    print STDERR "# dbmapreduce: _close_old_key closing reducer ($key)\n" if ($self->{_debug} >= 2);
+    $self->{_to_reducer_writer}->close;
+}
+
+=head2 _check_finished_reducers
+
+    $self->_check_finished_reducers($force);
+
+Internal: see if any reducer freds finished, optionally $FORCE-ing 
+all to finish.
+
+=cut
+
+sub _check_finished_reducers($$) {
+    my($self, $force) = @_;
+
+    print STDERR "# dbmerge:_check_finished_reducers: " . ($force ? "forced" : "optional") . "\n" if ($self->{_debug});
+    for(;;) {
+        my $fred_or_code = Fsdb::Support::Freds::join_any();
+	last if (ref($fred_or_code) eq '');
+	croak "dbmapreduce: reducer failed\n"
+	    if ($fred_or_code->exit_code() != 0);
+	print STDERR "# dbmerge:_check_finished_reducers: merged fred " . $fred_or_code->info() . "\n" if ($self->{_debug});
+    };
+    #
+    # Reducers finish-sub has adjusted the work queue.
+    # Try to push out output.
+    # Be forceful (and block) if required.
+    #
+    while ($#{$self->{_work_queue}} >= 0) {
+	my $work_queue_href = $self->{_work_queue}->[0];
+	if ($force) {
+	    my $fred = $work_queue_href->{fred};
+	    print STDERR "# dbmerge:_check_finished_reducers: blocking on pending fred " . $fred->info() . "\n" if ($self->{_debug});
+	    my $exit_code = $fred->join();
+	    croak "dbmapreduce: reducer failed, exit $exit_code\n" if ($exit_code != 0);
+	    croak "dbmapreduce: reducer didn't leave status done\n"
+		if ($work_queue_href->{status} ne 'done');
+	};
+	if ($work_queue_href->{status} ne 'done') {
+	    croak $self->{_prog} . ": internal error, reducer refused to complete\n" if ($force);
+	    last;
+	};
+	# this one is done, send it to output
+	my $output = $work_queue_href->{output};
+	print STDERR "# dbmerge->_check_finished_reducers: done with output $output\n" if ($self->{_debug});
+	$self->{_cat_writer}->write_rowobj([$output]);
+	shift(@{$self->{_work_queue}});
+    };
+}
+
+
+
+=head2 _mapper_run
+
+    $filter->_mapper_run();
+
+Internal: run over each rows, grouping them.
+Fork off reducer as necessary.
+
+=cut
+sub _mapper_run($) {
     my($self) = @_;
 
+    $self->{_work_queue} = [];
     my $read_fastpath_sub = $self->{_in}->fastpath_sub();
     my $reducer_fastpath_sub = undef;
+
+    #
+    # output merger
+    #
+    print STDERR "# opening dbfilecat\n" if ($self->{_debug});
+    my(@writer_args) = (-cols => [qw(filename)], -outputheader => 'never', -autoflush => 1);
+    my($cat_writer, $cat_fred) = dbpipeline_sink(\@writer_args,
+	'--fred_description' => 'dbmapreduce:dbpipeline_sink(cat_writer)',
+	'--output' => $self->{_output},
+	dbfilecat(qw(--nolog --xargs --removeinputs)));
+    croak $self->{_prog} . ": cannot invoke dbfilecat.\n"
+	if ($cat_writer->error);
+    $self->{_cat_writer} = $cat_writer;
+    $self->{_cat_fred} = $cat_fred;
 
     # read data
     my($last_key) = undef;
@@ -888,16 +805,6 @@ sub run ($) {
     while ($fref = &$read_fastpath_sub()) {
 	# print STDERR "data line: " . join("  ", @$fref) . "\n";
         my($key) = $fref->[$key_coli];
-# next block is removed because it fails in perl-5.8
-# with Bareword "threads::all" not allowed while "strict subs"
-# (that's a 5.10-ism, apparently.)
-#	if ($nrows++ % 100 == 0 && $debug >= 3) {
-#	    # dump thread stats
-#	    print STDERR "# dbmapreduce thread stats: " .
-#		"all: " . scalar(threads->list(threads::all)) . ", " .
-#		"running: " . scalar(threads->list(threads::running)) . ", " .
-#		"joinable: " . scalar(threads->list(threads::joinable)) . "\n";
-#	};
     
         if (!defined($last_key) || $key ne $last_key) {
             # start a new one
@@ -910,6 +817,7 @@ sub run ($) {
             # finish off old one?
             if (defined($last_key)) {
                 $self->_close_old_key($last_key);
+		$self->_check_finished_reducers(0);
             };
             $self->_open_new_key($key);
             $last_key = $key;
@@ -928,8 +836,26 @@ sub run ($) {
     # print STDERR "done with input, last_key=$last_key\n";
     # close out any pending processing? (use the force option)
     $self->_close_old_key($last_key, 1);
+    $self->_check_finished_reducers(1);
+    # will clean up cat_writer in finish
+}
 
-    # we join the thread in finish
+
+=head2 run
+
+    $filter->run();
+
+Internal: run over each rows.
+
+=cut
+sub run($) {
+    my($self) = @_;
+
+    if ($self->{_reducer_is_multikey_aware}) {
+	$self->{_multikey_aware_reducer}->run();
+    } else {
+	$self->_mapper_run();
+    };
 }
 
 =head2 finish
@@ -940,28 +866,42 @@ Internal: write trailer.
 
 =cut
 
-sub finish ($) {
+sub finish($) {
     my($self) = @_;
 
-    # Let the reducer and postprocessor threads cleanup things.
-    # It holds the output handle and calls the REAL finish.
     #
-    # We just join on them to make sure we don't terminate the 
-    # main thread prematurely.
+    # Join any pending Freds.
     #
-    # (no open _out, so must print to stderr!)
-    print STDERR "# mapreduce main: join on postprocess thread\n"
-	if ($self->{_debug});
-    $self->{_reducer_thread}->join;
-    if (my $error = $self->{_reducer_thread}->error()) {
-	die $self->{_prog} . ": reducer thread erred: $error";
+    if ($self->{_sorter_fred}) {
+        print STDERR "# mapreduce main: join sorter\n"
+	    if ($self->{_debug});
+        $self->{_sorter_fred}->join();
+	croak $self->{_prog} . ": input sorter failed: " . $self->{_sorter_fred}->error()
+	    if ($self->{_sorter_fred}->error());
+    };
+
+    if ($self->{_reducer_is_multikey_aware}) {
+	$self->{_multikey_aware_reducer}->finish();
+	# output our log message, in-line
+	$self->SUPER::finish();
+    } else {
+	# output log message by sending it all to cat_writer (a hack)
+	$self->{_out} = $self->{_cat_writer};
+	$self->SUPER::finish();  # will close it
+	$self->{_cat_writer}->close;
+        print STDERR "# mapreduce main: join dbfilecat\n"
+	    if ($self->{_debug});
+	$self->{_cat_fred}->join();
+	if (my $error = $self->{_cat_fred}->error()) {
+	    croak $self->{_prog} . ": dbfilecat erred: $error";
+	};
     };
 }
 
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2011 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

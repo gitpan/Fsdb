@@ -35,8 +35,6 @@ Fsdb::IO::Reader - handle formatting reading from a fsdb file (handle) or queue
 use strict;
 use IO::File;
 use Carp;
-use threads;
-# use threads::shared;
 use IO::Uncompress::AnyUncompress;
 
 use Fsdb::IO;

@@ -223,8 +223,6 @@ See the test cases F<dbcolstats_extrema> for examples.
 
 use strict;
 use Pod::Usage;
-use threads;
-use threads::shared;
 
 use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
@@ -357,12 +355,12 @@ sub setup ($) {
 	my(@writer_args) = (-cols => [qw(data)]);
 	print STDERR "dbcolstats: pre-saveoutput setup\n" if ($self->{_debug} > 2);
 	if (!$self->{_pre_sorted}) {
-	    my $sorter_thread;
+	    my $sorter_fred;
 	    print STDERR "dbcolstats: doing sorter thread\n" if ($self->{_debug} > 2);
-	    ($save_out, $sorter_thread) = dbpipeline_sink(\@writer_args,
+	    ($save_out, $sorter_fred) = dbpipeline_sink(\@writer_args,
 			'--output' => $self->{_save_out_filename},
 			dbsort(qw(-n data)));
-	    $self->{_sorter_thread} = $sorter_thread;
+	    $self->{_sorter_fred} = $sorter_fred;
 	} else {
 	    # no, just write it ourselves
 	    $save_out = new Fsdb::IO::Writer('-file' => $self->{_save_out_filename}, @writer_args);
@@ -532,11 +530,11 @@ sub run ($) {
     #
     # Make sure we cleaned up before we do any computation.
     #
-    if (defined($self->{_sorter_thread})) {
+    if (defined($self->{_sorter_fred})) {
 	# let sorting finish
 	print STDERR "dbcolstats: join on sorter thread\n" if ($self->{_debug} > 2);
-	$self->{_sorter_thread}->join;
-	$self->{_sorter_thread} = undef;
+	$self->{_sorter_fred}->join();
+	$self->{_sorter_fred} = undef;
 	print STDERR "dbcolstats: post join on sorter thread\n" if ($self->{_debug} > 2);
     };
 

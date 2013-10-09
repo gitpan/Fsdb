@@ -57,6 +57,7 @@ In addition, the C<info> method returns metadata about a given filter.
 ($VERSION) = 1.0;
 
 use strict;
+use 5.010;
 use Carp qw(carp croak);
 use IO::Handle;
 use IO::File;
@@ -418,6 +419,10 @@ sub finish_one_io_option ($$$@) {
     my $token = shift @_;
 
     my $fsdb;
+    # fast return a raw fh, if that's an option (-raw_fh=>1 in @fsdb_args)
+    if ($#_ >= 1 && $_[0] eq '-raw_fh' && $_[1]) {
+	return $token;
+    };
     if (ref($token) =~ /^Fsdb::IO/) {
 	# assume the user gave us a good one
 	$fsdb = $token;
@@ -636,7 +641,7 @@ sub finish($) {
     if (!defined($self->{_out})) {
 	my $problems = '';
 	$problems .= "delay_comments " if (defined($self->{_delay_comments}));
-	$problems .= "logprog " if (defined($self->{_logprog}));
+	$problems .= "logprog " if ($self->{_logprog});
 	$problems .= "save_output " if (defined($self->{_save_output}));
 	carp "finish with no _out object and $problems\n"
 	    if ($problems ne '');
@@ -659,7 +664,7 @@ sub finish($) {
     ${$self->{_save_output}} = $self->{_out}
 	if (defined($self->{_save_output}));
     $self->{_out}->close
-	if ($self->{_close} && defined($self->{_out}));
+	if ($self->{_close} && defined($self->{_out}) && !defined($self->{_save_output}));
 }
 
 =head2 setup_run_finish
@@ -732,8 +737,7 @@ Or with the optional argument, through C<$self->{_VALUE}>.
 sub create_pass_comments_sub ($;$)
 {
     my $self = shift @_;
-    my($value) = @_;
-    $value = '_out' if (!defined($value));
+    my($value) = $_[0] // '_out';
     # one extra level of indirection to allow for delayed opening of _out
     return sub { $self->{$value}->write_raw(@_); };
 }
@@ -751,14 +755,16 @@ I<Warning:> use carefully to guarantee consistent results.
 
 A symptom requiring tolerance is to get an error like
 "Can't call method "write_raw" on an undefined value at /usr/lib/perl5/vendor_perl/5.10.0/Fsdb/Filter.pm line 678."
+(which will be the sub create_pass_comments_sub ($;$) line in create_pass_comments.)
+
 
 =cut
 
 sub create_tolerant_pass_comments_sub ($;$)
 {
     my $self = shift @_;
-    my($value) = @_;
-    $value = '_out' if (!defined($value));
+    my($value) = $_[0] // '_out';
+    # print STDERR "## create_tolerant_pass_comments_sub on $value, " . ref($self->{$value}) . "\n";
     # one extra level of indirection to allow for delayed opening of _out
     return sub {
 	$self->{$value}->write_raw(@_)
@@ -768,7 +774,7 @@ sub create_tolerant_pass_comments_sub ($;$)
 
 =head2 create_delay_comments_sub
 
-    $filter->create_delay_comments_sub
+    $filter->create_delay_comments_sub($optional_value);
 
 Creates a code block suitable for passing to Fsdb::IO::Readers -comment_handler
 that will buffer comments for automatic (from $self->final) after all other IO.
@@ -777,9 +783,10 @@ at which time C<$self-E<gt>{_out}> must be a live Fsdb object.
 
 =cut
 
-sub create_delay_comments_sub ($) {
+sub create_delay_comments_sub ($;$) {
     my $self = shift @_;
-    my $dpc = new Fsdb::Support::DelayPassComments(\$self->{_out});
+    my($value) = $_[0] // '_out';
+    my $dpc = new Fsdb::Support::DelayPassComments(\$self->{$value});
     push (@{$self->{_delay_comments}}, $dpc);
     return sub { $dpc->enqueue(@_); };
 }

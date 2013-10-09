@@ -257,7 +257,7 @@ Internal: setup, parse headers.
 
 =cut
 
-sub setup ($) {
+sub setup($) {
     my($self) = @_;
 
     croak $self->{_prog} . ": no sorting key specified.\n"
@@ -319,7 +319,7 @@ sub segment_next_output($$) {
     my $final_output = ($#{$self->{_files_to_merge}} == -1 && $input_finished);
     my $out;
     if ($final_output) {
-	if (!defined($self->{_merge_thread})) {
+	if (!defined($self->{_merge_fred})) {
 	    # setup output
 	    # (if merging, then we did this when we forked the merge thread)
 	    $self->finish_io_option('output', -clone => $self->{_in});
@@ -393,12 +393,12 @@ Fork off a merge thread, if necessary.
 sub segment_merge_start($$) {
     my($self, $fn) = @_;
 
-    if (!defined($self->{_merge_thread})) {
+    if (!defined($self->{_merge_fred})) {
 	# create our output so we can give it to merge-thread
 	$self->finish_io_option('output', -clone => $self->{_in}); # , -outputheader => 'never');
 
 	print "# forking merge thread\n" if ($self->{_debug});
-	my(@writer_args) = (-cols => [qw(filename)]);
+	my(@writer_args) = (-cols => [qw(filename)], -autoflush => 1);
 	my(@merge_args) = qw(--nolog --noclose --removeinputs --xargs);
 	push(@merge_args, '--parallelism', $self->{_max_parallelism})
 	    if (defined($self->{_max_parallelism}));
@@ -406,13 +406,13 @@ sub segment_merge_start($$) {
 	    if (defined($self->{_tmpdir}));
 	push(@merge_args, @{$self->{_sort_argv}});
 
-	my($writer, $merge_thread) = dbpipeline_sink(\@writer_args,
+	my($writer, $merge_fred) = dbpipeline_sink(\@writer_args,
 	    '--output' => $self->{_out},
 	    dbmerge(@merge_args));
 	croak "dbsort: internal error in invoking dbmerge\n"
-	    if (!defined($writer) || !defined($merge_thread));
+	    if (!defined($writer) || !defined($merge_fred));
 	$self->{_merge_writer} = $writer;
-	$self->{_merge_thread} = $merge_thread;
+	$self->{_merge_fred} = $merge_fred;
     };
     print "# dbsort segment_merge_start: sending merge thread: $fn\n" if ($self->{_debug});
     $self->{_merge_writer}->write_row($fn);
@@ -430,15 +430,15 @@ Just call L<dbmerge(1)> to do all the real work.
 
 sub segment_merge_finish($) {
     my($self) = @_;
-    return if (!defined($self->{_merge_thread}));
+    return if (!defined($self->{_merge_fred}));
     return if ($#{$self->{_files_to_merge}} == -1);
 
     print "# final output\n" if ($self->{_debug});
     # tell it we're done
     $self->{_merge_writer}->close();	
     # and make it do its work
-    $self->{_merge_thread}->join();
-    $self->{_merge_thread} = undef;
+    $self->{_merge_fred}->join();
+    $self->{_merge_fred} = undef;
 }
 
 

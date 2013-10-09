@@ -28,8 +28,7 @@
             "IO::Uncompress::AnyUncompress" : "0",
             "Test::More" : "0",
             "Text::CSV_XS" : "0",
-            "XML::Simple" : "0",
-            "threads" : "1"
+            "XML::Simple" : "0"
          }
       },
       "test" : {

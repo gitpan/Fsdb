@@ -1,5 +1,6 @@
 prog='dbmapreduce'
-args='-k experiment dbmultistats duration'
+args='-M -k experiment dbmultistats duration'
+predecessor=dbmapreduce_sub_simple.cmd
 cmp='diff -cb '
 in=TEST/dbmapreduce_ex.in
 altcmp='dbfilediff -E --exit '

@@ -19,7 +19,8 @@ Fsdb::Support::NamedTmpfile - dreate temporary files that can be opened
 
 =head1 SYNOPSIS
 
-See L<Fsdb::Support::NamedTmpfile::new>
+    use Fsdb::Support::NamedTmpfile;
+    $pathname = Fsdb::Support::NamedTmpfile::alloc($tmpdir);
 
 =head1 FUNCTIONS
 
@@ -37,7 +38,8 @@ Note that there is a potential race condition between when we pick the file
 and when the caller opens it, when an external program could interceed.
 The caller therefor should open files with exclusive access.
 
-This routine is Perl thread-safe.
+This routine is Perl thread-safe, and process fork safe.
+(Files are only cleaned up by the process that creates them.)
 
 While this routine is basically "new", we don't call it such
 because we do not return an object.
@@ -47,14 +49,15 @@ because we do not return an object.
 @ISA = ();
 ($VERSION) = 1.0;
 
-use threads;
-use threads::shared;
+# use threads;
+# use threads::shared;
 
 use Carp;
 use File::Temp qw(tempfile);
 
-my $named_tmpfiles_lock : shared;
-my @named_tmpfiles : shared;
+# my $named_tmpfiles_lock : shared;
+# my %named_tmpfiles : shared;
+my %named_tmpfiles;
 my $tmpdir = undef;
 my $template = undef;
 
@@ -73,8 +76,8 @@ sub alloc {
     my($fh, $fn) = tempfile($template, SUFFIX => "~", DIR => $tmpdir);
     close $fh;
     {
-	lock($named_tmpfiles_lock);
-	push @named_tmpfiles, $fn;
+#	lock($named_tmpfiles_lock);
+	$named_tmpfiles{$fn} = $$;
     }
 
     return $fn;
@@ -93,10 +96,10 @@ sub cleanup_one {
     my($fn) = @_;
     return if (!defined($fn));
     # xxx: doesn't check for inclusion first
-    unlink($fn) if (-f $fn);
     {
-	lock($named_tmpfiles_lock);
-	@named_tmpfiles = grep { defined($_) && $_ ne $fn } @named_tmpfiles;
+#	lock($named_tmpfiles_lock);
+	unlink($fn) if ($named_tmpfiles{$fn} == $$ && -f $fn);
+	delete $named_tmpfiles{$fn};
     }
 }
 
@@ -111,15 +114,15 @@ Not a method.
 =cut
 
 sub cleanup_all {
-    my(@named_tmpfiles_copy);
+    my(%named_tmpfiles_copy);
     {
-	lock($named_tmpfiles_lock);
-	@named_tmpfiles_copy = @named_tmpfiles;
-	@named_tmpfiles = ();
+#	lock($named_tmpfiles_lock);
+	%named_tmpfiles_copy = %named_tmpfiles;
+	%named_tmpfiles = ();
     }
 
-    while ($fn = shift @named_tmpfiles_copy) {
-	unlink($fn) if (-f $fn);
+    foreach my $fn (keys %named_tmpfiles_copy) {
+	unlink($fn) if ($named_tmpfiles_copy{$fn} == $$ && -f $fn);
     };
 }
 

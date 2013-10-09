@@ -47,7 +47,7 @@ use Fsdb::IO;
 =head2 new
 
     $fsdb = new Fsdb::IO::Writer(-file => $filename);
-    $fsdb = new Fsdb::IO::Writer(-header => "#h -F t foo bar",
+    $fsdb = new Fsdb::IO::Writer(-header => "#fsdb -F t foo bar",
 				    -fh => $file_handle);
     $fsdb = new Fsdb::IO::Writer(-file => '-',
 				    -fscode => 'S',
@@ -88,6 +88,7 @@ sub new {
     #
     # new instance variables
     $self->{_write_rowobj_sub} = sub { croak "Fsdb::IO::Writer: attempt to write to unprepared stream\n"; };  # placeholder
+    $self->{_autoflush} = 0;
     #
     $self->config(@_);
     return $self if ($self->{_error});
@@ -100,6 +101,9 @@ sub new {
     if ($self->{_fh} && ref($self->{_fh}) eq 'IO::Pipe') {
 	# don't do this if we're IO::Pipe::End, since it's already been done
 	$self->{_fh}->writer();
+    };
+    if ($self->{_fh} && $self->{_autoflush}) {
+	$self->{_fh}->autoflush(1);
     };
     # Default to agressively generating header.
     # Call it for never (!) so we call create_io_subs.
@@ -133,6 +137,13 @@ sub config_one {
 	} else {
 	    $self->{_error} = "cannot open $file";
 	};
+    } elsif ($aaref->[0] eq '-autoflush') {
+	shift @$aaref;
+	my $af = shift @$aaref;
+	$af //= 0;
+	$self->{_autoflush} = $af;
+	croak "autoflush must be 0 or undef, or 1.\n"
+	    if (!($af == 0 || $af == 1));
     } elsif ($aaref->[0] eq '-outputheader') {
 	shift @$aaref;
 	my $oh = shift @$aaref;
