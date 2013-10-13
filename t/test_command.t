@@ -195,6 +195,7 @@ $env_cmd .= "PATH=$scripts_dir:\$PATH ";
 #
 # what to run?
 #
+my @failed_tests = ();
 my @TESTS = @ARGV;
 if ($#TESTS == -1) {
     @TESTS = glob "$test_dir/*.cmd";
@@ -206,7 +207,36 @@ foreach my $test (@TESTS) {
     ok(run_test($test), $test);
 };
 
+#
+# show output
+#
+if ($#failed_tests >= 0) {
+    diag "#### output of some failed tests\n";
+    my $shown_count = 0;
+    foreach my $failure (@failed_tests) {
+	last if ($shown_count++ > 3);  # don't go overboard
+	show_failure($failure);
+    };
+};
+
 exit 0;
+
+sub show_failure {
+    my($cmd_base) = @_;
+    my $diff_fn = "$cmd_base.diff";
+    diag "# $cmd_base\n";
+    if (-f $diff_fn) {
+        open(DIFF, "< $diff_fn") || return undef;
+	my $lines = 0;
+	while (<DIFF>) {
+	    diag "\t$_";
+	    last if ($lines++ > 64);
+	};
+	close DIFF;
+    } else {
+	diag "\t(no diff output)\n";
+    };
+}
 
 #
 # the .cmd is a pseudo-shell-script like thing.
@@ -406,17 +436,7 @@ sub run_test {
 	$out_ok = diff_output($cmd_base, "$cmd_base.altout", $trial_fn, $optref->{cmp}, 'out');
     };
     if (!$out_ok) {
-	my $diff_fn = "$cmd_base.diff";
-	if (-f $diff_fn) {
-	    open(DIFF, "< $diff_fn") || return undef;
-	    print "# $cmd_base\n";
-	    my $lines = 0;
-	    while (<DIFF>) {
-		print "\t$_";
-		last if ($lines++ > 16);
-	    };
-	    close DIFF;
-	};
+	push (@failed_tests, $cmd_base);
         return undef;
     };
 

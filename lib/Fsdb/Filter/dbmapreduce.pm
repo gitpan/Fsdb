@@ -748,7 +748,7 @@ sub _check_finished_reducers($$) {
 	    my $fred = $work_queue_href->{fred};
 	    print STDERR "# dbmerge:_check_finished_reducers: blocking on pending fred " . $fred->info() . "\n" if ($self->{_debug});
 	    my $exit_code = $fred->join();
-	    croak "dbmapreduce: reducer failed, exit $exit_code\n" if ($exit_code != 0);
+	    croak "dbmapreduce: reducer " . $fred->info() . " failed, exit $exit_code\n" if ($exit_code != 0);
 	    croak "dbmapreduce: reducer didn't leave status done\n"
 		if ($work_queue_href->{status} ne 'done');
 	};

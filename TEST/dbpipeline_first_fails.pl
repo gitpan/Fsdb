@@ -6,7 +6,6 @@
 # $Id$
 #
 
-use threads;
 use Fsdb::Filter::dbpipeline qw(:all);
 
 my(@pipeline_args) = ('--noautorun', '--input' => '-');

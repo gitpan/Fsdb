@@ -10,9 +10,6 @@
 # in $dblibdir for details.
 #
 
-# next line is just to suppress the comment about threads::shared
-use threads;
-
 use IO::Handle;
 use Fsdb::Filter::dbcol;
 use Fsdb::Filter::dbroweval;

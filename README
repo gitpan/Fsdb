@@ -143,17 +143,18 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.46, 2013-10-08 continuing cleanup of our no-threads version[0m
+   [1m2.47, 2013-10-12 test suite cleanup for non-threaded perls[0m
        BUG FIX
-           Fixed some packaging details.  (Really, threads are no longer
-           required, missing tests in the MANIFEST.)
+           Removed some stray "use threads" in some test cases.  We didn't
+           need them, and these were breaking non-threaded perls.
 
-       IMPROVEMENT
-           dbsort now better communicates with the merge process to avoid
-           bursty parallelism.
+       BUG FIX
+           Better handling of Fred cleanup; should fix intermittent
+           dbmapreduce failures on BSD.
 
-           Fsdb::IO::Writer now can take "-autoflush =" 1> for line-buffered
-           IO.
+       ENHANCEMENT
+           Improved test framework to show output when tests fail.  (This
+           time, for real.)
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -2002,6 +2003,18 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        BUG FIX
            Test case with "Fsdb::BoundedQueue" (gone since 2.44) now removed.
 
+   [1m2.46, 2013-10-08 continuing cleanup of our no-threads version[0m
+       BUG FIX
+           Fixed some packaging details.  (Really, threads are no longer
+           required, missing tests in the MANIFEST.)
+
+       IMPROVEMENT
+           dbsort now better communicates with the merge process to avoid
+           bursty parallelism.
+
+           Fsdb::IO::Writer now can take "-autoflush =" 1> for line-buffered
+           IO.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -2033,4 +2046,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.16.3                      2013-10-08                           Fsdb(3)
+perl v5.16.3                      2013-10-12                           Fsdb(3)

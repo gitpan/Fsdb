@@ -31,7 +31,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.46';
+our $VERSION = '2.47';
 
 =head1 SYNOPSIS
 
@@ -231,24 +231,25 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.46, 2013-10-08
-continuing cleanup of our no-threads version
+=head2 2.47, 2013-10-12
+test suite cleanup for non-threaded perls
 
 =over 4
 
 =item BUG FIX
 
-Fixed some packaging details.
-(Really, threads are no longer required,
-missing tests in the MANIFEST.)
+Removed some stray "use threads" in some test cases.
+We didn't need them, and these were breaking non-threaded perls.
 
-=item IMPROVEMENT
+=item BUG FIX
 
-L<dbsort> now better communicates with the merge process to avoid
-bursty parallelism.
+Better handling of Fred cleanup;
+should fix intermittent L<dbmapreduce> failures on BSD.
 
-L<Fsdb::IO::Writer> now can take C<-autoflush => 1>
-for line-buffered IO.
+=item ENHANCEMENT
+
+Improved test framework to show output when tests fail.
+(This time, for real.)
 
 =back
 
@@ -2989,6 +2990,27 @@ should now exploit greater parallelism.
 =item BUG FIX
 
 Test case with C<Fsdb::BoundedQueue> (gone since 2.44) now removed.
+
+=back
+
+=head2 2.46, 2013-10-08
+continuing cleanup of our no-threads version
+
+=over 4
+
+=item BUG FIX
+
+Fixed some packaging details.
+(Really, threads are no longer required,
+missing tests in the MANIFEST.)
+
+=item IMPROVEMENT
+
+L<dbsort> now better communicates with the merge process to avoid
+bursty parallelism.
+
+L<Fsdb::IO::Writer> now can take C<-autoflush => 1>
+for line-buffered IO.
 
 =back
 

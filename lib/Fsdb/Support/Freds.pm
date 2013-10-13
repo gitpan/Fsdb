@@ -189,6 +189,7 @@ Returns -1 on error
 sub join() {
     my($self) = @_;
     return -1 if ($self->{_parent} != $$);
+    return $self->{_exit_code} if (!$self->{_active});
 
     waitpid $self->{_pid}, 0;
     return $self->_post_join($?);

@@ -162,11 +162,13 @@ standardoption:
 # release stuff:
 #
 
+# next two lines should use $<, but FreeBSD turns that to null which hangs make
+
 README: lib/Fsdb.pm
-	pod2man $< | groff -man -P-b -Tascii > $@
+	pod2man lib/Fsdb.pm| groff -man -P-b -Tascii > $@
 
 README.html: lib/Fsdb.pm
-	pod2html --noindex $<  > $@
+	pod2html --noindex lib/Fsdb.pm  > $@
 
 all :: README README.html
 

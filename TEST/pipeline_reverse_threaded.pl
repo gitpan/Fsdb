@@ -10,7 +10,6 @@
 # in $dblibdir for details.
 #
 
-use threads;
 
 use IO::Handle;
 use Fsdb::Filter::dbcol;

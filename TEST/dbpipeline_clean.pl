@@ -10,7 +10,6 @@
 # in $dblibdir for details.
 #
 
-use threads;
 use Fsdb::Filter::dbpipeline qw(:all);
 
 # do the equivalent of

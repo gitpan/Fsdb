@@ -610,6 +610,7 @@ TEST/dbpipeline_close2_hash.pl
 TEST/dbpipeline_filter.cmd
 TEST/dbpipeline_filter.out
 TEST/dbpipeline_filter.pl
+TEST/dbpipeline_first_fails.altout
 TEST/dbpipeline_first_fails.cmd
 TEST/dbpipeline_first_fails.in
 TEST/dbpipeline_first_fails.out
