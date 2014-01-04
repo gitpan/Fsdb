@@ -3,4 +3,4 @@ prog='dbrow'
 args='"_fullname =~ /John/"'
 cmp='diff -cb '
 cmd_tail='| dbfilealter -Z none'
-
+requires='IO::Compress::Xz'

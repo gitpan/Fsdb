@@ -24,14 +24,16 @@ package Fsdb;
 
 use warnings;
 use strict;
+use utf8;
 
+=encoding utf8
 =head1 NAME
 
 Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.47';
+our $VERSION = '2.48';
 
 =head1 SYNOPSIS
 
@@ -231,25 +233,34 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.47, 2013-10-12
-test suite cleanup for non-threaded perls
+=head2 2.48, 2014-01-03
+small bugfixes and improved release engineering
 
 =over 4
 
-=item BUG FIX
+=item ENHANCEMENT
 
-Removed some stray "use threads" in some test cases.
-We didn't need them, and these were breaking non-threaded perls.
-
-=item BUG FIX
-
-Better handling of Fred cleanup;
-should fix intermittent L<dbmapreduce> failures on BSD.
+Test suites now skip tests for libraries that are missing.
+(Patch for missing C<IO::Compresss:Xz> contributed by Calvin Ardi.)
 
 =item ENHANCEMENT
 
-Improved test framework to show output when tests fail.
-(This time, for real.)
+Removed references to Jdb in the package specification.
+Since the name was changed in 2008, there's no longer a huge
+need for backwards compatability.
+(Suggestion form Petr Šabata.)
+
+=item ENHANCEMENT
+
+Test suites now invoke the perl using the path from C<$Config{perlpath}>.
+Hopefully this helps testing in environments where there are multiple installed
+perls and the default perl is not the same as the perl-under-test
+(as happens in cpantesters.org).
+
+=item BUG FIX
+
+Added specific encoding to this manpage to account for 
+Unicode.  Required to build correctly against perl-5.18.
 
 =back
 
@@ -1160,7 +1171,7 @@ Michael McQuaid,
 Christopher Meng,
 Calvin Ardi.
 
-Fsdb includes datasets contributed from NIST (DATA/nist_zarr13.fsdb),
+Fsdb includes datasets contributed from NIST (F<DATA/nist_zarr13.fsdb>),
 from
 L<http://www.itl.nist.gov/div898/handbook/eda/section4/eda4281.htm>,
 the NIST/SEMATECH e-Handbook of Statistical Methods, section
@@ -3011,6 +3022,28 @@ bursty parallelism.
 
 L<Fsdb::IO::Writer> now can take C<-autoflush => 1>
 for line-buffered IO.
+
+=back
+
+=head2 2.47, 2013-10-12
+test suite cleanup for non-threaded perls
+
+=over 4
+
+=item BUG FIX
+
+Removed some stray "use threads" in some test cases.
+We didn't need them, and these were breaking non-threaded perls.
+
+=item BUG FIX
+
+Better handling of Fred cleanup;
+should fix intermittent L<dbmapreduce> failures on BSD.
+
+=item ENHANCEMENT
+
+Improved test framework to show output when tests fail.
+(This time, for real.)
 
 =back
 

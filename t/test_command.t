@@ -149,6 +149,7 @@ use Test::More;
 use Pod::Usage;
 use Getopt::Long;
 use File::Copy qw(mv cp);
+use Config; # to get $Config{perlpath}
 
 Getopt::Long::Configure ("bundling");
 pod2usage(2) if ($#ARGV >= 0 && $ARGV[0] eq '-?');
@@ -264,6 +265,7 @@ sub parse_cmd_file {
 
 sub fix_prog_path {
     my ($prog) = @_;
+    return $Config{perlpath} if ($prog eq 'perl');
     return $prog if ($prog =~ /^(\|\s*)?(\/|cmp|diff|perl|sh)\b/);
     my($head, $tail) = ($prog =~ /^(\|\s*)?([^| ].*)$/);
     $head = '' if (!defined($head));

@@ -4,3 +4,4 @@ enabled=0
 args='-Z gz'
 in=TEST/dbfilealter_ex.in
 cmp='cmp '
+requires='IO::Compress::Gzip'

@@ -2,8 +2,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-[1mNAME[0m
-       Fsdb - a flat-text database for shell scripting
+Fsdb - a flat-text database for shell scripting
 
 [1mSYNOPSIS[0m
        Fsdb, the flatfile streaming database is package of commands for
@@ -143,18 +142,26 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.47, 2013-10-12 test suite cleanup for non-threaded perls[0m
-       BUG FIX
-           Removed some stray "use threads" in some test cases.  We didn't
-           need them, and these were breaking non-threaded perls.
-
-       BUG FIX
-           Better handling of Fred cleanup; should fix intermittent
-           dbmapreduce failures on BSD.
+   [1m2.48, 2014-01-03 small bugfixes and improved release engineering[0m
+       ENHANCEMENT
+           Test suites now skip tests for libraries that are missing.  (Patch
+           for missing "IO::Compresss:Xz" contributed by Calvin Ardi.)
 
        ENHANCEMENT
-           Improved test framework to show output when tests fail.  (This
-           time, for real.)
+           Removed references to Jdb in the package specification.  Since the
+           name was changed in 2008, there's no longer a huge need for
+           backwards compatability.  (Suggestion form Petr Xabata.)
+
+       ENHANCEMENT
+           Test suites now invoke the perl using the path from
+           $Config{perlpath}.  Hopefully this helps testing in environments
+           where there are multiple installed perls and the default perl is
+           not the same as the perl-under-test (as happens in
+           cpantesters.org).
+
+       BUG FIX
+           Added specific encoding to this manpage to account for Unicode.
+           Required to build correctly against perl-5.18.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -877,7 +884,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        [4mnxu@aludra.usc.edu[24m, Martin Lukac [4mmlukac@lecs.cs.ucla.edu[24m, Xue Cai,
        Michael McQuaid, Christopher Meng, Calvin Ardi.
 
-       Fsdb includes datasets contributed from NIST (DATA/nist_zarr13.fsdb),
+       Fsdb includes datasets contributed from NIST ([4mDATA/nist_zarr13.fsdb[24m),
        from
        <http://www.itl.nist.gov/div898/handbook/eda/section4/eda4281.htm>, the
        NIST/SEMATECH e-Handbook of Statistical Methods, section 1.4.2.8.1.
@@ -2015,6 +2022,19 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            Fsdb::IO::Writer now can take "-autoflush =" 1> for line-buffered
            IO.
 
+   [1m2.47, 2013-10-12 test suite cleanup for non-threaded perls[0m
+       BUG FIX
+           Removed some stray "use threads" in some test cases.  We didn't
+           need them, and these were breaking non-threaded perls.
+
+       BUG FIX
+           Better handling of Fred cleanup; should fix intermittent
+           dbmapreduce failures on BSD.
+
+       ENHANCEMENT
+           Improved test framework to show output when tests fail.  (This
+           time, for real.)
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -2046,4 +2066,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.16.3                      2013-10-12                           Fsdb(3)
+perl v5.18.1                      2014-01-03                           Fsdb(3)

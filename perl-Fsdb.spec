@@ -1,6 +1,6 @@
 Summary: A set of commands for manipulating flat-text databases from the shell
 Name: perl-Fsdb
-Version: 2.46
+Version: 2.48
 Release: 1%{?dist}
 License: GPLv2
 Group: Development/Libraries
@@ -9,25 +9,33 @@ Source0: http://www.isi.edu/~johnh/SOFTWARE/FSDB/Fsdb-%{version}.tar.gz
 # buildroot deprecated before 2013-07-26, but left in for EPEL 5
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildArch: noarch
-Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
-BuildRequires:  perl(ExtUtils::MakeMaker)
+BuildRequires: perl
+BuildRequires: perl(Carp)
+BuildRequires: perl(Config)
+BuildRequires: perl(Exporter)
+BuildRequires: perl(ExtUtils::MakeMaker)
+BuildRequires: perl(File::Copy)
+BuildRequires: perl(Getopt::Long)
+BuildRequires: perl(IO::File)
+BuildRequires: perl(IO::Handle)
+BuildRequires: perl(IO::Uncompress::AnyUncompress)
+BuildRequires: perl(Pod::Usage)
+BuildRequires: perl(strict)
+BuildRequires: perl(Test::More)
+BuildRequires: perl(vars)
+# following BRs are maybe not required?
 BuildRequires:  perl(HTML::Parser)
-BuildRequires:  perl(Test::More)
 BuildRequires:  perl(Text::CSV_XS)
-BuildRequires: 	perl(IO::Compress::Bzip2)
-BuildRequires: 	perl(IO::Compress::Gzip)
-BuildRequires: 	perl(IO::Compress::Xz)
+BuildRequires:  perl(IO::Compress::Bzip2)
+BuildRequires:  perl(IO::Compress::Gzip)
+BuildRequires:  perl(IO::Compress::Xz)
+Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Requires:       perl(HTML::Parser)
 Requires:       perl(Test::More)
 Requires:       perl(Text::CSV_XS)
-Requires: 	perl(IO::Compress::Bzip2)
-Requires: 	perl(IO::Compress::Gzip)
-Requires: 	perl(IO::Compress::Xz)
-# next line for rpmlint perl-Fsdb.noarch: W: obsolete-not-provided perl-Jdb
-Obsoletes:   perl-Jdb < 2.12
-Provides:  perl-Jdb = 2.12
-
-BuildRequires:  perl(ExtUtils::MakeMaker)
+Requires:       perl(IO::Compress::Bzip2)
+Requires:       perl(IO::Compress::Gzip)
+Requires:       perl(IO::Compress::Xz)
 
 
 
@@ -60,20 +68,21 @@ and it is very robust (error cases, careful memory handling, etc.).
 make %{?_smp_mflags}
 
 %install
+# buildroot removal left in for EPEL 5
 rm -rf $RPM_BUILD_ROOT
-make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
+make pure_install DESTDIR=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
-find $RPM_BUILD_ROOT -type f -name '*.bs' -empty -exec rm -f {} ';'
 # fix up g+s getting set on directories, and executables being 0555
 # (*I* think those are ok, but not rpmlint.)
-find $RPM_BUILD_ROOT -type d -exec chmod g-s {} ';'
-find $RPM_BUILD_ROOT -executable -exec chmod 0755 {} ';'
+# find $RPM_BUILD_ROOT -type d -exec chmod g-s {} ';'
+# find $RPM_BUILD_ROOT -executable -exec chmod 0755 {} ';'
+%{_fixperms} %{buildroot}/*
 
 
 %check
 make test
 
-# -was-percent-clean deprecated before 2013-07-26, but left in for EPEL 5
+# %clean but left in for EPEL 5
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -91,5 +100,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Tue Oct 08 2013 John Heidemann <johnh@isi.edu> 2.46-1
+* Mon Dec 09 2013 John Heidemann <johnh@isi.edu> 2.48-1
 - See http://www.isi.edu/~johnh/SOFTWARE/FSDB/

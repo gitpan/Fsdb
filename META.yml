@@ -10,7 +10,7 @@ configure_requires:
   ExtUtils::MakeMaker: 0
 distribution_type: module
 dynamic_config: 1
-generated_by: 'ExtUtils::MakeMaker version 6.64'
+generated_by: 'ExtUtils::MakeMaker version 6.72'
 license: GPL-2
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -29,4 +29,4 @@ requires:
   Test::More: 0
   Text::CSV_XS: 0
   XML::Simple: 0
-version: 2.47
+version: 2.48
