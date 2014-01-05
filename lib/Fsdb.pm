@@ -27,13 +27,14 @@ use strict;
 use utf8;
 
 =encoding utf8
+
 =head1 NAME
 
 Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.48';
+our $VERSION = '2.49';
 
 =head1 SYNOPSIS
 
@@ -233,34 +234,26 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.48, 2014-01-03
-small bugfixes and improved release engineering
+=head2 2.49, 2014-01-04
+bugfix to unicode handling in Fsdb IO (plus minor packaging fixes)
 
 =over 4
 
-=item ENHANCEMENT
+=item BUG FIX
 
-Test suites now skip tests for libraries that are missing.
-(Patch for missing C<IO::Compresss:Xz> contributed by Calvin Ardi.)
-
-=item ENHANCEMENT
-
-Removed references to Jdb in the package specification.
-Since the name was changed in 2008, there's no longer a huge
-need for backwards compatability.
-(Suggestion form Petr Šabata.)
-
-=item ENHANCEMENT
-
-Test suites now invoke the perl using the path from C<$Config{perlpath}>.
-Hopefully this helps testing in environments where there are multiple installed
-perls and the default perl is not the same as the perl-under-test
-(as happens in cpantesters.org).
+Restored a line in the F<.spec> to chmod g-s.
 
 =item BUG FIX
 
-Added specific encoding to this manpage to account for 
-Unicode.  Required to build correctly against perl-5.18.
+Unicode decoding is now handled correctly for programs that read 
+from standard input.
+(Also: New test scripts cover unicode input and output.)
+
+=item BUG FIX
+
+Fix to L<Fsdb> documentation encoding line.
+Addresses test failure in perl-5.16 and earlier.
+(Who knew "encoding" had to be followed by a blank line.)
 
 =back
 
@@ -3046,6 +3039,38 @@ Improved test framework to show output when tests fail.
 (This time, for real.)
 
 =back
+
+=head2 2.48, 2014-01-03
+small bugfixes and improved release engineering
+
+=over 4
+
+=item ENHANCEMENT
+
+Test suites now skip tests for libraries that are missing.
+(Patch for missing C<IO::Compresss:Xz> contributed by Calvin Ardi.)
+
+=item ENHANCEMENT
+
+Removed references to Jdb in the package specification.
+Since the name was changed in 2008, there's no longer a huge
+need for backwards compatability.
+(Suggestion form Petr Šabata.)
+
+=item ENHANCEMENT
+
+Test suites now invoke the perl using the path from C<$Config{perlpath}>.
+Hopefully this helps testing in environments where there are multiple installed
+perls and the default perl is not the same as the perl-under-test
+(as happens in cpantesters.org).
+
+=item BUG FIX
+
+Added specific encoding to this manpage to account for 
+Unicode.  Required to build correctly against perl-5.18.
+
+=back
+
 
 
 =head1 AUTHOR

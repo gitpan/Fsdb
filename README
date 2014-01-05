@@ -2,7 +2,8 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-Fsdb - a flat-text database for shell scripting
+[1mNAME[0m
+       Fsdb - a flat-text database for shell scripting
 
 [1mSYNOPSIS[0m
        Fsdb, the flatfile streaming database is package of commands for
@@ -142,26 +143,20 @@ Fsdb - a flat-text database for shell scripting
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.48, 2014-01-03 small bugfixes and improved release engineering[0m
-       ENHANCEMENT
-           Test suites now skip tests for libraries that are missing.  (Patch
-           for missing "IO::Compresss:Xz" contributed by Calvin Ardi.)
-
-       ENHANCEMENT
-           Removed references to Jdb in the package specification.  Since the
-           name was changed in 2008, there's no longer a huge need for
-           backwards compatability.  (Suggestion form Petr Xabata.)
-
-       ENHANCEMENT
-           Test suites now invoke the perl using the path from
-           $Config{perlpath}.  Hopefully this helps testing in environments
-           where there are multiple installed perls and the default perl is
-           not the same as the perl-under-test (as happens in
-           cpantesters.org).
+   [1m2.49, 2014-01-04 bugfix to unicode handling in Fsdb IO (plus minor[0m
+       [1mpackaging fixes)[0m
+       BUG FIX
+           Restored a line in the [4m.spec[24m to chmod g-s.
 
        BUG FIX
-           Added specific encoding to this manpage to account for Unicode.
-           Required to build correctly against perl-5.18.
+           Unicode decoding is now handled correctly for programs that read
+           from standard input.  (Also: New test scripts cover unicode input
+           and output.)
+
+       BUG FIX
+           Fix to Fsdb documentation encoding line.  Addresses test failure in
+           perl-5.16 and earlier.  (Who knew "encoding" had to be followed by
+           a blank line.)
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -2035,6 +2030,27 @@ Fsdb - a flat-text database for shell scripting
            Improved test framework to show output when tests fail.  (This
            time, for real.)
 
+   [1m2.48, 2014-01-03 small bugfixes and improved release engineering[0m
+       ENHANCEMENT
+           Test suites now skip tests for libraries that are missing.  (Patch
+           for missing "IO::Compresss:Xz" contributed by Calvin Ardi.)
+
+       ENHANCEMENT
+           Removed references to Jdb in the package specification.  Since the
+           name was changed in 2008, there's no longer a huge need for
+           backwards compatability.  (Suggestion form Petr Xabata.)
+
+       ENHANCEMENT
+           Test suites now invoke the perl using the path from
+           $Config{perlpath}.  Hopefully this helps testing in environments
+           where there are multiple installed perls and the default perl is
+           not the same as the perl-under-test (as happens in
+           cpantesters.org).
+
+       BUG FIX
+           Added specific encoding to this manpage to account for Unicode.
+           Required to build correctly against perl-5.18.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -2066,4 +2082,4 @@ Fsdb - a flat-text database for shell scripting
 
 
 
-perl v5.18.1                      2014-01-03                           Fsdb(3)
+perl v5.18.1                      2014-01-04                           Fsdb(3)

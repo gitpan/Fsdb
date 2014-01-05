@@ -198,7 +198,7 @@ signrpms:
 WEBDIR=/home/johnh/WORKING/JOHNH_WWW/SOFTWARE/FSDB
 
 release:
-	@echo "You should have done (fix date in Fsdb.pm); \"make manifest; make dist; make rpms\""
+	@echo "You should have done (fix date in Fsdb.pm); \"make manifest; make dist; make rpms; make rpmlint\""
 	-make signrpms
 	cp $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).$(RPM_ARCH).rpm $(WEBDIR)
 	cp $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).src.rpm $(WEBDIR)

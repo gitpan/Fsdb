@@ -127,8 +127,8 @@ sub config_one {
 	my $mode = $self->default_binmode();
 	if ($file eq '-') {
 	     $fh = new IO::Handle;
-	     binmode(STDOUT, $mode);
 	     $fh->fdopen(fileno(STDOUT),">");
+	     binmode $fh, $mode;
 	} else {
 	     $fh = new IO::File $file, ">$mode";
 	};

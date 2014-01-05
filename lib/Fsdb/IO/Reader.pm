@@ -162,8 +162,8 @@ sub config_one {
 	my $mode = $self->default_binmode();
 	if ($file eq '-') {
 	     $fh = new IO::Handle;
-	     binmode(STDIN, $mode);
 	     $fh->fdopen(fileno(STDIN),"<");
+	     binmode $fh, $mode;
 	} else {
 	     $fh = new IO::File $file, "<$mode";
 	};

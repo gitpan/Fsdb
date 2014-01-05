@@ -1,6 +1,6 @@
 Summary: A set of commands for manipulating flat-text databases from the shell
 Name: perl-Fsdb
-Version: 2.48
+Version: 2.49
 Release: 1%{?dist}
 License: GPLv2
 Group: Development/Libraries
@@ -74,7 +74,7 @@ make pure_install DESTDIR=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 # fix up g+s getting set on directories, and executables being 0555
 # (*I* think those are ok, but not rpmlint.)
-# find $RPM_BUILD_ROOT -type d -exec chmod g-s {} ';'
+find $RPM_BUILD_ROOT -type d -exec chmod g-s {} ';'
 # find $RPM_BUILD_ROOT -executable -exec chmod 0755 {} ';'
 %{_fixperms} %{buildroot}/*
 
@@ -100,5 +100,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon Dec 09 2013 John Heidemann <johnh@isi.edu> 2.48-1
+* Sat Jan 04 2014 John Heidemann <johnh@isi.edu> 2.49-1
 - See http://www.isi.edu/~johnh/SOFTWARE/FSDB/

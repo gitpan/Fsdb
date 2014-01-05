@@ -135,6 +135,9 @@ TEST/dbcol_R.out
 TEST/dbcol_S.cmd
 TEST/dbcol_S.in
 TEST/dbcol_S.out
+TEST/dbcol_unicode.cmd
+TEST/dbcol_unicode.in
+TEST/dbcol_unicode.out
 TEST/dbcol_v1_coled.cmd
 TEST/dbcol_v1_coled.in
 TEST/dbcol_v1_coled.out
@@ -720,6 +723,11 @@ TEST/dbroweval_manual_output_count.cmd
 TEST/dbroweval_manual_output_count.out
 TEST/dbroweval_manual_output_some_lines.cmd
 TEST/dbroweval_manual_output_some_lines.out
+TEST/dbroweval_unicode.cmd
+TEST/dbroweval_unicode.out
+TEST/dbroweval_unicode_n.cmd
+TEST/dbroweval_unicode_n.code
+TEST/dbroweval_unicode_n.out
 TEST/dbrowuniq_empty.cmd
 TEST/dbrowuniq_empty.in
 TEST/dbrowuniq_empty.out
