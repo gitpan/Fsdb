@@ -1,6 +1,6 @@
 Summary: A set of commands for manipulating flat-text databases from the shell
 Name: perl-Fsdb
-Version: 2.49
+Version: 2.50
 Release: 1%{?dist}
 License: GPLv2
 Group: Development/Libraries
@@ -22,17 +22,16 @@ BuildRequires: perl(IO::Uncompress::AnyUncompress)
 BuildRequires: perl(Pod::Usage)
 BuildRequires: perl(strict)
 BuildRequires: perl(Test::More)
-BuildRequires: perl(vars)
+BuildRequires: perl(utf8)
+BuildRequires: perl(warnings)
 # following BRs are maybe not required?
-BuildRequires:  perl(HTML::Parser)
-BuildRequires:  perl(Text::CSV_XS)
 BuildRequires:  perl(IO::Compress::Bzip2)
 BuildRequires:  perl(IO::Compress::Gzip)
 BuildRequires:  perl(IO::Compress::Xz)
 Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
-Requires:       perl(HTML::Parser)
-Requires:       perl(Test::More)
-Requires:       perl(Text::CSV_XS)
+# next two are autodetected by rpmbuild (I am told)
+# Requires:       perl(HTML::Parser)
+# Requires:       perl(Text::CSV_XS)
 Requires:       perl(IO::Compress::Bzip2)
 Requires:       perl(IO::Compress::Gzip)
 Requires:       perl(IO::Compress::Xz)
@@ -40,7 +39,7 @@ Requires:       perl(IO::Compress::Xz)
 
 
 %description
-FSDB is package of commands for manipulating flat-ASCII databases from
+FSDB is a package of commands for manipulating flat-ASCII databases from
 shell scripts.  FSDB is useful to process medium amounts of data (with
 very little data you'd do it by hand, with megabytes you might want a
 real database).  FSDB is very good at doing things like:
@@ -54,11 +53,9 @@ real database).  FSDB is very good at doing things like:
         - reformatting data for graphing programs
 
 Rather than hand-code scripts to do each special case, FSDB provides
-higher-level functions.  Although it's often easy throw together a
-custom script to do any single task, I believe that there are several
-advantages to using this library: it is higher-level than raw perl,
-control uses names instead of column numbers, it is self-documenting,
-and it is very robust (error cases, careful memory handling, etc.).
+higher-level functions than one gets with raw perl or shell scripts.
+(Some features:  control uses names instead of column numbers,
+it is self-documenting, and is robuts with good error and memory handling.)
 
 %prep
 %setup -q -n Fsdb-%{version}
@@ -100,5 +97,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Sat Jan 04 2014 John Heidemann <johnh@isi.edu> 2.49-1
+* Tue May 27 2014 John Heidemann <johnh@isi.edu> 2.50-1
 - See http://www.isi.edu/~johnh/SOFTWARE/FSDB/

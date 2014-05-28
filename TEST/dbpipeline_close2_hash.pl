@@ -13,7 +13,7 @@
 use Fsdb::Support::NamedTmpfile;
 use Fsdb::Filter::dbpipeline qw(dbpipeline_open2 dbpipeline_close2_hash dbcolstats);
 use Fsdb::Filter::dbcolstats;
-use v5.10;
+use 5.010;
 
 my($queue, $sink, $thread) = 
 	    dbpipeline_open2([-cols => [qw(data)]], dbcolstats('data'));

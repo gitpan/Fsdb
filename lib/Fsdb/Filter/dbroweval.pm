@@ -400,8 +400,12 @@ sub setup ($) {
     # set up reader
     #
     $self->{_out} = undef;
-    my @in_options;
-    @in_options = (-comment_handler => $self->create_pass_comments_sub)
+    my @in_options = ();
+    if ($self->{_no_output_even_comments}) {
+	$self->{_no_output} = 1;
+	push(@in_options, -outputheader => 'never');
+    };
+    push(@in_options, (-comment_handler => $self->create_pass_comments_sub))
 	if (!$self->{_no_output_even_comments});
     $self->finish_io_option('input', @in_options);
     my $read_fastpath_sub = $self->{_in}->fastpath_sub();
@@ -504,6 +508,20 @@ Internal: run over all IO
 sub run ($) {
     my($self) = @_;
     &{$self->{_loop_sub}}();
+}
+
+
+=head2 finish
+
+    $filter->finish();
+
+Internal: write trailer.
+
+=cut
+sub finish($) {
+    my($self) = @_;
+    return if ($self->{_no_output_even_comments});
+    $self->SUPER::finish();
 }
 
 

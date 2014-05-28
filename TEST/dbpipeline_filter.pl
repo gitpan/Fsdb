@@ -15,7 +15,7 @@ use Fsdb::Filter::dbpipeline qw(dbpipeline_filter dbsort);
 use Fsdb::Filter::dbcol;
 use Fsdb::Filter::dbsort;
 use Fsdb::Filter::dbroweval;
-use v5.10;
+use 5.010;
 
 my($new_reader, $new_thread) = dbpipeline_filter('-', [], dbsort(qw(cname)));
 

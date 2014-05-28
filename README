@@ -143,20 +143,17 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.49, 2014-01-04 bugfix to unicode handling in Fsdb IO (plus minor[0m
-       [1mpackaging fixes)[0m
-       BUG FIX
-           Restored a line in the [4m.spec[24m to chmod g-s.
+   [1m2.50, 2014-05-27 a quick release for spec tweaks[0m
+       ENHANCEMENT
+           In dbroweval, the "-N" (no output, even comments) option now
+           implies "-n", and it now suppresses the header and trailer.
 
        BUG FIX
-           Unicode decoding is now handled correctly for programs that read
-           from standard input.  (Also: New test scripts cover unicode input
-           and output.)
+           A few more tweaks to the [4mperl-Fsdb.spec[24m from Petr Xabata.
 
        BUG FIX
-           Fix to Fsdb documentation encoding line.  Addresses test failure in
-           perl-5.16 and earlier.  (Who knew "encoding" had to be followed by
-           a blank line.)
+           Fixed 3 uses of "use v5.10" in test suites that were causing test
+           failures (due to warnings, not real failures) on some platforms.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -2051,6 +2048,21 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            Added specific encoding to this manpage to account for Unicode.
            Required to build correctly against perl-5.18.
 
+   [1m2.49, 2014-01-04 bugfix to unicode handling in Fsdb IO (plus minor[0m
+       [1mpackaging fixes)[0m
+       BUG FIX
+           Restored a line in the [4m.spec[24m to chmod g-s.
+
+       BUG FIX
+           Unicode decoding is now handled correctly for programs that read
+           from standard input.  (Also: New test scripts cover unicode input
+           and output.)
+
+       BUG FIX
+           Fix to Fsdb documentation encoding line.  Addresses test failure in
+           perl-5.16 and earlier.  (Who knew "encoding" had to be followed by
+           a blank line.)
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -2082,4 +2094,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.18.1                      2014-01-04                           Fsdb(3)
+perl v5.18.2                      2014-05-27                           Fsdb(3)

@@ -34,7 +34,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.49';
+our $VERSION = '2.50';
 
 =head1 SYNOPSIS
 
@@ -234,28 +234,27 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.49, 2014-01-04
-bugfix to unicode handling in Fsdb IO (plus minor packaging fixes)
+=head2 2.50, 2014-05-27
+a quick release for spec tweaks
 
 =over 4
 
-=item BUG FIX
+=item ENHANCEMENT
 
-Restored a line in the F<.spec> to chmod g-s.
-
-=item BUG FIX
-
-Unicode decoding is now handled correctly for programs that read 
-from standard input.
-(Also: New test scripts cover unicode input and output.)
+In L<dbroweval>, the C<-N> (no output, even comments) option now
+implies C<-n>, and it now suppresses the header and trailer.
 
 =item BUG FIX
 
-Fix to L<Fsdb> documentation encoding line.
-Addresses test failure in perl-5.16 and earlier.
-(Who knew "encoding" had to be followed by a blank line.)
+A few more tweaks to the F<perl-Fsdb.spec> from Petr Šabata.
+
+=item BUG FIX
+
+Fixed 3 uses of C<use v5.10> in test suites that were causing test
+failures (due to warnings, not real failures) on some platforms.
 
 =back
+
 
 
 =head1 README CONTENTS
@@ -3071,6 +3070,28 @@ Unicode.  Required to build correctly against perl-5.18.
 
 =back
 
+=head2 2.49, 2014-01-04
+bugfix to unicode handling in Fsdb IO (plus minor packaging fixes)
+
+=over 4
+
+=item BUG FIX
+
+Restored a line in the F<.spec> to chmod g-s.
+
+=item BUG FIX
+
+Unicode decoding is now handled correctly for programs that read 
+from standard input.
+(Also: New test scripts cover unicode input and output.)
+
+=item BUG FIX
+
+Fix to L<Fsdb> documentation encoding line.
+Addresses test failure in perl-5.16 and earlier.
+(Who knew "encoding" had to be followed by a blank line.)
+
+=back
 
 
 =head1 AUTHOR
