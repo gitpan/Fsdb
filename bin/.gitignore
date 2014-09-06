@@ -44,6 +44,7 @@ dbsort
 html_table_to_db
 kitrace_to_db
 mysql_to_db
+sqlselect_to_db
 tabdelim_to_db
 tcpdump_to_db
 xml_to_db

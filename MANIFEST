@@ -71,6 +71,7 @@ lib/Fsdb/Filter/dbsort.pm
 lib/Fsdb/Filter/dbsubprocess.pm
 lib/Fsdb/Filter/html_table_to_db.pm
 lib/Fsdb/Filter/kitrace_to_db.pm
+lib/Fsdb/Filter/sqlselect_to_db.pm
 lib/Fsdb/Filter/tabdelim_to_db.pm
 lib/Fsdb/Filter/tcpdump_to_db.pm
 lib/Fsdb/Filter/xml_to_db.pm
@@ -149,6 +150,8 @@ TEST/dbcolcopylast_ex.in
 TEST/dbcolcopylast_ex.out
 TEST/dbcolcreate_double_creation.cmd
 TEST/dbcolcreate_double_creation.out
+TEST/dbcolcreate_double_creation_ok.cmd
+TEST/dbcolcreate_double_creation_ok.out
 TEST/dbcolcreate_ex.cmd
 TEST/dbcolcreate_ex.in
 TEST/dbcolcreate_ex.out
@@ -204,6 +207,9 @@ TEST/dbcolmovingstats_nonnumeric_no.in
 TEST/dbcolmovingstats_nonnumeric_no.out
 TEST/dbcolmovingstats_nonnumeric_yes.cmd
 TEST/dbcolmovingstats_nonnumeric_yes.out
+TEST/dbcolmovingstats_rounding_error.cmd
+TEST/dbcolmovingstats_rounding_error.in
+TEST/dbcolmovingstats_rounding_error.out
 TEST/dbcolneaten_eoln.cmd
 TEST/dbcolneaten_eoln.out
 TEST/dbcolneaten_ex.cmd
@@ -273,6 +279,9 @@ TEST/dbcolsplittocols_ex.out
 TEST/dbcolsplittocols_ex_S.cmd
 TEST/dbcolsplittocols_ex_S.in
 TEST/dbcolsplittocols_ex_S.out
+TEST/dbcolsplittorows_enumerate.cmd
+TEST/dbcolsplittorows_enumerate.in
+TEST/dbcolsplittorows_enumerate.out
 TEST/dbcolsplittorows_ex.cmd
 TEST/dbcolsplittorows_ex.in
 TEST/dbcolsplittorows_ex.out
@@ -505,6 +514,7 @@ TEST/dbmapreduce_cat.in
 TEST/dbmapreduce_cat.out
 TEST/dbmapreduce_compatible_fscodes.cmd
 TEST/dbmapreduce_compatible_fscodes.out
+TEST/dbmapreduce_dbrowenumerate.cmd
 TEST/dbmapreduce_ex.cmd
 TEST/dbmapreduce_ex.in
 TEST/dbmapreduce_ex.out
@@ -818,6 +828,9 @@ TEST/reader_hash.pl
 TEST/reader_rowobj.cmd
 TEST/reader_rowobj.out
 TEST/reader_rowobj.pl
+TEST/sqlselect_to_db_ex.cmd
+TEST/sqlselect_to_db_ex.in
+TEST/sqlselect_to_db_ex.out
 TEST/tabdelim_to_db_ex.cmd
 TEST/tabdelim_to_db_ex.in
 TEST/tabdelim_to_db_ex.out

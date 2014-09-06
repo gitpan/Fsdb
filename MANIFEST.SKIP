@@ -67,6 +67,7 @@ bin/dbsort$
 bin/html_table_to_db$
 bin/kitrace_to_db$
 bin/mysql_to_db$
+bin/sqlselect_to_db$
 bin/tabdelim_to_db$
 bin/tcpdump_to_db$
 bin/xml_to_db$
@@ -97,3 +98,4 @@ stdin\.[0-9]\.fsdb
 ^t$
 ^tt$
 ^test.out$
+^py/

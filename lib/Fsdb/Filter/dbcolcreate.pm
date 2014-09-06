@@ -43,6 +43,11 @@ Specify the value newly created columns get.
 Put all new columns as the first columns of each row.
 By default, they go at the end of each row.
 
+=item B<--no-recreate-fatal>
+
+By default, creating an existing column is an error.
+With B<--no-recreate-fatal>, we ignore re-creation.
+
 =back
 
 =for comment
@@ -160,6 +165,7 @@ sub set_defaults ($) {
     $self->{_creations} = [];
     $self->{_first} = undef;
     $self->{_create_values} = {};
+    $self->{_recreate_fatal} = 1;
 }
 
 =head2 parse_options
@@ -184,6 +190,7 @@ sub parse_options ($@) {
 	'e|empty=s' => \$self->{_empty},
 	'f|first!' => \$self->{_first},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
+	'recreate-fatal!' => \$self->{_recreate_fatal},
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	'<>' => sub { 
@@ -220,8 +227,10 @@ sub setup ($) {
     my $coli = ($self->{_first} ? 0 : $#new_cols);
     my $insert_args = '';
     foreach (@{$self->{_creations}}) {
-	croak $self->{_prog} . ": attempt to create pre-existing column $_.\n"
-	    if (defined($existing_cols{$_}));
+	if (defined($existing_cols{$_})) {
+	    next if (!$self->{_recreate_fatal});
+	    croak $self->{_prog} . ": attempt to create pre-existing column $_.\n"
+	};
 	$coli++;
 	if ($self->{_first}) {
 	    unshift @new_cols, $_;

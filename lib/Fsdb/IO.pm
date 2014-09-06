@@ -596,7 +596,7 @@ sub parse_fscode {
 	my $real_code = chr(hex($1));
 	$fsre = "[$real_code]+";
 	$outfs = $real_code;
-    } elsif ($code =~ /^C(.)$/) {   # hex value
+    } elsif ($code =~ /^C(.)$/) {   # character value
 	my $real_code = $1;
 	$fsre = "[$real_code]+";
 	$outfs = $real_code;

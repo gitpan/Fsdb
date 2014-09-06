@@ -34,7 +34,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.50';
+our $VERSION = '2.51';
 
 =head1 SYNOPSIS
 
@@ -234,24 +234,38 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.50, 2014-05-27
-a quick release for spec tweaks
+=head2 2.51, 2014-09-05
+Feature enchancements to L<dbcolmovingstats>, L<dbcolcreate>, L<dbmapreduce>, and new L<sqlselect_to_db>
 
 =over 4
 
 =item ENHANCEMENT
 
-In L<dbroweval>, the C<-N> (no output, even comments) option now
-implies C<-n>, and it now suppresses the header and trailer.
+L<dbcolcreate> now has a C<--no-recreate-fatal>
+that causes it to ignore creation of existing columns
+(instead of failing).
+
+=item ENHANCEMENT
+
+L<dbmapreduce> once again is robust to reducers
+that output the key;
+C<--no-prepend-key> is no longer manditory.
+
+=item ENHANCEMENT
+
+L<dbcolsplittorows> can now enumerate the output rows with C<-E>.
 
 =item BUG FIX
 
-A few more tweaks to the F<perl-Fsdb.spec> from Petr Šabata.
+L<dbcolmovingstats> is more mathemtically robust.
+Previously for some inputs and some platforms,
+floating point rounding could 
+sometimes cause squareroots of negative numbers.
 
-=item BUG FIX
+=item NEW
 
-Fixed 3 uses of C<use v5.10> in test suites that were causing test
-failures (due to warnings, not real failures) on some platforms.
+L<sqlselect_to_db> converts the output of the MySQL or MarinaDB
+select comment into fsdb format.
 
 =back
 
@@ -674,6 +688,10 @@ L<http://ficus-www.cs.ucla.edu/ficus-members/geoff/kitrace.html>
 =item ns_to_db 
 
 L<http://mash-www.cs.berkeley.edu/ns/>
+
+=item sqlselect_to_db   
+
+the output of SQL SELECT tables to db
 
 =item tabdelim_to_db   
 
@@ -3090,6 +3108,29 @@ from standard input.
 Fix to L<Fsdb> documentation encoding line.
 Addresses test failure in perl-5.16 and earlier.
 (Who knew "encoding" had to be followed by a blank line.)
+
+=back
+
+=head1 WHAT'S NEW
+
+=head2 2.50, 2014-05-27
+a quick release for spec tweaks
+
+=over 4
+
+=item ENHANCEMENT
+
+In L<dbroweval>, the C<-N> (no output, even comments) option now
+implies C<-n>, and it now suppresses the header and trailer.
+
+=item BUG FIX
+
+A few more tweaks to the F<perl-Fsdb.spec> from Petr Šabata.
+
+=item BUG FIX
+
+Fixed 3 uses of C<use v5.10> in test suites that were causing test
+failures (due to warnings, not real failures) on some platforms.
 
 =back
 

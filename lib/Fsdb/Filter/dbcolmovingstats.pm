@@ -356,8 +356,10 @@ sub run ($) {
 	my $n = $#d+1;
 
 	$mean = $sx / $n;
-	$stddev = ($n <= 1 ? 0 : 
-		sqrt(($sxx - $n * $mean * $mean) / ($n - 1)));
+	my($sqrt_part) = ($n <= 1 ? 0 : ($sxx - $n * $mean * $mean) / ($n - 1));
+	# Sqrt_part can go negtiave if we have floating point rounding in the subtraction,
+	# so protect against that.
+	$stddev = ($sqrt_part > 0 ? sqrt($sqrt_part) : 0);
 	if ($doing_median) {
 	    my $median_i = int($n / 2);
 	    # 1 -> 0.5 -> [0]

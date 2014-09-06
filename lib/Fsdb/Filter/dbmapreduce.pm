@@ -64,8 +64,7 @@ of its choosing.
 For non-multi-key-aware reducers,
 we add the KeyField use for each Reduce
 is in the output stream.
-If this addition is not desired, use C<--no-prepend-key>.
-(Previously this happend autmoatically.)
+(If the reducer passes the key we trust that it gives a correct value.)
 We also insure that the output field seperator is the
 same as the input field separator.
 
@@ -452,7 +451,8 @@ sub parse_options ($@) {
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'k|key=s' => \$self->{_key_column},
 	'K|pass-current-key!' => \$self->{_pass_current_key},
-	'prepend-key!' => \$self->{_prepend_key},
+	'prepend-key' => sub { $self->{_prepend_key} = 1; },
+	'no-prepend-key' => sub { $self->{_prepend_key} = 0; }, # set but false
 	'log!' => \$self->{_logprog},
 	'M|multiple-ok!' => \$self->{_reducer_is_multikey_aware},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
@@ -668,9 +668,9 @@ sub _open_new_key {
 	push(@reducer_modules, dbfilealter('--nolog', '-F', $self->{_in}->fscode()));
     };
     if ($self->{_prepend_key}) {
-	push(@reducer_modules, dbcolcreate('--nolog', '--first', '-e', $new_key, $self->{_key_column}));
+	push(@reducer_modules, dbcolcreate('--no-recreate-fatal', '--nolog', '--first', '-e', $new_key, $self->{_key_column}));
     };
-    print STDERR "# reducer output to $output_file\n" if ($self->{_debug});
+    print STDERR "# reducer output to $output_file (in process $$)\n" if ($self->{_debug});
 #    $reducer_modules[$#reducer_modules]->parse_options('--output' => $output_file);
     unshift(@reducer_modules, '--output' => $output_file);
     my %work_queue_entry;

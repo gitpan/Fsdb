@@ -73,6 +73,7 @@ my @modularized_db_converters = qw(
 	db_to_html_table 
 	html_table_to_db 
 	kitrace_to_db 
+	sqlselect_to_db
 	tabdelim_to_db 
 	tcpdump_to_db
 	xml_to_db
@@ -207,7 +208,7 @@ release:
 	cp README.html $(WEBDIR)/$(SPEC_PREFIX)-$(VERSION)_README.html
 	cd $(WEBDIR); git add $(RPM_PREFIX)-$(VERSION)*.rpm Fsdb-$(VERSION).tar.gz $(SPEC_PREFIX)-$(VERSION)_README.html
 	cd $(WEBDIR); rm Fsdb-current.tar.gz; ln -s Fsdb-$(VERSION).tar.gz Fsdb-current.tar.gz; rm $(RPM_PREFIX)-current.noarch.rpm; ln -s $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).noarch.rpm $(RPM_PREFIX)-current.noarch.rpm; rm $(RPM_PREFIX)-current.src.rpm; ln -s $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).src.rpm $(RPM_PREFIX)-current.src.rpm; 
-	@echo "to finish: git commit -am $(VERSION)-release; git tag -s -u johnh@isi.edu -m $(VERSION)-release fsdb-$(VERSION); cd $(WEBDIR); git commit -am \"release $(RPM_PREFIX)-$(VERSION)\""
+	@echo "to finish: git commit -am $(VERSION)-release; git tag -s -u 0x4c6cd6f2 -m $(VERSION)-release fsdb-$(VERSION); cd $(WEBDIR); git commit -am \"release $(RPM_PREFIX)-$(VERSION)\""
 
 rpmlint:
 	rpmlint $(RPM_PREFIX)-$(VERSION)-1$(RPM_DIST).noarch.rpm

@@ -18,7 +18,7 @@ dbcolsplittocols - split an existing column into multiple new columns
 
 =head1 SYNOPSIS
 
-dbcolsplittocols [-C ElementSeparator] column [column...]
+dbcolsplittocols [-E] [-C ElementSeparator] column [column...]
 
 =head1 DESCRIPTION
 
@@ -40,6 +40,14 @@ to set column names.
 
 Specify the separator I<S> used to join columns.
 (Defaults to a single underscore.)
+
+=item B<-E> or B<--enumerate>
+
+Enumerate output columns: rather than assuming the column name uses
+teh element separator, we keep it whole and fill in with indexes
+starting from 0.
+(Not currently implemented, but planned.  See
+L<dbcolsplittorows>.)
 
 =back
 
@@ -167,6 +175,7 @@ sub set_defaults ($) {
     my($self) = @_;
     $self->SUPER::set_defaults();
     $self->{_elem_separator} = '_';
+    $self->{_enumerate} = undef;
     $self->{_target_column} = undef;
 }
 
@@ -190,6 +199,7 @@ sub parse_options ($@) {
 	'close!' => \$self->{_close},
 	'C|element-separator=s' => \$self->{_elem_separator},
 	'd|debug+' => \$self->{_debug},
+	'E|enumerate!' => \$self->{_enumerate},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
@@ -221,7 +231,13 @@ sub setup ($) {
 	if ($self->{_elem_separator} =~ /\'/);
 
     $self->finish_io_option('output', -clone => $self->{_in}, -outputheader => 'delay');
-    my @new_columns = split(/$self->{_elem_separator}/, $self->{_target_column});
+    my(@new_columns);
+    if ($self->{_enumerate}) {
+	# xxx: need to estimate how many we need, but we can't do that.
+	croak $self->{_prog} . ": enumeration is not currently supported\n";
+    } else {
+	@new_columns = split(/$self->{_elem_separator}/, $self->{_target_column});
+    };
     my @new_colis = ();
 
     #

@@ -232,6 +232,8 @@ sub setup ($) {
     } elsif ($input_ref =~ /^Fsdb::IO::Reader/) {
 	# start up a converter Fred
         my $pipe = new IO::Pipe;
+	croak $self->{_prog} . ": error opening pipe.\n"
+	    if ($pipe->error);
 	my $input = $self->{_input};
 	my $input_fred = new Fsdb::Support::Freds('dbsubprocess_Fsdb::IO::Reader_converter',
 	    sub {
@@ -270,7 +272,11 @@ sub setup ($) {
 	# a file
 	my $fh = IO::File->new($self->{_output}, "w");
 	$fh->binmode;
+	croak $self->{_prog} . ": cannot open output file: " . $self->{_output} . ".\n"
+	    if ($fh->error);
 	$self->{_out_fileno} = $fh->fileno;
+	croak $self->{_prog} . ": strangely unset fileno for output file: " . $self->{_output} . ".\n"
+	    if (!defined($self->{_out_fileno}));
     } else {
 	croak $self->{_prog} . ": unknown output method.\n"
     };

@@ -18,7 +18,7 @@ dbcolsplittorows - split an existing column into multiple new rows
 
 =head1 SYNOPSIS
 
-dbcolsplittorows [-C ElementSeperator] [-e null] column [column...]
+dbcolsplittorows [-C ElementSeperator] [-e null] [-E] [-N enumerated-name] column [column...]
 
 =head1 DESCRIPTION
 
@@ -38,8 +38,19 @@ are empty, we generate one (and not zero) empty fields.
 
 =item B<-C S> or B<--element-separator S>
 
-Specify the separator used to join columns.
+Specify the separator used to split columns.
 (Defaults to a single underscore.)
+
+=item B<-E> or B<--enumerate>
+
+Enumerate output columns: rather than assuming the column name uses
+teh element separator, we keep it whole and fill in with indexes
+starting from 0.
+
+=item B<-N> or B<--new-name> N
+
+Name the new column N for enumeration.
+Defaults to C<index>.
 
 =item B<-e E> or B<--empty E>
 
@@ -173,6 +184,8 @@ sub set_defaults ($) {
     my($self) = @_;
     $self->SUPER::set_defaults();
     $self->{_elem_separator} = '_';
+    $self->{_enumerate} = undef;
+    $self->{_destination_column} = 'count';
     $self->{_target_column} = undef;
     $self->{_empty} = undef;
 }
@@ -198,8 +211,10 @@ sub parse_options ($@) {
 	'C|element-separator=s' => \$self->{_elem_separator},
 	'd|debug+' => \$self->{_debug},
 	'e|empty=s' => \$self->{_empty},
+	'E|enumerate!' => \$self->{_enumerate},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
+	'N|new-name=s' => \$self->{_destination_column},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
 	) or pod2usage(2);
     $self->parse_target_column(\@argv);
@@ -230,8 +245,11 @@ sub setup ($) {
     croak $self->{_prog} . ": bad empty value.\n"
 	if ($self->{_empty} =~ /\'/);
 
-    $self->finish_io_option('output', -clone => $self->{_in});
-
+    $self->finish_io_option('output', -clone => $self->{_in}, -outputheader => 'delay');
+    if ($self->{_enumerate}) {
+	$self->{_out}->col_create($self->{_destination_column})
+	    or croak $self->{_prog} . ": cannot create column '" . $self->{_destination_column} . "' (maybe it already existed?)\n";
+    };
 }
 
 =head2 run
@@ -248,17 +266,26 @@ sub run ($) {
     my $write_fastpath_sub = $self->{_out}->fastpath_sub();
 
     my $empty = $self->{_empty};
+    my $enum_coli = undef;
+    if ($self->{_enumerate}) {
+	$enum_coli = $self->{_out}->col_to_i($self->{_destination_column});
+	croak $self->{_prog} . ": enumeration column " . $self->{_destion_column} . " doesn't exist, even though we created it.\n"
+	    if (!defined($enum_coli));
+    };
+
 
     my($loop) = q'{
         my $fref;
 	while ($fref = &$read_fastpath_sub()) {
 	    my @p = split(/' . quotemeta($self->{_elem_separator}) . '/, $fref->[' . $self->{_target_coli} . ']);
 	    push(@p, undef) if ($#p == -1);
+	    my($i) = 0;
 	    foreach (@p) {
 		if (!defined($_) || $_ eq "") {
 		    ' . (!defined($empty) ? "next;\n" : '$_ = ' . "'" . $empty . "';" ) . '
 		};
-		$fref->[' . $self->{_target_coli} . '] = $_;
+		$fref->[' . $self->{_target_coli} . '] = $_;' . 
+		(defined($enum_coli) ? '  $fref->[' . $enum_coli . '] = $i++;' : '') . '
 		&$write_fastpath_sub($fref);
 	    };
         };
