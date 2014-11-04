@@ -100,5 +100,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Wed Sep 03 2014 John Heidemann <johnh@isi.edu> 2.51-1
+* Fri Sep 05 2014 John Heidemann <johnh@isi.edu> 2.51-1
 - See http://www.isi.edu/~johnh/SOFTWARE/FSDB/

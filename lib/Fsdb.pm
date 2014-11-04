@@ -34,7 +34,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.51';
+our $VERSION = '2.52';
 
 =head1 SYNOPSIS
 
@@ -234,38 +234,17 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.51, 2014-09-05
-Feature enchancements to L<dbcolmovingstats>, L<dbcolcreate>, L<dbmapreduce>, and new L<sqlselect_to_db>
+=head2 2.52, 2014-11-03
+Fixing the test suite for line number changes.
 
 =over 4
 
 =item ENHANCEMENT
 
-L<dbcolcreate> now has a C<--no-recreate-fatal>
-that causes it to ignore creation of existing columns
-(instead of failing).
+Test suites changes to be robust to exact line numbers of failures,
+since different Perl releases fail on different lines.
+L<https://bugzilla.redhat.com/show_bug.cgi?id=1158380>
 
-=item ENHANCEMENT
-
-L<dbmapreduce> once again is robust to reducers
-that output the key;
-C<--no-prepend-key> is no longer manditory.
-
-=item ENHANCEMENT
-
-L<dbcolsplittorows> can now enumerate the output rows with C<-E>.
-
-=item BUG FIX
-
-L<dbcolmovingstats> is more mathemtically robust.
-Previously for some inputs and some platforms,
-floating point rounding could 
-sometimes cause squareroots of negative numbers.
-
-=item NEW
-
-L<sqlselect_to_db> converts the output of the MySQL or MarinaDB
-select comment into fsdb format.
 
 =back
 
@@ -3131,6 +3110,41 @@ A few more tweaks to the F<perl-Fsdb.spec> from Petr Šabata.
 
 Fixed 3 uses of C<use v5.10> in test suites that were causing test
 failures (due to warnings, not real failures) on some platforms.
+
+=back
+
+=head2 2.51, 2014-09-05
+Feature enchancements to L<dbcolmovingstats>, L<dbcolcreate>, L<dbmapreduce>, and new L<sqlselect_to_db>
+
+=over 4
+
+=item ENHANCEMENT
+
+L<dbcolcreate> now has a C<--no-recreate-fatal>
+that causes it to ignore creation of existing columns
+(instead of failing).
+
+=item ENHANCEMENT
+
+L<dbmapreduce> once again is robust to reducers
+that output the key;
+C<--no-prepend-key> is no longer manditory.
+
+=item ENHANCEMENT
+
+L<dbcolsplittorows> can now enumerate the output rows with C<-E>.
+
+=item BUG FIX
+
+L<dbcolmovingstats> is more mathemtically robust.
+Previously for some inputs and some platforms,
+floating point rounding could 
+sometimes cause squareroots of negative numbers.
+
+=item NEW
+
+L<sqlselect_to_db> converts the output of the MySQL or MarinaDB
+select comment into fsdb format.
 
 =back
 

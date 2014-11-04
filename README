@@ -143,26 +143,9 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.51, 2014-09-05 Feature enchancements to dbcolmovingstats, dbcolcreate,[0m
-       [1mdbmapreduce, and new sqlselect_to_db[0m
+   [1m2.52, date tbd desc tbd[0m
        ENHANCEMENT
-           dbcolcreate now has a "--no-recreate-fatal" that causes it to
-           ignore creation of existing columns (instead of failing).
-
-       ENHANCEMENT
-           dbmapreduce once again is robust to reducers that output the key;
-           "--no-prepend-key" is no longer manditory.
-
-       ENHANCEMENT
-           dbcolsplittorows can now enumerate the output rows with "-E".
-
-       BUG FIX
-           dbcolmovingstats is more mathemtically robust.  Previously for some
-           inputs and some platforms, floating point rounding could sometimes
-           cause squareroots of negative numbers.
-
-       NEW sqlselect_to_db converts the output of the MySQL or MarinaDB select
-           comment into fsdb format.
+           xxx
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -2088,6 +2071,27 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            Fixed 3 uses of "use v5.10" in test suites that were causing test
            failures (due to warnings, not real failures) on some platforms.
 
+   [1m2.51, 2014-09-05 Feature enchancements to dbcolmovingstats, dbcolcreate,[0m
+       [1mdbmapreduce, and new sqlselect_to_db[0m
+       ENHANCEMENT
+           dbcolcreate now has a "--no-recreate-fatal" that causes it to
+           ignore creation of existing columns (instead of failing).
+
+       ENHANCEMENT
+           dbmapreduce once again is robust to reducers that output the key;
+           "--no-prepend-key" is no longer manditory.
+
+       ENHANCEMENT
+           dbcolsplittorows can now enumerate the output rows with "-E".
+
+       BUG FIX
+           dbcolmovingstats is more mathemtically robust.  Previously for some
+           inputs and some platforms, floating point rounding could sometimes
+           cause squareroots of negative numbers.
+
+       NEW sqlselect_to_db converts the output of the MySQL or MarinaDB select
+           comment into fsdb format.
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -2119,4 +2123,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.18.2                      2014-09-05                           Fsdb(3)
+perl v5.18.4                      2014-09-08                           Fsdb(3)

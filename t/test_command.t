@@ -366,9 +366,14 @@ sub run_test {
     open(OUT, ">$cmd_base.trial") or die "$0: cannot write $cmd_base.trial\n";
     while (<RUN>) {
 	chomp;
+	#
 	# Carp has no period in perl-5.14, but gathers one by 5.17.
 	# normalize the difference.
-	s/^( at .* line \d+)\.?/$1./g;
+	#
+	# Also, changes to the base perl version change the exact line that fails.
+	# Fix that here.
+	#
+	s/^( at .* line) (\d+)\.?/$1 999./g;
 	if (defined($suppress_warnings_regexp)) {
 	    if (/^($suppress_warnings_regexp)/) {
 	        # print "skipping: $_\n";
