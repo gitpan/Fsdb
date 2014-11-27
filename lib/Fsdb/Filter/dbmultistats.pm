@@ -2,7 +2,7 @@
 
 #
 # dbmultistats.pm
-# Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -90,6 +90,11 @@ Only used if median or quantiles are requested.
 Also uses environment variable TMPDIR, if -T is 
 not specified.
 Default is /tmp.
+
+=item <--parallelism=N>
+
+Allow up to N reducers to run in parallel.
+Default is the number of CPUs in the machine.
 
 =back
 
@@ -219,6 +224,7 @@ sub set_defaults ($) {
     $self->{_format} = undef;
     $self->{_quantile} = undef;
     $self->{_median} = undef;   # special case: renames the output field
+    $self->{_max_parallelism} = undef;
     $self->{_include_non_numeric} = undef;
 }
 
@@ -249,6 +255,7 @@ sub parse_options ($@) {
 	'log!' => \$self->{_logprog},
 	'm|median!' =>  \$self->{_median},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
+	'parallelism=i' => \$self->{_max_parallelism},
 	'q|quantile=i' => \$self->{_quantile},
 	'S|pre-sorted+' => \$self->{_pre_sorted},
 	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
@@ -287,6 +294,8 @@ sub setup ($) {
 	if (defined($self->{_quantile}));
     push (@dbcolstats_argv, '--tmpdir', $self->{_tmpdir})
 	if (defined($self->{_tmpdir}));
+    push (@dbcolstats_argv, '--parallelism', $self->{_max_parallelism})
+	if (defined($self->{_max_parallelism}));
     # last one!
     # push (@dbcolstats_argv, $self->{_target_column});
     # Added by hand below.
@@ -299,6 +308,8 @@ sub setup ($) {
     # the rest
     push (@dbmapreduce_argv, ("-S") x $self->{_pre_sorted})
 	if ($self->{_pre_sorted});
+    push (@dbcolstats_argv, '--parallelism', $self->{_max_parallelism})
+	if (defined($self->{_max_parallelism}));
     push (@dbmapreduce_argv, "--key", $self->{_key_column})
 	if (defined($self->{_key_column}));
     my $dbcolstats_code = 'dbcolstats(';
@@ -358,7 +369,7 @@ sub finish ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

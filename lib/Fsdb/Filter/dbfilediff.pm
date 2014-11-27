@@ -2,7 +2,7 @@
 
 #
 # dbfilediff.pm
-# Copyright (C) 2012 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2012-2014 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -27,7 +27,7 @@ OR
 =head1 DESCRIPTION
 
 Dbfilediff compares two Fsdb tables, row by row.
-Unlike Unix diff(1), this program assumes the files are identical
+Unlike Unix L<diff(1)>, this program assumes the files are identical
 line-by-line and we compare fields.
 Thus, insertion of one extra row will result in all
 subsequent lines being marked different.
@@ -38,8 +38,11 @@ By default, I<all> columns must be unique.
 Output is a new table with a new column C<diff>
 (or something else if the C<-N> option is given),
 "-"  and "+" for the first and second non-equal rows,
-or "~" if they are equal with epsilon numerics (in which case only the
-first row is included).
+"=" for matching lines, 
+or "~" if they are equal with epsilon numerics
+(in which case only the second row is included).
+Unlike Unix L<diff(1)>, we output I<all> rows (the "=" lines),
+not just diffs (the C<--quiet> option suppresses this output).
 
 Optionally, with C<-E> it will do a "epsilon numeric" comparision,
 to account for things like variations in different computer's
@@ -67,6 +70,9 @@ Epsilon comparision allows the last digit to vary by 1,
 or for there to be one extra digit of precision,
 but only for floating point numbers.
 
+Rows that are within epsilon are not considered different 
+for purposes of the exit code.
+
 =item B<--exit>
 
 Exit with a status of 1 if some differences were found.
@@ -81,6 +87,8 @@ Specify the name of the C<diff> column, if any.
 =item B<-q> or B<--quiet>
 
 Be quiet, supressing output for identical rows.
+(This behavior is different from Unix L<diff(1)> 
+where C<-q> supresses I<all> output.
 
 =back
 
@@ -397,7 +405,7 @@ sub run ($) {
 			# sloppy numeric compare fails;
 			# non-numeric compare
 		    };
-		    $eq = 0.1;  # epsilon :-)
+		    $eq = 'epsilon';
 		    # sloppy numeric compare succeeds; keep going
 		} else {
 		    $eq = undef;
@@ -405,9 +413,11 @@ sub run ($) {
 		};
 	    };
 	};
-	if ($eq) {
-	    push(@$f0, ($eq == 0.1 ? "~": "="));
-	    &$out_fastpath_sub($f0);
+	if (defined($eq)) {
+	    push(@$f1, ($eq eq 'epsilon' ? "~": "="));
+	    if ($eq eq 'epsilon' || !$self->{_quiet}) {
+		&$out_fastpath_sub($f1);
+	    };
 	} else {
 	    $difference_count++;
 	    push(@$f0, "-");
@@ -428,7 +438,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2012 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2012-2014 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

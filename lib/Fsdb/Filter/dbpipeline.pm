@@ -357,6 +357,20 @@ has completed.
 Or if $RESULT_READER_AREF is C<[-raw_fh,  1]>, it just returns the IO::Handle
 to the pipe.
 
+As an example, this code uses C<dbpipeline_filter> to insure the input
+(from C<$in> which is a filename or L<Fsdb::IO::Reader>) is sorted
+numerically by column C<x>:
+
+    use Fsdb::Filter::dbpipeline qw(dbpipeline_filter dbsort);
+    my($new_in, $new_fred) = dbpipeline_filter($in,
+	[-comment_handler => $self->create_delay_comments_sub],
+	dbsort(qw(--nolog -n x)));
+    while (my $fref = $new_in->read_rowwobj()) {
+	# do something
+    };
+    $new_in->close;
+    $new_fred->join();
+
 =cut
 
 sub dbpipeline_filter($@) {

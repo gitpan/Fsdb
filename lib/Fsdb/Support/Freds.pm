@@ -197,10 +197,10 @@ sub join() {
 
 =head2 join_any
 
-    my $fred = Fsdb::Support::Freds::join_any();
+    my $fred = Fsdb::Support::Freds::join_any($BLOCK);
 
 Join on some pending fred,
-without blocking.
+without blocking (default) or blocking (if $BLOCK) is set.
 Returns -1 on error.
 Returns 0 if something is running but not finished.
 
@@ -208,8 +208,10 @@ Returns the $FRED that ends.
 
 =cut
 
-sub join_any() {
-    my $pid = waitpid(-1, WNOHANG);
+sub join_any(;$) {
+    my($block) = @_;
+
+    my $pid = waitpid(-1, ($block ? 0 : WNOHANG));
     return $pid if ($pid == -1 || $pid == 0);
 
     # find it

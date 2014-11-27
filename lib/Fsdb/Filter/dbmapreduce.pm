@@ -2,7 +2,7 @@
 
 #
 # dbmapreduce.pm
-# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
 # $Id: 1e25691a19e98de45f517c2a454ccd40580c1348 $
 #
 # This program is distributed under terms of the GNU general
@@ -169,6 +169,11 @@ Not done by default.
 Change the field separator of a
 non-multi-key-aware reducers to match the input's field separator.
 Not done by default.
+
+=item <--parallelism=N>
+
+Allow up to N reducers to run in parallel.
+Default is the number of CPUs in the machine.
 
 =item B<-C FILTER-CODE> or B<--filter-code=FILTER-CODE>
 
@@ -377,6 +382,7 @@ use Fsdb::IO::Reader;
 use Fsdb::IO::Writer;
 use Fsdb::Filter::dbsubprocess;
 use Fsdb::Support::NamedTmpfile;
+use Fsdb::Support::OS;
 use Fsdb::Filter::dbpipeline qw(dbpipeline_filter dbpipeline_sink dbsort dbcolcreate dbfilecat dbfilealter dbsubprocess);
 
 my $REDUCER_GROUP_SYNCHRONIZATION_FLAG = 'reducer group synchronization flag';
@@ -423,6 +429,9 @@ sub set_defaults ($) {
     $self->{_filter_generator_code} = undef;
     $self->{_code_files} = [];
     $self->{_warnings} = 1;
+    $self->{_max_parallelism} = undef;
+    $self->{_parallelism_available} = undef;
+    $self->{_test_parallelism} = undef;
     $self->set_default_tmpdir;
 }
 
@@ -456,13 +465,16 @@ sub parse_options ($@) {
 	'log!' => \$self->{_logprog},
 	'M|multiple-ok!' => \$self->{_reducer_is_multikey_aware},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
+	'parallelism=i' => \$self->{_max_parallelism},
 	'S|pre-sorted+' => \$self->{_pre_sorted},
+	'test-parallelism!' => \$self->{_test_parallelism},  # for test suite only
 	'T|tmpdir|tempdir=s' => \$self->{_tmpdir},
 	'saveoutput=s' => \$self->{_save_output},
         'w|warnings!' => \$self->{_warnings},
 	) or pod2usage(2);
     push (@{$self->{_external_command_argv}}, @argv);
 }
+
 
 =head2 setup
 
@@ -491,6 +503,13 @@ sub setup($) {
     };
 
     #
+    # control parallelism
+    #
+    $self->{_max_parallelism} //= Fsdb::Support::OS::max_parallelism();
+    $self->{_max_parallelism} = 1 if ($self->{_max_parallelism} < 1);  # always allow some
+    $self->{_parallelism_available} //= $self->{_max_parallelism};
+
+    #
     # what are we running?
     #
     # Figure it out, and generate a 
@@ -508,9 +527,13 @@ sub setup($) {
 	    '--nolog', '--';
 	my $reducer_generator_sub;
 	if ($self->{_pass_current_key}) {
-	    $reducer_generator_sub = sub { dbsubprocess(@pre_argv, @argv, $_[0] // $empty); };
+	    $reducer_generator_sub = sub { 
+		return dbsubprocess(@pre_argv, @argv, $_[0] // $empty);
+	    };
 	} else {
-	    $reducer_generator_sub = sub { dbsubprocess(@pre_argv, @argv); };
+	    $reducer_generator_sub = sub { 
+		return dbsubprocess(@pre_argv, @argv);
+	     };
 	};
 	$self->{_reducer_generator_sub} = $reducer_generator_sub;
 	print STDERR "# dbmapreduce/setup: external command is " . join(" ", @pre_argv, @argv) . "\n" if ($self->{_debug} > 2);
@@ -636,7 +659,7 @@ Convert a key (maybe undef) to a string for status messages.
 
 sub _key_to_string($$) {
     my($self, $key) = @_;
-    return defined($key) ? $key  : $self->{_empty};
+    return defined($key) ? $key  : '(undef)';
 }
 
 
@@ -645,6 +668,8 @@ sub _key_to_string($$) {
     _open_new_key
 
 (internal)
+
+Note that new_key can be undef if there was no input.
 
 =cut
 
@@ -668,7 +693,8 @@ sub _open_new_key {
 	push(@reducer_modules, dbfilealter('--nolog', '-F', $self->{_in}->fscode()));
     };
     if ($self->{_prepend_key}) {
-	push(@reducer_modules, dbcolcreate('--no-recreate-fatal', '--nolog', '--first', '-e', $new_key, $self->{_key_column}));
+	# croak $self->{_prog} . ": no key_column\n" if (!defined($self->{_key_column}));
+	push(@reducer_modules, dbcolcreate('--no-recreate-fatal', '--nolog', '--first', '-e', $new_key // $self->{_empty}, $self->{_key_column}));
     };
     print STDERR "# reducer output to $output_file (in process $$)\n" if ($self->{_debug});
 #    $reducer_modules[$#reducer_modules]->parse_options('--output' => $output_file);
@@ -724,12 +750,23 @@ sub _close_old_key {
 Internal: see if any reducer freds finished, optionally $FORCE-ing 
 all to finish.
 
+This routine also enforces a maximum amount of parallelism, blocking us when we have too
+many reducers running.
+
 =cut
 
 sub _check_finished_reducers($$) {
     my($self, $force) = @_;
 
-    print STDERR "# dbmerge:_check_finished_reducers: " . ($force ? "forced" : "optional") . "\n" if ($self->{_debug});
+    my $force_status = ($force ? "forced" : "optional");
+    my $backlog = $#{$self->{_work_queue}} + 1;
+    $self->{_cat_writer}->write_rowobj("# dbmapreduce: test_parallelism backlog $backlog, max $self->{_max_parallelism}\n") if ($self->{_test_parallelism});
+    if ($backlog >= $self->{_max_parallelism}) {
+	$force = 2;
+	$force_status = "backlog-forced";
+    }
+
+    print STDERR "# dbmerge:_check_finished_reducers: $force_status\n" if ($self->{_debug});
     for(;;) {
         my $fred_or_code = Fsdb::Support::Freds::join_any();
 	last if (ref($fred_or_code) eq '');
@@ -777,7 +814,7 @@ Fork off reducer as necessary.
 sub _mapper_run($) {
     my($self) = @_;
 
-    $self->{_work_queue} = [];
+    $self->{_work_queue} = [];   # track running reducers
     my $read_fastpath_sub = $self->{_in}->fastpath_sub();
     my $reducer_fastpath_sub = undef;
 
@@ -901,7 +938,7 @@ sub finish($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

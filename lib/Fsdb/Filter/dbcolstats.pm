@@ -2,7 +2,7 @@
 
 #
 # dbcolstats.pm
-# Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -93,6 +93,12 @@ Compute I<whole> population statistics
 Assume data is already sorted.
 With one -S, we check and confirm this precondition.
 When repeated, we skip the check.
+
+=item <--parallelism=N>
+
+Allow sorting to happen in parallel.
+Defaults on.
+(Only relevant if using non-pre-sorted data with quantiles.)
 
 =item B<-F> or B<--fs> or B<--fieldseparator> S
 
@@ -272,6 +278,7 @@ sub set_defaults ($) {
     $self->{_pre_sorted} = 0;
     $self->{_include_non_numeric} = undef;
     $self->{_fscode} = undef;
+    $self->{_max_parallelism} = undef;
     $self->set_default_tmpdir;
 }
 
@@ -302,6 +309,7 @@ sub parse_options ($@) {
 	'log!' => \$self->{_logprog},
 	'm|median!' =>  \$self->{_median},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
+	'parallelism=i' => \$self->{_max_parallelism},
 	'q|quantile=i' => \$self->{_quantile},
 	's|sample!' =>  \$self->{_sample},
 	'S|pre-sorted+' => \$self->{_pre_sorted},
@@ -356,10 +364,13 @@ sub setup ($) {
 	print STDERR "dbcolstats: pre-saveoutput setup\n" if ($self->{_debug} > 2);
 	if (!$self->{_pre_sorted}) {
 	    my $sorter_fred;
+	    my(@dbsort_args) = qw(-n data);
+	    push (@dbsort_args, '--parallelism', $self->{_max_parallelism})
+		if (defined($self->{_max_parallelism}));
 	    print STDERR "dbcolstats: doing sorter thread\n" if ($self->{_debug} > 2);
 	    ($save_out, $sorter_fred) = dbpipeline_sink(\@writer_args,
 			'--output' => $self->{_save_out_filename},
-			dbsort(qw(-n data)));
+			dbsort(@dbsort_args));
 	    $self->{_sorter_fred} = $sorter_fred;
 	} else {
 	    # no, just write it ourselves
@@ -614,7 +625,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

@@ -34,7 +34,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.52';
+our $VERSION = '2.53';
 
 =head1 SYNOPSIS
 
@@ -234,17 +234,41 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.52, 2014-11-03
-Fixing the test suite for line number changes.
+=head2 2.53, 2014-11-26
+bug fixes and stability improvements to dbmapreduce
 
 =over 4
 
 =item ENHANCEMENT
 
-Test suites changes to be robust to exact line numbers of failures,
-since different Perl releases fail on different lines.
-L<https://bugzilla.redhat.com/show_bug.cgi?id=1158380>
+The L<dbfilediff> how supports a C<--quiet> option.
 
+=item ENHANCEMENT
+
+Better documention of L<dbpipeline_filter>.
+
+=item BUGFIX
+
+Added groff-base and perl-podlators to the Fedora package spec.
+Fixes L<https://bugzilla.redhat.com/show_bug.cgi?id=1163149>.
+(Also in package 2.52-2.)
+
+=item BUGFIX
+
+An important stability improvement to L<dbmapreduce>.
+It, plus L<dbmultistats>, and L<dbcolstats> now support
+controlled parallelism with the C<--pararallelism=N> option.
+They default to run with the number of avaiable CPUs.
+L<dbmapreduce> also moderates its level of parallelism.
+Previously it would create reducers as needed,
+causing CPU thrashing if reducers ran much slower than data production.
+
+=item BUGFIX
+
+The combination of L<dbmapreduce> with L<dbrowenumerate> now works
+as it should.  (The obscure bug was an interaction with L<dbcolcreate>
+with non-multi-key reducers that output their own key.  L<dbmapreduce>
+has too many useful corner cases.)
 
 =back
 
@@ -3145,6 +3169,26 @@ sometimes cause squareroots of negative numbers.
 
 L<sqlselect_to_db> converts the output of the MySQL or MarinaDB
 select comment into fsdb format.
+
+=item INCOMPATIBLE CHANGE
+
+L<dbfilediff> now outputs the I<second> row
+when doing sloppy numeric comparisions,
+to beter support test suites.
+
+=back
+
+=head2 2.52, 2014-11-03
+Fixing the test suite for line number changes.
+
+=over 4
+
+=item ENHANCEMENT
+
+Test suites changes to be robust to exact line numbers of failures,
+since different Perl releases fail on different lines.
+L<https://bugzilla.redhat.com/show_bug.cgi?id=1158380>
+
 
 =back
 

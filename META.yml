@@ -29,4 +29,4 @@ requires:
   Test::More: 0
   Text::CSV_XS: 0
   XML::Simple: 0
-version: 2.52
+version: 2.53

@@ -113,6 +113,8 @@ L<dbrowaccumulate>.
 =cut
 
 use Fsdb::Filter::dbrowaccumulate;
-my $f = new Fsdb::Filter::dbrowaccumulate(qw(-N count -I -1 -C 1), @ARGV);
+my(@dbrowaccumulate_args) = qw(-N count -I -1 -C 1);
+push(@dbrowaccumulate_args, @ARGV);
+my $f = new Fsdb::Filter::dbrowaccumulate(@dbrowaccumulate_args);
 $f->setup_run_finish;  # or could just --autorun
 exit 0;

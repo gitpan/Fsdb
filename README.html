@@ -173,14 +173,38 @@
 
 <h1 id="WHATS-NEW">WHAT&#39;S NEW</h1>
 
-<h2 id="date-tbd-desc-tbd">2.52, date tbd desc tbd</h2>
+<h2 id="bug-fixes-and-stability-improvements-to-dbmapreduce">2.53, 2014-11-26 bug fixes and stability improvements to dbmapreduce</h2>
 
 <dl>
 
 <dt id="ENHANCEMENT">ENHANCEMENT</dt>
 <dd>
 
-<p>xxx</p>
+<p>The <a>dbfilediff</a> how supports a <code>--quiet</code> option.</p>
+
+</dd>
+<dt id="ENHANCEMENT1">ENHANCEMENT</dt>
+<dd>
+
+<p>Better documention of <a>dbpipeline_filter</a>.</p>
+
+</dd>
+<dt id="BUGFIX">BUGFIX</dt>
+<dd>
+
+<p>Added groff-base and perl-podlators to the Fedora package spec. Fixes <a href="https://bugzilla.redhat.com/show_bug.cgi?id=1163149">https://bugzilla.redhat.com/show_bug.cgi?id=1163149</a>. (Also in package 2.52-2.)</p>
+
+</dd>
+<dt id="BUGFIX1">BUGFIX</dt>
+<dd>
+
+<p>An important stability improvement to <a>dbmapreduce</a>. It, plus <a>dbmultistats</a>, and <a>dbcolstats</a> now support controlled parallelism with the <code>--pararallelism=N</code> option. They default to run with the number of avaiable CPUs. <a>dbmapreduce</a> also moderates its level of parallelism. Previously it would create reducers as needed, causing CPU thrashing if reducers ran much slower than data production.</p>
+
+</dd>
+<dt id="BUGFIX2">BUGFIX</dt>
+<dd>
+
+<p>The combination of <a>dbmapreduce</a> with <a>dbrowenumerate</a> now works as it should. (The obscure bug was an interaction with <a>dbcolcreate</a> with non-multi-key reducers that output their own key. <a>dbmapreduce</a> has too many useful corner cases.)</p>
 
 </dd>
 </dl>
@@ -1618,7 +1642,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT1">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT2">ENHANCEMENT</dt>
 <dd>
 
 <p>shifting more old programs to Perl modules. New in 2.2: <a>dbrowaccumulate</a>, <a>dbformmail</a>. <a>dbcolmovingstats</a>. <a>dbrowuniq</a>. <a>dbrowdiff</a>. <a>dbcolmerge</a>. <a>dbcolsplittocols</a>. <a>dbcolsplittorows</a>. <a>dbmapreduce</a>. <a>dbmultistats</a>. <a>dbrvstatdiff</a>. Also <a>dbrowenumerate</a> exists only as a front-end (command-line) program.</p>
@@ -1712,13 +1736,13 @@
 
 <dl>
 
-<dt id="ENHANCEMENT2">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT3">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbrow</a> now defaults to running user supplied code without warnings (as with fsdb-1.x). Use <code>--warnings</code> or <code>-w</code> to turn them back on.</p>
 
 </dd>
-<dt id="ENHANCEMENT3">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT4">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbroweval</a> can now write different format output than the input, using the <code>-m</code> option.</p>
@@ -1748,7 +1772,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT4">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT5">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbmapreduce</a> can now tolerate non-map-aware reducers that pass back the key column in put. It also passes the current key as the last argument to external reducers.</p>
@@ -1768,7 +1792,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT5">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT6">ENHANCEMENT</dt>
 <dd>
 
 <p>shifting more old programs to Perl modules. New in 2.2: <a>dbcolpercentile</a>.</p>
@@ -1806,7 +1830,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT6">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT7">ENHANCEMENT</dt>
 <dd>
 
 <p>shifting more old programs to Perl modules. New in 2.7: <a>dbcolscorellate</a>. <a>dbcolsregression</a>. <a>cgi_to_db</a>. <a>dbfilevalidate</a>. <a>db_to_csv</a>. <a>csv_to_db</a>, <a>db_to_html_table</a>, <a>kitrace_to_db</a>, <a>tcpdump_to_db</a>, <a>tabdelim_to_db</a>, <a>ns_to_db</a>.</p>
@@ -1818,7 +1842,7 @@
 <p>The following programs have been dropped from fsdb-2.x: <a>db2dcliff</a>, <a>dbcolmultiscale</a>, <a>crl_to_db</a>. <a>ipchain_logs_to_db</a>. They may come back, but seemed overly specialized. The following program <a>dbrowsplituniq</a> was dropped because it is superseded by <a>dbmapreduce</a>. <a>dmalloc_to_db</a> was dropped pending a test cases and examples.</p>
 
 </dd>
-<dt id="ENHANCEMENT7">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT8">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbfilevalidate</a> now has a <code>-c</code> option to correct errors.</p>
@@ -1864,7 +1888,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT8">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT9">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbmapreduce</a> now generates plausible output when given no rows of input.</p>
@@ -1878,13 +1902,13 @@
 
 <dl>
 
-<dt id="ENHANCEMENT9">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT10">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbmapreduce</a> now generates plausible output when given no rows of input.</p>
 
 </dd>
-<dt id="ENHANCEMENT10">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT11">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbroweval</a> the warnings option was backwards; now corrected. As a result, warnings in user code now default off (like in fsdb-1.x).</p>
@@ -1910,13 +1934,13 @@
 
 <dl>
 
-<dt id="ENHANCEMENT11">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT12">ENHANCEMENT</dt>
 <dd>
 
 <p><a>html_table_to_db</a> is now more agressive about filling in empty cells with the official empty value, rather than leaving them blank or as whitespace.</p>
 
 </dd>
-<dt id="ENHANCEMENT12">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT13">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbpipeline</a> now catches failures during pipeline element setup and exits reasonably gracefully.</p>
@@ -1978,7 +2002,7 @@
 <p>Improved documentation for <a>dbmapreduce</a>&#39;s <code>-f</code> option.</p>
 
 </dd>
-<dt id="ENHANCEMENT13">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT14">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbcolmovingstats</a> how computes a moving standard deviation in addition to a moving mean.</p>
@@ -2578,13 +2602,13 @@
 <p>Actually in 2.38, the Fedora <i>.spec</i> got cleaner dependencies. Suggestion from Christopher Meng via <a href="https://bugzilla.redhat.com/show_bug.cgi?id=877096">https://bugzilla.redhat.com/show_bug.cgi?id=877096</a>.</p>
 
 </dd>
-<dt id="ENHANCEMENT14">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT15">ENHANCEMENT</dt>
 <dd>
 
 <p>Fsdb files are now explicitly set into UTF-8 encoding, unless one specifies <code>-encoding</code> to <code>Fsdb::IO</code>.</p>
 
 </dd>
-<dt id="ENHANCEMENT15">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT16">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbrowuniq</a> now supports <code>-I</code> for incremental counting.</p>
@@ -2620,7 +2644,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT16">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT17">ENHANCEMENT</dt>
 <dd>
 
 <p>Documentation to <a>dbrvstatdiff</a> improved (inspired by questions from Qian Kun).</p>
@@ -2638,13 +2662,13 @@
 <p>Add missing <code>XML::Simple</code> dependency to <i>Makefile.PL</i>.</p>
 
 </dd>
-<dt id="ENHANCEMENT17">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT18">ENHANCEMENT</dt>
 <dd>
 
 <p>Tests now show the diff of the failing output if run with <code>make test TEST_VERBOSE=1</code>.</p>
 
 </dd>
-<dt id="ENHANCEMENT18">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT19">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbroweval</a> now includes documentation for how to output extra rows. Suggestion from Yuri Pradkin.</p>
@@ -2662,7 +2686,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT19">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT20">ENHANCEMENT</dt>
 <dd>
 
 <p>Documentation to <a>dbjoin</a> improved to better memory usage. (Based on problem report by Lin Quan.)</p>
@@ -2704,7 +2728,7 @@
 <p>Yet more parallelism in <a>dbmerge</a>: new &quot;endgame-mode&quot; builds a merge tree of processes at the end of large merge tasks to get maximally parallelism. Currently this feature is off by default because it can hang for some inputs. Enable this experimental feature with <code>--endgame</code>.</p>
 
 </dd>
-<dt id="ENHANCEMENT20">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT21">ENHANCEMENT</dt>
 <dd>
 
 <p><code>Fsdb::IO</code> now handles being given <code>IO::Pipe</code> objects (as exercised by <a>dbmerge</a>).</p>
@@ -2722,7 +2746,7 @@
 <p>Fsdb now requires perl 5.10. This is a bug fix because some test cases used to require it, but this fact was not properly documented. (Back-porting to 5.008 would require removing all <code>//</code> operators.)</p>
 
 </dd>
-<dt id="ENHANCEMENT21">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT22">ENHANCEMENT</dt>
 <dd>
 
 <p>Fsdb now handles automatic compression of file contents. Enable compression with <code>dbfilealter -Z xz</code> (or <code>gz</code> or <code>bz2</code>). All programs should operate on compressed files and leave the output with the same level of copmresion. <code>xz</code> is recommended as fastest and most efficient. <code>gz</code> is produces unrepeatable output (and so has no output test), it seems to insist on adding a timestamp.</p>
@@ -2734,7 +2758,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT22">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT23">ENHANCEMENT</dt>
 <dd>
 
 <p>Fsdb is now thread free and only uses processes for parallelism. This change is a big change--the entire motivation for Fsdb-2 was to exploit parallelism via threading. Parallelism--good, but perl threading--bad for performance. Horribly bad for performance. About 20x worse than pipes on my box. (See perl bug #119445 for the discussion.)</p>
@@ -2746,7 +2770,7 @@
 <p><code>Fsdb::Support::Freds</code> provides a thread-like abstraction over forking, with some nice support for callbacks in the parent upon child termination.</p>
 
 </dd>
-<dt id="ENHANCEMENT23">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT24">ENHANCEMENT</dt>
 <dd>
 
 <p>Details about removing theads: <code>dbpipeline</code> is thread free, and new tests to verify each of its parts. The easy cases are <code>dbcolpercentile</code>, <code>dbcolstats</code>, <code>dbfilepivot</code>, <code>dbjoin</code>, and <code>dbcolstatscores</code>, each of which use it in simple ways (2013-09-09). <code>dbmerge</code> is now thread free (2013-09-13), but was a signficant rewrite, which brought <code>dbsort</code> along. <code>dbmapreduce</code> is partly thread free (2013-09-21), again as a rewrite, and it brings <code>dbmultistats</code> along. Full <code>dbmapreduce</code> support took much longer (2013-10-02).</p>
@@ -2770,7 +2794,7 @@
 <p><a>dbfilecat</a> will concatinate two files, verifying that thye have the same schema.</p>
 
 </dd>
-<dt id="ENHANCEMENT24">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT25">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbmapreduce</a> now passes comments through, rather than eating them as before.</p>
@@ -2802,7 +2826,7 @@
 <p>Corrected a fast busy-wait in <a>dbmerge</a>.</p>
 
 </dd>
-<dt id="ENHANCEMENT25">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT26">ENHANCEMENT</dt>
 <dd>
 
 <p>Endgame mode enabled in <a>dbmerge</a>; it (and also large cases of <a>dbsort</a>) should now exploit greater parallelism.</p>
@@ -2852,7 +2876,7 @@
 <p>Better handling of Fred cleanup; should fix intermittent <a>dbmapreduce</a> failures on BSD.</p>
 
 </dd>
-<dt id="ENHANCEMENT26">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT27">ENHANCEMENT</dt>
 <dd>
 
 <p>Improved test framework to show output when tests fail. (This time, for real.)</p>
@@ -2864,19 +2888,19 @@
 
 <dl>
 
-<dt id="ENHANCEMENT27">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT28">ENHANCEMENT</dt>
 <dd>
 
 <p>Test suites now skip tests for libraries that are missing. (Patch for missing <code>IO::Compresss:Xz</code> contributed by Calvin Ardi.)</p>
 
 </dd>
-<dt id="ENHANCEMENT28">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT29">ENHANCEMENT</dt>
 <dd>
 
 <p>Removed references to Jdb in the package specification. Since the name was changed in 2008, there&#39;s no longer a huge need for backwards compatability. (Suggestion form Petr &Scaron;abata.)</p>
 
 </dd>
-<dt id="ENHANCEMENT29">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT30">ENHANCEMENT</dt>
 <dd>
 
 <p>Test suites now invoke the perl using the path from <code>$Config{perlpath}</code>. Hopefully this helps testing in environments where there are multiple installed perls and the default perl is not the same as the perl-under-test (as happens in cpantesters.org).</p>
@@ -2920,7 +2944,7 @@
 
 <dl>
 
-<dt id="ENHANCEMENT30">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT31">ENHANCEMENT</dt>
 <dd>
 
 <p>In <a>dbroweval</a>, the <code>-N</code> (no output, even comments) option now implies <code>-n</code>, and it now suppresses the header and trailer.</p>
@@ -2944,19 +2968,19 @@
 
 <dl>
 
-<dt id="ENHANCEMENT31">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT32">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbcolcreate</a> now has a <code>--no-recreate-fatal</code> that causes it to ignore creation of existing columns (instead of failing).</p>
 
 </dd>
-<dt id="ENHANCEMENT32">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT33">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbmapreduce</a> once again is robust to reducers that output the key; <code>--no-prepend-key</code> is no longer manditory.</p>
 
 </dd>
-<dt id="ENHANCEMENT33">ENHANCEMENT</dt>
+<dt id="ENHANCEMENT34">ENHANCEMENT</dt>
 <dd>
 
 <p><a>dbcolsplittorows</a> can now enumerate the output rows with <code>-E</code>.</p>
@@ -2972,6 +2996,24 @@
 <dd>
 
 <p><a>sqlselect_to_db</a> converts the output of the MySQL or MarinaDB select comment into fsdb format.</p>
+
+</dd>
+<dt id="INCOMPATIBLE-CHANGE7">INCOMPATIBLE CHANGE</dt>
+<dd>
+
+<p><a>dbfilediff</a> now outputs the <i>second</i> row when doing sloppy numeric comparisions, to beter support test suites.</p>
+
+</dd>
+</dl>
+
+<h2 id="Fixing-the-test-suite-for-line-number-changes">2.52, 2014-11-03 Fixing the test suite for line number changes.</h2>
+
+<dl>
+
+<dt id="ENHANCEMENT35">ENHANCEMENT</dt>
+<dd>
+
+<p>Test suites changes to be robust to exact line numbers of failures, since different Perl releases fail on different lines. <a href="https://bugzilla.redhat.com/show_bug.cgi?id=1158380">https://bugzilla.redhat.com/show_bug.cgi?id=1158380</a></p>
 
 </dd>
 </dl>

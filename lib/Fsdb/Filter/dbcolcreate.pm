@@ -217,6 +217,9 @@ Internal: setup, parse headers.
 sub setup ($) {
     my($self) = @_;
 
+    croak $self->{_prog} . ": no new columns to create.\n"
+	if ($#{$self->{_creations}} == -1);
+
     $self->finish_io_option('input', -comment_handler => $self->create_pass_comments_sub);
 
     my @new_cols = @{$self->{_in}->cols};
@@ -248,6 +251,18 @@ sub setup ($) {
 	$insert_args .= "\t\t, q" . $quote . $val . $quote . "\n";
     };
     my $insert_code = "\t" . ($self->{_first} ? "unshift" : "push") . '(@$fref' . $insert_args . ");\n";
+    #
+    # A fun case, exercised by TEST/dbmapreduce_dbrowenumerate.cmd:
+    #
+    # IF we are invoked with --no-recreate-fatal
+    # AND the column we're creating already exists,
+    # THEN we end up with  nothing to create.
+    # The result is this obscure warning:
+    # Useless use of unshift with no values at (eval 37) line 5, <GEN9> line 1.
+    #
+    # To fix that case, we turn ourselves into a pass-through loop.
+    #
+    $insert_code = '' if ($insert_args eq '');
 
     $self->finish_io_option('output', -clone => $self->{_in}, -cols => \@new_cols);
     

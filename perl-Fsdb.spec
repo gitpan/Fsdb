@@ -1,6 +1,6 @@
 Summary: A set of commands for manipulating flat-text databases from the shell
 Name: perl-Fsdb
-Version: 2.51
+Version: 2.53
 Release: 1%{?dist}
 License: GPLv2
 Group: Development/Libraries
@@ -31,6 +31,9 @@ BuildRequires:  perl(IO::Compress::Xz)
 # next two are needed to run test suites and are not autodetected
 BuildRequires:       perl(HTML::Parser)
 BuildRequires:       perl(Text::CSV_XS)
+# next two are needed to run test suites and are not autodetected
+BuildRequires: groff-base
+BuildRequires: perl-podlators
 Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 # next two are needed to run test suites and are not autodetected
 Requires:       perl(HTML::Parser)
@@ -100,5 +103,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Fri Sep 05 2014 John Heidemann <johnh@isi.edu> 2.51-1
+* Wed Nov 26 2014 John Heidemann <johnh@isi.edu> 2.53-1
 - See http://www.isi.edu/~johnh/SOFTWARE/FSDB/

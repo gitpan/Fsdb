@@ -273,7 +273,7 @@ sub fix_prog_path {
 }
 
 sub diff_output {
-    my($cmd_base, $out, $trial, $cmp, $altout_p) = @_;
+    my($cmd_base, $out, $trial, $cmp, $cmp_needs_input_flags, $altout_p) = @_;
     if (! -e $out) {
 	diag "    test $cmd_base is missing output $out\n";
 	return undef;
@@ -281,8 +281,7 @@ sub diff_output {
     $cmp = fix_prog_path($cmp);
     my($input_flag) = '';
     my($cmp_env) = '';
-    if ($cmp =~ /dbfilediff/) {
-	# xxxnn
+    if (defined($cmp_needs_input_flags) && $cmp_needs_input_flags ne 'false') {
 	$input_flag = '--input';
 	$cmp_env = $env_cmd;
     };
@@ -435,9 +434,9 @@ sub run_test {
     #
     my($out_ok) = 1;
     my $trial_fn = "$cmd_base.trial";
-    $out_ok = diff_output($cmd_base, $out, $trial_fn, $optref->{cmp}, 'altout');
+    $out_ok = diff_output($cmd_base, $out, $trial_fn, $optref->{cmp}, $optref->{cmp_needs_input_flags}, 'altout');
     if (!$out_ok && defined($optref->{altcmp})) {
-        $out_ok = diff_output($cmd_base, $out, $trial_fn, $optref->{altcmp}, 'altout');
+        $out_ok = diff_output($cmd_base, $out, $trial_fn, $optref->{altcmp}, $optref->{altcmp_needs_input_flags},  'altout');
     };
     if (!$out_ok && defined($optref->{altout}) && $optref->{altout} eq 'true') {
 	$out_ok = diff_output($cmd_base, "$cmd_base.altout", $trial_fn, $optref->{cmp}, 'out');

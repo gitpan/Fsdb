@@ -44,6 +44,12 @@ Unix command; instead it is used only from within Perl.
 Enable warnings in user supplied code.
 (Default to include warnings.)
 
+=item B<-E> or B<--endsub> SUB
+
+Call Perl SUB when the subprocess terminates.
+The sub runs in the parent and is a Fred ending sub, see
+L<Fsdb::Support::Freds>.
+
 =back
 
 =for comment
@@ -178,6 +184,7 @@ sub set_defaults ($) {
     $self->SUPER::set_defaults();
     $self->{_external_command_argv} = [];
     $self->{_warnings} = 1;
+    $self->{_ending_sub} = undef;
 }
 
 =head2 parse_options
@@ -199,6 +206,7 @@ sub parse_options ($@) {
 	'autorun!' => \$self->{_autorun},
 	'close!' => \$self->{_close},
 	'd|debug+' => \$self->{_debug},
+	'E|endsub=s' => \$self->{_ending_sub},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
@@ -321,7 +329,7 @@ sub run ($) {
 	    exec @$args_ref or croak $self->{_prog} . ": cannot exec: " . join(" ", @$args_ref) . "\n";
 	    # never returns, either way.
 	    die;   # just in case
-	});
+	}, $self->{_ending_sub});
     $self->{_fred} = $fred;
 }
 

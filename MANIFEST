@@ -427,6 +427,8 @@ TEST/dbfilediff_ex.in-2
 TEST/dbfilediff_ex.out
 TEST/dbfilediff_ex_exit.cmd
 TEST/dbfilediff_ex_exit.out
+TEST/dbfilediff_quiet.cmd
+TEST/dbfilediff_quiet.out
 TEST/dbfilepivot_commented.cmd
 TEST/dbfilepivot_commented.in
 TEST/dbfilepivot_commented.out
@@ -515,6 +517,7 @@ TEST/dbmapreduce_cat.out
 TEST/dbmapreduce_compatible_fscodes.cmd
 TEST/dbmapreduce_compatible_fscodes.out
 TEST/dbmapreduce_dbrowenumerate.cmd
+TEST/dbmapreduce_dbrowenumerate.out
 TEST/dbmapreduce_ex.cmd
 TEST/dbmapreduce_ex.in
 TEST/dbmapreduce_ex.out
@@ -537,6 +540,13 @@ TEST/dbmapreduce_grouped_incorrectly.out
 TEST/dbmapreduce_incompatible_fscodes.cmd
 TEST/dbmapreduce_incompatible_fscodes.in
 TEST/dbmapreduce_incompatible_fscodes.out
+TEST/dbmapreduce_limited_parallelism.cmd
+TEST/dbmapreduce_limited_parallelism.in
+TEST/dbmapreduce_limited_parallelism.out
+TEST/dbmapreduce_limited_parallelism.pl
+TEST/dbmapreduce_limited_parallelism_2.cmd
+TEST/dbmapreduce_limited_parallelism_2.in
+TEST/dbmapreduce_limited_parallelism_2.out
 TEST/dbmapreduce_multiple_aware.cmd
 TEST/dbmapreduce_multiple_aware.out
 TEST/dbmapreduce_multiple_aware_code.cmd
@@ -563,6 +573,8 @@ TEST/dbmapreduce_sub_no_prepend.out
 TEST/dbmapreduce_sub_simple.cmd
 TEST/dbmapreduce_sub_simple.out
 TEST/dbmapreduce_sub_simple.pl
+TEST/dbmapreduce_unlimited_parallelism.cmd
+TEST/dbmapreduce_unlimited_parallelism.out
 TEST/dbmerge2_ex.cmd
 TEST/dbmerge2_ex.out
 TEST/dbmerge2_ex_R.cmd

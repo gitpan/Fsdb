@@ -5,4 +5,4 @@ args='TEST/dbpipeline_first_fails.pl'
 cmp='diff -cb '
 expected_exit_code=fail
 altout=true
-altcmp='dbfilediff -E --exit '
+altcmp='dbfilediff --quiet -E --exit '

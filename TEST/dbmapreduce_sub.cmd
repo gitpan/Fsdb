@@ -3,5 +3,5 @@ args='--prepend-key -k experiment -C "dbcolstats(qw(--nolog duration))"'
 cmp='diff -cb '
 predecessor=dbmapreduce_multiple_aware_sub.cmd
 in=TEST/dbmapreduce_ex.in
-altcmp='dbfilediff -E --exit '
+altcmp='dbfilediff --quiet -E --exit '
 altcmp_needs_input_flags=true

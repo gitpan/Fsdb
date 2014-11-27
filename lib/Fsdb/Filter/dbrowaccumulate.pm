@@ -298,9 +298,9 @@ sub run ($) {
 	    &$write_fastpath_sub($fref);
 	};
     };';
+    print STDERR $loop_sub_code if ($self->{_debug});
     eval $loop_sub_code;
     $@ && die $self->{_prog} . ":  internal eval error: $@.\n";
-
     &$loop_sub();
 }
 
