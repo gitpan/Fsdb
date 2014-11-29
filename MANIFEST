@@ -102,6 +102,13 @@ t/pod-coverage.t
 t/pod.t
 t/test_command.t
 TEST/.gitignore
+TEST/0_test_command_altcmp.cmd
+TEST/0_test_command_altcmp.out
+TEST/0_test_command_altout.altout
+TEST/0_test_command_altout.cmd
+TEST/0_test_command_altout.out
+TEST/0_test_command_correct.cmd
+TEST/0_test_command_correct.out
 TEST/cgi_to_db_ex.cmd
 TEST/cgi_to_db_ex.in
 TEST/cgi_to_db_ex.in-2

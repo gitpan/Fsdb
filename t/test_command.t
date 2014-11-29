@@ -222,7 +222,7 @@ if ($#failed_tests >= 0) {
 
 exit 0;
 
-sub show_failure {
+sub show_failure($) {
     my($cmd_base) = @_;
     my $diff_fn = "$cmd_base.diff";
     diag "# $cmd_base\n";
@@ -243,7 +243,7 @@ sub show_failure {
 # the .cmd is a pseudo-shell-script like thing.
 # Parse that here.
 #
-sub parse_cmd_file {
+sub parse_cmd_file($) {
     my($cmd_file) = @_;
     my %opts;
     open(CMD, "<$cmd_file") or die "$0: cannot read $cmd_file\n";
@@ -263,7 +263,7 @@ sub parse_cmd_file {
     return \%opts;
 };
 
-sub fix_prog_path {
+sub fix_prog_path($) {
     my ($prog) = @_;
     return $Config{perlpath} if ($prog eq 'perl');
     return $prog if ($prog =~ /^(\|\s*)?(\/|cmp|diff|perl|sh)\b/);
@@ -272,7 +272,7 @@ sub fix_prog_path {
     return $head . $scripts_dir . "/" . $tail;
 }
 
-sub diff_output {
+sub diff_output($$$$$$) {
     my($cmd_base, $out, $trial, $cmp, $cmp_needs_input_flags, $altout_p) = @_;
     if (! -e $out) {
 	diag "    test $cmd_base is missing output $out\n";
@@ -439,7 +439,7 @@ sub run_test {
         $out_ok = diff_output($cmd_base, $out, $trial_fn, $optref->{altcmp}, $optref->{altcmp_needs_input_flags},  'altout');
     };
     if (!$out_ok && defined($optref->{altout}) && $optref->{altout} eq 'true') {
-	$out_ok = diff_output($cmd_base, "$cmd_base.altout", $trial_fn, $optref->{cmp}, 'out');
+	$out_ok = diff_output($cmd_base, "$cmd_base.altout", $trial_fn, $optref->{cmp}, $optref->{cmp_needs_input_flags}, 'out');
     };
     if (!$out_ok) {
 	push (@failed_tests, $cmd_base);

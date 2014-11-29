@@ -143,32 +143,9 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.53, 2014-11-26 bug fixes and stability improvements to dbmapreduce[0m
+   [1m2.54, date tbd one-line tbd[0m
        ENHANCEMENT
-           The dbfilediff how supports a "--quiet" option.
-
-       ENHANCEMENT
-           Better documention of dbpipeline_filter.
-
-       BUGFIX
-           Added groff-base and perl-podlators to the Fedora package spec.
-           Fixes <https://bugzilla.redhat.com/show_bug.cgi?id=1163149>.  (Also
-           in package 2.52-2.)
-
-       BUGFIX
-           An important stability improvement to dbmapreduce.  It, plus
-           dbmultistats, and dbcolstats now support controlled parallelism
-           with the "--pararallelism=N" option.  They default to run with the
-           number of avaiable CPUs.  dbmapreduce also moderates its level of
-           parallelism.  Previously it would create reducers as needed,
-           causing CPU thrashing if reducers ran much slower than data
-           production.
-
-       BUGFIX
-           The combination of dbmapreduce with dbrowenumerate now works as it
-           should.  (The obscure bug was an interaction with dbcolcreate with
-           non-multi-key reducers that output their own key.  dbmapreduce has
-           too many useful corner cases.)
+           xxx
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -2125,6 +2102,33 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            since different Perl releases fail on different lines.
            <https://bugzilla.redhat.com/show_bug.cgi?id=1158380>
 
+   [1m2.53, 2014-11-26 bug fixes and stability improvements to dbmapreduce[0m
+       ENHANCEMENT
+           The dbfilediff how supports a "--quiet" option.
+
+       ENHANCEMENT
+           Better documention of dbpipeline_filter.
+
+       BUGFIX
+           Added groff-base and perl-podlators to the Fedora package spec.
+           Fixes <https://bugzilla.redhat.com/show_bug.cgi?id=1163149>.  (Also
+           in package 2.52-2.)
+
+       BUGFIX
+           An important stability improvement to dbmapreduce.  It, plus
+           dbmultistats, and dbcolstats now support controlled parallelism
+           with the "--pararallelism=N" option.  They default to run with the
+           number of avaiable CPUs.  dbmapreduce also moderates its level of
+           parallelism.  Previously it would create reducers as needed,
+           causing CPU thrashing if reducers ran much slower than data
+           production.
+
+       BUGFIX
+           The combination of dbmapreduce with dbrowenumerate now works as it
+           should.  (The obscure bug was an interaction with dbcolcreate with
+           non-multi-key reducers that output their own key.  dbmapreduce has
+           too many useful corner cases.)
+
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
 
@@ -2156,4 +2160,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.18.4                      2014-11-26                           Fsdb(3)
+perl v5.18.4                      2014-11-27                           Fsdb(3)
