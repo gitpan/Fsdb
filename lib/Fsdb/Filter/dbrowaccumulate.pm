@@ -42,7 +42,7 @@ No default.
 
 =item B<-C> or B<--constant> K
 
-Accumulate the given contant K for each row of input.
+Accumulate the given constant K for each row of input.
 No default.
 
 =item B<-I> or B<--initial-value> I

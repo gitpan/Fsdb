@@ -2,7 +2,7 @@
 
 #
 # dbcolstatscores.pm
-# Copyright (C) 1997-2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1997-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -183,7 +183,7 @@ use Fsdb::Support::NamedTmpfile;
 
     $filter = new Fsdb::Filter::dbcolstatscores(@arguments);
 
-Create a new dbcolstatscores object, taking command-line arugments.
+Create a new dbcolstatscores object, taking command-line arguments.
 
 =cut
 

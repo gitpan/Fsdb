@@ -3,7 +3,7 @@
 #
 # dbrvstatdiff
 #
-# Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -80,7 +80,7 @@ either "rejected" or "not-rejected".
 
 =item C<t_test_break>
 
-The hypothesised value that is break-even point
+The hypothesized value that is break-even point
 for the T-test.
 
 =item C<t_test_break_pct>
@@ -93,7 +93,7 @@ Confidence intervals are not printed if standard deviations are not provided.
 Confidence intervals assume normal distributions with common variances.
 
 T-tests are only computed if a hypothesized difference is provided.
-Hypothesized diferences should be proceeded by <=, >=, =.
+Hypothesized differences should be proceeded by <=, >=, =.
 T-tests assume normal distributions with common variances.
 
 =head1 OPTIONS
@@ -113,7 +113,7 @@ Defaults to C<%.5g>.
 
 =item B<-h DIFF> or B<--hypothesis DIFF>
 
-Specify the hypothoesized difference as C<DIFF>,
+Specify the hypothesized difference as C<DIFF>,
 where C<DIFF> is something like C<E<lt>=0> or C<E<gt>=0>, etc.
 
 =back
@@ -553,7 +553,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

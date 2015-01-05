@@ -24,7 +24,7 @@ dbrow [-vw] CONDITION [CONDITION...]
 
 Select rows for which all CONDITIONS are true.
 Conditions are specified as Perl code,
-in which column names are be embedded, preceeded by underscores.
+in which column names are be embedded, preceded by underscores.
 
 =head1 OPTIONS
 
@@ -133,7 +133,7 @@ use Fsdb::IO::Writer;
 
     $filter = new Fsdb::Filter::dbrow(@arguments);
 
-Create a new dbrow object, taking command-line arugments.
+Create a new dbrow object, taking command-line arguments.
 
 =cut
 

@@ -2,7 +2,7 @@
 
 #
 # dbroweval.pm
-# Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -27,10 +27,10 @@ Evaluate code for each row of the data.
 Typical actions are things like reformatting
 and other data transformations.
 
-Code can include embedded column names preceeded by underscores;
+Code can include embedded column names preceded by underscores;
 these result in the value of that column for the current row.
 
-The values of the last row's columns are retreieved with _last_foo
+The values of the last row's columns are retrieved with _last_foo
 where foo is the column name.
 
 Even more perverse, _columname(N) is the value of the
@@ -65,7 +65,7 @@ no output at all, except for what is in the provided code
 =item B<-m> or B<--manual-output>
 
 The user must setup output,
-allowing arbitary comments.
+allowing arbitrary comments.
 See example 2 below for details.
 
 =item B<-w> or B<--warnings>
@@ -260,7 +260,7 @@ in for a penny with C<$ofref>, in for a pound.
 
 =head2 Command 4: Extra Ouptut
 
-Calling C<&$write_fastpath_sub($fref)> will do etra output,
+Calling C<&$write_fastpath_sub($fref)> will do extra output,
 so this simple program will duplicate each line of input
 (one extra output, plus one regular output for each line of input):
 
@@ -529,7 +529,7 @@ sub finish($) {
 
     $log = $filter->figure_program_log();
 
-Override compute_program_log to do pretty-printted arguments.
+Override compute_program_log to do pretty-printed arguments.
 
 =cut
 
@@ -541,5 +541,16 @@ sub compute_program_log($) {
     return $log;
 }
 
+
+
+=head1 AUTHOR and COPYRIGHT
+
+Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+
+This program is distributed under terms of the GNU general
+public license, version 2.  See the file COPYING
+with the distribution for details.
+
+=cut
 
 1;

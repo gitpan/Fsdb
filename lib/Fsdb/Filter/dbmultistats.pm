@@ -2,7 +2,7 @@
 
 #
 # dbmultistats.pm
-# Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -74,7 +74,7 @@ Compute median value.  (Will sort data if necessary.)
 =item B<-q N> or B<--quantile N>
 
 Compute quantile (quartile when N is 4),
-or an artbitrary quantile for other values of N,
+or an arbitrary quantile for other values of N,
 where the scores that are 1 Nth of the way across the population.
 
 =item B<-S> or B<--pre-sorted>
@@ -369,7 +369,7 @@ sub finish ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

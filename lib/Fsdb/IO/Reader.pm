@@ -4,7 +4,7 @@
 # Fsdb::IO::Reader.pm
 # $Id$
 #
-# Copyright (C) 2005-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2005-2015 by John Heidemann <johnh@isi.edu>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License,
@@ -183,7 +183,7 @@ sub config_one {
 
 =head2 comment_handler_to_sub;
 
-interal use only: parses and sets up the comment hanlder callback.
+internal use only: parses and sets up the comment handle callback.
 (At input, _comment_sub is as given by -comment_handler,
 but at exit it is always an anon function.
 
@@ -544,7 +544,7 @@ sub fastpath_ok {
 
 Return an anonymous sub that does read fast-path when called.
 This code stub returns a new $aref
-correponding with a data line, 
+corresponding with a data line, 
 and handles comments as specified by -comment_handler
 
 =cut

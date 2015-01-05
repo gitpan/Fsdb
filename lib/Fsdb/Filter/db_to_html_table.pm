@@ -2,7 +2,7 @@
 
 #
 # db_to_html_table.pm
-# Copyright (C) 2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2007-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -23,7 +23,7 @@ db_to_html_table - convert db to an HTML table
 =head1 DESCRIPTION
 
 Covert an existing dbtable to an HTML table.
-The output is a fragement of an HTML page;
+The output is a fragment of an HTML page;
 we assume the user fills in the rest (head and body, etc.).
 
 Input is fsdb format.
@@ -200,7 +200,7 @@ sub parse_options ($@) {
     $self->_format_row($row_aref, $tag, $color);
 
 Return as a string the HTML table row corresponding to
-C<@$row_aref>, with each element deliminated by C<$tag>,
+C<@$row_aref>, with each element delimited by C<$tag>,
 with color C<$color>.
 
 =cut
@@ -280,7 +280,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2007-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

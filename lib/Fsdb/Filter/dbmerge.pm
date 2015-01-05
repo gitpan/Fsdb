@@ -2,7 +2,7 @@
 
 #
 # dbmerge.pm
-# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -228,7 +228,7 @@ use Fsdb::Support::Freds;
 
     $filter = new Fsdb::Filter::dbmerge(@arguments);
 
-Create a new object, taking command-line arugments.
+Create a new object, taking command-line arguments.
 
 =cut
 
@@ -958,7 +958,7 @@ sub run($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

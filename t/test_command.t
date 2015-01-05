@@ -205,7 +205,7 @@ if ($#TESTS == -1) {
 plan tests => ($#TESTS + 1);
 
 foreach my $test (@TESTS) {
-    ok(run_test($test), $test);
+    ok(run_one($test), $test);
 };
 
 #
@@ -230,8 +230,12 @@ sub show_failure($) {
         open(DIFF, "< $diff_fn") || return undef;
 	my $lines = 0;
 	while (<DIFF>) {
+	    if ($lines++ > 65) {
+		# cap output to a reasonable amount
+	    	diag "\t...";
+		last;
+	    };
 	    diag "\t$_";
-	    last if ($lines++ > 64);
 	};
 	close DIFF;
     } else {
@@ -266,7 +270,7 @@ sub parse_cmd_file($) {
 sub fix_prog_path($) {
     my ($prog) = @_;
     return $Config{perlpath} if ($prog eq 'perl');
-    return $prog if ($prog =~ /^(\|\s*)?(\/|cmp|diff|perl|sh)\b/);
+    return $prog if ($prog =~ /^(\|\s*)?(\/|cmp|diff|false|perl|sh)\b/);
     my($head, $tail) = ($prog =~ /^(\|\s*)?([^| ].*)$/);
     $head = '' if (!defined($head));
     return $head . $scripts_dir . "/" . $tail;
@@ -304,7 +308,7 @@ sub diff_output($$$$$$) {
 }
 
 
-sub run_test {
+sub run_one {
     my($cmd_file) = @_;
     die "confusion: run on non .cmd file: $cmd_file\n" if ($cmd_file !~ /\.cmd$/);
 
@@ -323,7 +327,7 @@ sub run_test {
     } else {
 	$in = " < " . $optref->{in};
     };
-    my $out = (defined($optref->{out}) ? $optref->{in} : "$cmd_base.out");
+    my $out = "$cmd_base.out"; #  never used: (defined($optref->{out}) ? $optref->{out} : "$cmd_base.out");
     my $run_cmd = $prog_path . " " . (defined($optref->{args}) ? $optref->{args} : '') ." $in";
     $run_cmd .= fix_prog_path($optref->{cmd_tail}) if (defined($optref->{cmd_tail}));
     print "$env_cmd $run_cmd\n" if ($verbose);

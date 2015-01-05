@@ -2,7 +2,7 @@
 
 #
 # dbcol.pm
-# Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id: 5a06601f0c627bd64e40318ab7733071e367d60a $
 #
 # This program is distributed under terms of the GNU general
@@ -41,7 +41,7 @@ Relaxed error checking: ignore columns that aren't there.
 
 Output all columns except those listed (like grep -v).
 
-=item B<-e> EmptyValue or B<--emtpy>
+=item B<-e> EmptyValue or B<--empty>
 
 Specify the value newly created columns get.
 
@@ -137,7 +137,7 @@ use Fsdb::IO::Writer;
 
     $filter = new Fsdb::Filter::dbcol(@arguments);
 
-Create a new dbcol object, taking command-line arugments.
+Create a new dbcol object, taking command-line arguments.
 
 =cut
 
@@ -322,7 +322,7 @@ sub finish ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2007 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

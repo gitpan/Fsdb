@@ -44,7 +44,7 @@ Specify the separator used to split columns.
 =item B<-E> or B<--enumerate>
 
 Enumerate output columns: rather than assuming the column name uses
-teh element separator, we keep it whole and fill in with indexes
+the element separator, we keep it whole and fill in with indexes
 starting from 0.
 
 =item B<-N> or B<--new-name> N

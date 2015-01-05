@@ -2,7 +2,7 @@
 
 #
 # dbsubprocess.pm
-# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -156,7 +156,7 @@ use Fsdb::IO::Writer;
 
     $filter = new Fsdb::Filter::dbsubprocess(@arguments);
 
-Create a new dbsubprocess object, taking command-line arugments.
+Create a new dbsubprocess object, taking command-line arguments.
 
 =cut
 
@@ -361,7 +361,7 @@ sub finish($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

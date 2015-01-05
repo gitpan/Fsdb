@@ -2,7 +2,7 @@
 
 #
 # dbfilecat.pm
-# Copyright (C) 2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2013-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -14,7 +14,7 @@ package Fsdb::Filter::dbfilecat;
 
 =head1 NAME
 
-dbfilecat - concatinate two files with identical schema
+dbfilecat - concatenate two files with identical schema
 
 =head1 SYNOPSIS
 
@@ -27,7 +27,7 @@ or
 
 =head1 DESCRIPTION
 
-Concatinate all provided input files,
+Concatenate all provided input files,
 producing one result.
 We remove extra header lines.
 
@@ -156,7 +156,7 @@ use Fsdb::IO::Writer;
 
     $filter = new Fsdb::Filter::dbmerge(@arguments);
 
-Create a new object, taking command-line arugments.
+Create a new object, taking command-line arguments.
 
 =cut
 
@@ -243,7 +243,7 @@ sub setup($) {
     } else {
 	$self->finish_io_option('inputs', -comment_handler => $self->create_pass_comments_sub);
 	foreach (@{$self->{_ins}}) {
-	    croak $self->{_prog} . ": input streams have different schemas; cannot concatinate\n"
+	    croak $self->{_prog} . ": input streams have different schemas; cannot concatenate\n"
 		if ($self->{_ins}[0]->compare($_) ne 'identical');
 	};
 	$self->finish_io_option('output', -clone => $self->{_ins}[0]);
@@ -289,7 +289,7 @@ sub run($) {
 	    if (!$self->{_out}) {
 	    	$self->finish_io_option('output', -clone => $this_in);
 	    } else {
-		croak $self->{_prog} . ": input streams have different schemas; cannot concatinate\n"
+		croak $self->{_prog} . ": input streams have different schemas; cannot concatenate\n"
 		    if ($self->{_out}->compare($this_in) ne 'identical');
 	    };
 	    $self->_run_one($this_in);
@@ -308,7 +308,7 @@ sub run($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2013-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

@@ -2,7 +2,7 @@
 
 #
 # dbfilealter.pm
-# Copyright (C) 2008-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2008-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -14,7 +14,7 @@ package Fsdb::Filter::dbfilealter;
 
 =head1 NAME
 
-dbfilealter - alter the format of an Fsdb file, changing the row/column seperator
+dbfilealter - alter the format of an Fsdb file, changing the row/column separator
 
 =head1 SYNOPSIS
 
@@ -29,7 +29,7 @@ file constraints (for example, if spaces appear in data and
 the new format has space as a separator),
 and optionally corrects things.
 
-With C<-Z copmression> it controls copmression on the file
+With C<-Z compression> it controls compression on the file
 
 =head1 OPTIONS
 
@@ -56,7 +56,7 @@ Default is none.
 
 =item B<-c> or B<--correct>
 
-Correct any inconstenences caused by the new separators,
+Correct any inconsistency caused by the new separators,
 if possible.
 
 =back
@@ -145,7 +145,7 @@ the default, one line per row
 
 =item B<C>
 complete rowized. 
-Each line is a field-labled and its value,
+Each line is a field-labeled and its value,
 and a blank line separates "rows".
 All fields present in the output.
 
@@ -295,11 +295,11 @@ sub parse_options ($@) {
 	'close!' => \$self->{_close},
 	'c|correct!' => \$self->{_correct},
 	'd|debug+' => \$self->{_debug},
-	'F|fs|cs|fieldseperator|columnseperator=s' => \$self->{_fscode},
+	'F|fs|cs|fieldseparator|columnseparator=s' => \$self->{_fscode},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
-	'R|rs|rowseperator=s' => \$self->{_rscode},
+	'R|rs|rowseparator=s' => \$self->{_rscode},
 	'Z|compression=s' => \$self->{_compression},
 	) or pod2usage(2);
     push (@{$self->{_cols}}, @argv);
@@ -361,7 +361,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2008-2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2008-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

@@ -2,7 +2,7 @@
 
 #
 # xml_to_db.pm
-# Copyright (C) 2011 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2011-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -44,7 +44,7 @@ spaces are converted to single underscores.
 
 =over 4
 
-=item B<-e> EmptyValue or B<--emtpy>
+=item B<-e> EmptyValue or B<--empty>
 
 Specify the value newly created columns get.
 
@@ -202,7 +202,7 @@ sub parse_options ($@) {
 
     $filter->_find_entities
 
-Interal: walk the ENTITYFIELD specification through the XML::Simple data structure.
+Internal: walk the ENTITYFIELD specification through the XML::Simple data structure.
 Returns an aref.
 
 =cut
@@ -303,7 +303,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2011 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2011-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

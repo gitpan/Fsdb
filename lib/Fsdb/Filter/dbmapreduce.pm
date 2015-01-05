@@ -2,7 +2,7 @@
 
 #
 # dbmapreduce.pm
-# Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id: 1e25691a19e98de45f517c2a454ccd40580c1348 $
 #
 # This program is distributed under terms of the GNU general
@@ -65,7 +65,7 @@ For non-multi-key-aware reducers,
 we add the KeyField use for each Reduce
 is in the output stream.
 (If the reducer passes the key we trust that it gives a correct value.)
-We also insure that the output field seperator is the
+We also insure that the output field separator is the
 same as the input field separator.
 
 Adding the key and adjusting the output field separator
@@ -81,7 +81,7 @@ but executed sequentially.
 For input, these systems include a map function and apply it to input data
 to generate the key.
 We assume this key generation (the map function)
-has occured head of time.
+has occurred head of time.
 
 We also allow the grouping key to be in any column.  
 Hadoop Streaming requires it to be in the first column.
@@ -95,7 +95,7 @@ With the C<-M> option, we also pass multiple multiple groups to the reducer.
 Unlike those systems, with the C<-S> option
 we do not require the groups arrive in any particular
 order, just that they be grouped together.
-(They guarantees they arive in lexically sorted order).
+(They guarantees they arrive in lexically sorted order).
 However, with C<-S> we create lexical ordering.
 
 With C<--prepend-key> we insure that the KeyField is in the output stream;
@@ -115,7 +115,7 @@ The program will check and abort if this precondition is not met.
 With two C<-S>'s, program consumes O(1) memory, but doesn't verify
 that the data-arrival precondition is met.
 
-The field seperators of the input and the output
+The field separators of the input and the output
 can now be different
 (early versions of this tool prohibited such variation.)
 With C<--copy-fs> we copy the input field separator to the output,
@@ -139,7 +139,7 @@ specify which column is the key for grouping (default: the first column)
 =item B<-S> or B<--pre-sorted>
 
 Assume data is already grouped by tag.
-Provided twice, it removes the validiation of this assertion.
+Provided twice, it removes the validation of this assertion.
 
 =item B<-M> or B<--multiple-ok>
 
@@ -183,7 +183,7 @@ The provided code should be an anonymous sub
 that creates a Fsdb Filter that implements the reduce object.
 
 The reduce object will then be called with --input and --output
-paramters that hook it into a the reduce with queues.
+parameters that hook it into a the reduce with queues.
 
 One sample fragment that works is just:
 
@@ -330,7 +330,7 @@ The main process reads input and groups input by key.
 Each group is passed to a
 secondary fred C<$self->{_reducer_thread}>
 that invokes the reducer on each group
-and does any ouptut.
+and does any output.
 If the reducer is I<not> map-aware, then
 we create a final postprocessor thread that 
 adds the key back to the output.
@@ -365,7 +365,7 @@ and feeds them to a reducer Fred, one per group.
 A dedicated additional Fred merges output and addes the missing key,
 if necessary.
 Either way, output ends up in a file.
-A finally postprocesser thread merges all the output files.
+A finally postprocessor thread merges all the output files.
 
 =cut
 
@@ -938,7 +938,7 @@ sub finish($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

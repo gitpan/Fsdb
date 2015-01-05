@@ -4,7 +4,7 @@
 # Fsdb.pm
 # $Id: 535f2d6db51a9c848cff016eb9af024dc4522614 $
 #
-# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License,
@@ -34,7 +34,7 @@ Fsdb - a flat-text database for shell scripting
 
 
 =cut
-our $VERSION = '2.54';
+our $VERSION = '2.55';
 
 =head1 SYNOPSIS
 
@@ -234,17 +234,34 @@ L<http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 =head1 WHAT'S NEW
 
-=head2 2.54, 2014-11-28
-fix for the test suite to correct failing tests on not-my-platfrom
+=head2 2.55, 2015-01-05
+many spelling fixes and dbcolmovingstats tests are more robust to different numeric precision
 
 =over 4
 
-=item BUGFIX
+=item ENHANCEMENT
 
-Sigh, the test suite now has a test suite.
-Because, yes, I broke it, causing many incorrect failures
-at cpantesters.
-Now fixed.
+L<dbfilediff> now can be extra quiet, as I continue to try to track down 
+a numeric difference on FreeBSD AMD boxes.
+
+=item ENHANCEMENT
+
+L<dbcolmovingstats> gave different test output
+(just reflecting rounding error)
+when stddev approaches zero.  We now detect hand handle this case.
+See <https://rt.cpan.org/Public/Bug/Display.html?id=101220>
+and thanks to H. Merijn Brand for the bug report.
+
+=item BUG FIX
+
+Many, many spelling bugs found by 
+H. Merijn Brand for the bug report.
+
+=item INCOMPATBLE CHANGE
+
+A number of programs had misspelled "separator" 
+in C<--fieldseparator> and C<--columnseparator> options as "seperator".
+These are now correctly spelled.
 
 =back
 
@@ -436,7 +453,7 @@ providing an automatic audit log.)
 In addition to typical database functions (select, join, etc.) there
 are also a number of statistical functions.
 
-The real power of Fsdb is that one can apply arbitary code to rows
+The real power of Fsdb is that one can apply arbitrary code to rows
 to do powerful things.
 
 	cat DATA/passwd | dbroweval '_fullname =~ s/(\w+)_(\w+)/$2,_$1/'
@@ -537,7 +554,7 @@ split one column into multiple rows
 =item dbfilepivot
 
 "pivots" a file, converting multiple rows
-correponding to the same entity into a single row with multiple columns.
+corresponding to the same entity into a single row with multiple columns.
 
 =item dbfilevalidate
 
@@ -993,7 +1010,7 @@ Stats on an exam (in C<$FILE>, where C<$COLUMN> is the name of the exam)?
 	cat $FILE | dbcolhisto -g -n 20 $COLUMN | dbcolneaten | dbstripcomments
 
 
-Merging a the hw1 column from file hw1.fsdb into grades.fsdb assuing
+Merging a the hw1 column from file hw1.fsdb into grades.fsdb assuming
 there's a common student id in column "id":
 
 	dbcol id hw1 <hw1.fsdb >t.fsdb
@@ -1033,7 +1050,7 @@ must be re-read), programs will spool data to disk if necessary.
 Most tools buffer one or a few lines of data, so memory
 will scale with the size of each line.
 (So lines with many columns, or when columns have lots data,
-may cause larege memory consumption.)
+may cause large memory consumption.)
 
 All Fsdb tools should run in constant or at worst C<n log n> time.
 
@@ -1041,7 +1058,7 @@ All Fsdb tools use normal Perl math routines for computation.
 Although I make every attempt to choose numerically stable algorithms
 (although I also welcome feedback and suggestions for improvement),
 normal rounding due to computer floating point approximations
-can result in inaccuracies when data spans a large range of precisions.
+can result in inaccuracies when data spans a large range of precision.
 (See for example the F<dbcolstats_extrema> test cases.)
 
 Any requirements and limitations of each Fsdb tool
@@ -1158,7 +1175,8 @@ Martin Lukac F<mlukac@lecs.cs.ucla.edu>,
 Xue Cai,
 Michael McQuaid,
 Christopher Meng,
-Calvin Ardi.
+Calvin Ardi,
+H. Merijn Brand.
 
 Fsdb includes datasets contributed from NIST (F<DATA/nist_zarr13.fsdb>),
 from
@@ -1322,7 +1340,7 @@ dbcolmovingstats does moving means over a series of data
 dbcol has a -v option to get all columns except those listed
 
 =item NEW
-dbmultistats does quartitles and medians
+dbmultistats does quartiles and medians
 
 =item NEW
 dbstripextraheaders now also cleans up bogus comments before the fist header
@@ -1992,7 +2010,7 @@ not written.
 
 =item BUG FIX
 
-L<dbmapreduce> now tolerates comments that preceed the first key,
+L<dbmapreduce> now tolerates comments that precede the first key,
 instead of failing with an error message.
 
 =back
@@ -2031,7 +2049,7 @@ now corrected.  As a result, warnings in user code now default off
 =item BUG FIX
 
 L<dbcolpercentile> now defaults to assuming the target column is numeric.
-The new option C<-N> allows selectin of a non-numeric target.
+The new option C<-N> allows selection of a non-numeric target.
 
 =item BUG FIX
 
@@ -2050,7 +2068,7 @@ Still in beta, but picking up some bug fixes.
 
 =item ENHANCEMENT
 
-L<html_table_to_db> is now more agressive about filling in empty cells
+L<html_table_to_db> is now more aggressive about filling in empty cells
 with the official empty value, rather than leaving them blank or as whitespace.
 
 =item ENHANCEMENT
@@ -2060,7 +2078,7 @@ and exits reasonably gracefully.
 
 =item BUG FIX
 
-L<dbsubprocess> now reaps child prcoesses, thus avoiding
+L<dbsubprocess> now reaps child processes, thus avoiding
 running out of processes when used a lot.
 
 =back
@@ -2246,13 +2264,13 @@ that causes the test suites to hang about 20% of the time
 
 F<dbmapreduce> now detects and correctly fails
 when the input and reducer have incompatible 
-field seperators.
+field separators.
 
 =item IMPROVEMENT
 
 F<dbcolstats>, F<dbcolhisto>, F<dbcolscorrelate>, F<dbcolsregression>,
 and F<dbrowcount>
-now all take an C<-F> option to let one specify the output field seperator
+now all take an C<-F> option to let one specify the output field separator
 (so they work better with F<dbmapreduce>).
 
 =item BUG FIX
@@ -2303,7 +2321,7 @@ One new tool F<dbcolcopylast> and several bug fixes for Perl 5.10.
 F<dbmerge> now correctly handles n-way merges.
 Bug reported by Yuri Pradkin.
 
-=item INCOMPATABLE CHANGE
+=item INCOMPARABLE CHANGE
 
 F<dbcolneaten> now defaults to I<not> padding the last column.
 
@@ -2318,7 +2336,7 @@ in January 2005.
 New program F<dbcolcopylast> copies the last value of a column
 into a new column copylast_column of the next row.
 New program requested by Fabio Silva;
-useful for convereting dbmultistats output into dbrvstatdiff input.
+useful for converting dbmultistats output into dbrvstatdiff input.
 
 =item BUG FIX
 
@@ -2334,7 +2352,7 @@ standard IO redirection.
 
 
 =head2 2.23, 2011-03-10
-Several small portability bugfixes; improved F<dbcolstats> for large datsets
+Several small portability bugfixes; improved F<dbcolstats> for large datasets
 
 =over 4
 
@@ -2392,7 +2410,7 @@ Improvements to fix an old bug in dbmapreduce with different field separators
 =item IMPROVEMENT
 
 The F<dbfilealter> command had a C<--correct> option to
-work-around from incompatible field-seperators,
+work-around from incompatible field-separators,
 but it did nothing.  Now it does the correct but sad, data-loosing
 thing.
 
@@ -2430,7 +2448,7 @@ F<xml_to_db> can convert simple, very regular XML files into Fsdb.
 =item NEW
 
 F<dbfilepivot> "pivots" a file, converting multiple rows
-correponding to the same entity into a single row with multiple columns.
+corresponding to the same entity into a single row with multiple columns.
 
 =back
 
@@ -2446,7 +2464,7 @@ Bugs fixed in L<Fsdb::IO::Reader(3)> manual page.
 =item BUG FIX
 
 Fixed problems where L<dbcolstats> was truncating floating point numbers
-when sorting.  This strange behavior happenes as of perl-5.14.2 and
+when sorting.  This strange behavior happens as of perl-5.14.2 and
 it I<seems> like a Perl bug.  I've worked around it for the test suites,
 but I'm a bit nervous.
 
@@ -2477,7 +2495,7 @@ is now documented.
 
 =item BUG FIX
 
-F<dbrowuniq> now corretly handles the case where there is no input
+F<dbrowuniq> now correctly handles the case where there is no input
 (previously it output a blank line, which is a malformed fsdb file).
 Thanks to Yuri Pradkin for reporting this bug.
 
@@ -2513,7 +2531,7 @@ in the non-ithreads test system.)
 =back
 
 =head2 2.30, 2012-11-25
-imporovements to perl portability
+improvements to perl portability
 
 =over 4
 
@@ -2581,7 +2599,7 @@ numeric-aware differences.
 
 Test suites that are numeric now use L<dbfilediff> to do numeric-aware
 comparisons, so the test suite should now be robust to slightly different
-computers and operating systems and complilers than I<exactly> what I use.
+computers and operating systems and compilers than I<exactly> what I use.
 
 =back
 
@@ -2783,7 +2801,7 @@ Documentation to L<dbrvstatdiff> improved
 =item BUG FIX
 
 L<dbrowuniq> no longer duplicates
-singleton unique lines when outputing both (with C<-B>).
+singleton unique lines when outputting both (with C<-B>).
 
 =item BUG FIX
 
@@ -2849,7 +2867,7 @@ Adds in-file compression.
 =item BUG FIX
 
 Changed the sort on F<TEST/dbsort_merge.cmd> to strings
-(from numerics) so we're less succeptable to false test-failures
+(from numerics) so we're less susceptible to false test-failures
 due to floating point IO differences.
 
 =item EXPERIMENTAL ENHANCEMENT
@@ -2886,7 +2904,7 @@ Fsdb now handles automatic compression of file contents.
 Enable compression with C<dbfilealter -Z xz>
 (or C<gz> or C<bz2>).
 All programs should operate on compressed files
-and leave the output with the same level of copmresion.
+and leave the output with the same level of compression.
 C<xz> is recommended as fastest and most efficient.
 C<gz> is produces unrepeatable output (and so has no
 output test), it seems to insist on adding a timestamp.
@@ -2915,14 +2933,14 @@ with some nice support for callbacks in the parent upon child termination.
 
 =item ENHANCEMENT
 
-Details about removing theads:
+Details about removing threads:
 C<dbpipeline> is thread free,
 and new tests to verify each of its parts.
 The easy cases are C<dbcolpercentile>, 
 C<dbcolstats>, C<dbfilepivot>, C<dbjoin>, and
 C<dbcolstatscores>, each of which use it in simple ways (2013-09-09).
 C<dbmerge> is now thread free (2013-09-13),
-but was a signficant rewrite,
+but was a significant rewrite,
 which brought C<dbsort> along.
 C<dbmapreduce> is partly thread free (2013-09-21),
 again as a rewrite,
@@ -2942,8 +2960,8 @@ with the C<--first> option.
 
 =item NEW
 
-L<dbfilecat> will concatinate two files,
-verifying that thye have the same schema.
+L<dbfilecat> will concatenate two files,
+verifying that they have the same schema.
 
 =item ENHANCEMENT
 
@@ -2953,7 +2971,7 @@ rather than eating them as before.
 Also, L<dbmapreduce> now supports a C<--> option to prevent misinterpreting
 sub-program parameters as for dbmapreduce.
 
-=item INCOMAPTIBLE CHANGE
+=item INCOMPATIBLE CHANGE
 
 L<dbmapreduce> no longer figures out if it needs to add the key
 to the output.  For multi-key-aware reducers, it never does
@@ -2963,7 +2981,7 @@ it defaults to add the key and will now fail if the reducer adds the key
 In such cases, one must disable adding the key with the new
 option C<--no-prepend-key>.
 
-=item INCOMAPTIBLE CHANGE
+=item INCOMPATIBLE CHANGE
 
 L<dbmapreduce> no longer copies the input field separator by default.
 For multi-key-aware reducers, it never does
@@ -3050,7 +3068,7 @@ Test suites now skip tests for libraries that are missing.
 
 Removed references to Jdb in the package specification.
 Since the name was changed in 2008, there's no longer a huge
-need for backwards compatability.
+need for backwards comparability.
 (Suggestion form Petr Šabata.)
 
 =item ENHANCEMENT
@@ -3114,7 +3132,7 @@ failures (due to warnings, not real failures) on some platforms.
 =back
 
 =head2 2.51, 2014-09-05
-Feature enchancements to L<dbcolmovingstats>, L<dbcolcreate>, L<dbmapreduce>, and new L<sqlselect_to_db>
+Feature enhancements to L<dbcolmovingstats>, L<dbcolcreate>, L<dbmapreduce>, and new L<sqlselect_to_db>
 
 =over 4
 
@@ -3128,7 +3146,7 @@ that causes it to ignore creation of existing columns
 
 L<dbmapreduce> once again is robust to reducers
 that output the key;
-C<--no-prepend-key> is no longer manditory.
+C<--no-prepend-key> is no longer mandatory.
 
 =item ENHANCEMENT
 
@@ -3136,7 +3154,7 @@ L<dbcolsplittorows> can now enumerate the output rows with C<-E>.
 
 =item BUG FIX
 
-L<dbcolmovingstats> is more mathemtically robust.
+L<dbcolmovingstats> is more mathematically robust.
 Previously for some inputs and some platforms,
 floating point rounding could 
 sometimes cause squareroots of negative numbers.
@@ -3149,8 +3167,8 @@ select comment into fsdb format.
 =item INCOMPATIBLE CHANGE
 
 L<dbfilediff> now outputs the I<second> row
-when doing sloppy numeric comparisions,
-to beter support test suites.
+when doing sloppy numeric comparisons,
+to better support test suites.
 
 =back
 
@@ -3193,7 +3211,7 @@ Fixes L<https://bugzilla.redhat.com/show_bug.cgi?id=1163149>.
 An important stability improvement to L<dbmapreduce>.
 It, plus L<dbmultistats>, and L<dbcolstats> now support
 controlled parallelism with the C<--pararallelism=N> option.
-They default to run with the number of avaiable CPUs.
+They default to run with the number of available CPUs.
 L<dbmapreduce> also moderates its level of parallelism.
 Previously it would create reducers as needed,
 causing CPU thrashing if reducers ran much slower than data production.
@@ -3207,7 +3225,19 @@ has too many useful corner cases.)
 
 =back
 
+=head2 2.54, 2014-11-28
+fix for the test suite to correct failing tests on not-my-platform
 
+=over 4
+
+=item BUGFIX
+
+Sigh, the test suite now has a test suite.
+Because, yes, I broke it, causing many incorrect failures
+at cpantesters.
+Now fixed.
+
+=back
 
 =head1 AUTHOR
 
@@ -3264,7 +3294,7 @@ C<johnh@isi.edu>.
 # LocalWords:  dmalloc tabdelim stats numerics datapoint CDF xgraph max txt sed
 # LocalWords:  login gecos div cmd nr hw hw assuing Kuenning Vikram Visweswariah
 # LocalWords:  Kannan Varadahan Arkadi Gelfond Pavlin Radoslavov quartile getopt
-# LocalWords:  dbcolscorrelate DbGetopt cp tmp quartitles nd Ya Xu dbfilesplit
+# LocalWords:  dbcolscorrelate DbGetopt cp tmp nd Ya Xu dbfilesplit
 # LocalWords:  MERCHANTABILITY tba dbcolsplittocols dbcolsplittorows cvs johnh
 # LocalWords:  dbcolsregression datasets whitespace LaTeX FS columnname cgi pre
 # LocalWords:  columname's dbfilevalidate  tcpdump http rv eq Bourne DbTDistr 

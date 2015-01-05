@@ -2,7 +2,7 @@
 
 #
 # dbcoldefine.pm
-# Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -172,7 +172,7 @@ sub parse_options ($@) {
 	'autorun!' => \$self->{_autorun},
 	'close!' => \$self->{_close},
 	'd|debug+' => \$self->{_debug},
-	'F|fs|fieldseperator=s' => \$self->{_fscode},
+	'F|fs|fieldseparator|columnseparator=s' => \$self->{_fscode},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
@@ -218,7 +218,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

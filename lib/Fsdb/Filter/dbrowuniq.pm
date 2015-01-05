@@ -2,7 +2,7 @@
 
 #
 # dbrowuniq.pm
-# Copyright (C) 1997-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1997-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -43,8 +43,8 @@ Optionally, with C<-L>, it will output the I<last> unique row,
 or with C<-B> it outputs both first and last.
 (This choice only matters when uniqueness is determined by specific fields.)
 
-L<dbrowuniq> can also count how many unique, adjcent lines it finds
-with C<-c>, with the count coing to a new column (defaulting to C<count>).
+L<dbrowuniq> can also count how many unique, adjacent lines it finds
+with C<-c>, with the count going to a new column (defaulting to C<count>).
 Incremental counting, when the C<count> column already exists,
 is possible with C<-I>.
 
@@ -441,7 +441,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1997-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

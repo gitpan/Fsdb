@@ -2,7 +2,7 @@
 
 #
 # dbfilepivot.pm
-# Copyright (C) 2011-2012 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2011-2015 by John Heidemann <johnh@isi.edu>
 # $Id: 628d1e4630cc337fef1056df75e3cef8b51b2ad4 $
 #
 # This program is distributed under terms of the GNU general
@@ -22,14 +22,14 @@ dbfilepivot [-e empty] -k KeyField -p PivotField [-v ValueField]
 
 =head1 DESCRIPTION
 
-Pivot a table, converting multiple rows correponding to the 
+Pivot a table, converting multiple rows corresponding to the 
 same key into a single wide row.
 
 In a normalized database, one might have data with a schema like
 (id, attribute, value),
 but sometimes it's more convenient to see the data with a schema like
 (id, attribute1, attribute2).
-(For example, gnuplot's stacked histograms requires denomralized data.)
+(For example, gnuplot's stacked histograms requires denormalized data.)
 Dbfilepivot converts the normalized format to the denormalized,
 but sometimes useful, format.
 Here the "id" is the key, the attribute is the "pivot",
@@ -110,7 +110,7 @@ give value E as the value for empty (null) records
 =item B<-S> or B<--pre-sorted>
 
 Assume data is already grouped by key.
-Provided twice, it removes the validiation of this assertion.
+Provided twice, it removes the validation of this assertion.
 By default, we sort by key.
 
 =item B<-T TmpDir>
@@ -477,7 +477,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2011-2012 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2011-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

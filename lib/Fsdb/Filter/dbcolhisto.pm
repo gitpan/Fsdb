@@ -33,7 +33,7 @@ can be specified, the rest default accordingly.
 Buckets range from a value (given the the low column) to just below
 the next low value and buckets are equal width.
 If necessary, extra "<min" and ">max" buckets are created.
-By default, the last bucket includes max (and is thus infintimessally 
+By default, the last bucket includes max (and is thus infinitesimally 
 larger than the other buckets).  This irregularity can be removed
 with the C<-I> option.
 
@@ -67,7 +67,7 @@ The default is 10 buckets.
 
 =item B<-g> or B<--graphical>
 
-Generate a graphical histograph (with astrisks).
+Generate a graphical histogram (with asterisks).
 Default is numeric.
 
 =item B<-I> or B<--last-inclusive>
@@ -247,7 +247,7 @@ sub parse_options ($@) {
 	'a|include-non-numeric!' => \$self->{_include_non_numeric},
 	'd|debug+' => \$self->{_debug},
 	'E|end=f' => \$self->{_bucket_end},
-	'F|fs|cs|fieldseperator|columnseperator=s' => \$self->{_fscode},
+	'F|fs|cs|fieldseparator|columnseparator=s' => \$self->{_fscode},
 	'g|graphical!' => \$self->{_graphical_output},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'I|last-inclusive!' => \$self->{_last_inclusive},

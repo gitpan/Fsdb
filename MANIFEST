@@ -428,6 +428,12 @@ TEST/dbfilediff_epsilon_cases.cmd
 TEST/dbfilediff_epsilon_cases.in
 TEST/dbfilediff_epsilon_cases.in-2
 TEST/dbfilediff_epsilon_cases.out
+TEST/dbfilediff_epsilon_fail.cmd
+TEST/dbfilediff_epsilon_fail.in
+TEST/dbfilediff_epsilon_fail.in-2
+TEST/dbfilediff_epsilon_fail.out
+TEST/dbfilediff_epsilon_fail2.in
+TEST/dbfilediff_epsilon_fail2.in-2
 TEST/dbfilediff_ex.cmd
 TEST/dbfilediff_ex.in
 TEST/dbfilediff_ex.in-2
@@ -436,6 +442,8 @@ TEST/dbfilediff_ex_exit.cmd
 TEST/dbfilediff_ex_exit.out
 TEST/dbfilediff_quiet.cmd
 TEST/dbfilediff_quiet.out
+TEST/dbfilediff_quiet_quiet.cmd
+TEST/dbfilediff_quiet_quiet.out
 TEST/dbfilepivot_commented.cmd
 TEST/dbfilepivot_commented.in
 TEST/dbfilepivot_commented.out

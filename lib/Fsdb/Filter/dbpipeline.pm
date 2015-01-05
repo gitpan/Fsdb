@@ -2,7 +2,7 @@
 
 #
 # dbpipeline.pm
-# Copyright (C) 2007-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2007-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -415,8 +415,8 @@ Set up a pipeline of @MODULES that is a data "sink", where the output
 is given by a C<--output> argument, or goes to standard output (by default).
 The caller generates input into the pipeline 
 by writing to a newly created $FSDB_WRITER,
-whose configuration is specified by the manditory first
-arugment $WRITER_ARGUMENTS_AREF.
+whose configuration is specified by the mandatory first
+argument $WRITER_ARGUMENTS_AREF.
 (These arguments should include the schema.)
 Returns this writer, and a $FRED that must be joined to guarantee output
 has completed.
@@ -478,8 +478,8 @@ sub dbpipeline_sink($@) {
 Set up a pipeline of @MODULES that is a data sink and source (both!).
 The caller generates input into the pipeline 
 by writing to a newly created $FSDB_WRITER,
-whose configuration is specified by the manditory 
-arugment $WRITER_ARGUMENTS_AREF.
+whose configuration is specified by the mandatory 
+argument $WRITER_ARGUMENTS_AREF.
 These arguments should include the schema.)
 The output of the pipeline comes out to the newly
 created $FSDB_READER_FH.
@@ -487,7 +487,7 @@ Returns this read queue and writer,
 and a $PID that must be joined to guarantee output
 has completed.
 
-(Unfortunately the interface is assymetric with a read I<queue>
+(Unfortunately the interface is asymmetric with a read I<queue>
 but a write C<Fsdb::IO> object, because C<Fsdb::IO::Reader> blocks on
 input of the header.)
 
@@ -765,7 +765,7 @@ sub finish ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

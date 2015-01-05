@@ -2,7 +2,7 @@
 
 #
 # dbcolcreate.pm
-# Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -34,7 +34,7 @@ with an optional C<DefaultValue>.
 
 =over 4
 
-=item B<-e> EmptyValue or B<--emtpy>
+=item B<-e> EmptyValue or B<--empty>
 
 Specify the value newly created columns get.
 
@@ -304,7 +304,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

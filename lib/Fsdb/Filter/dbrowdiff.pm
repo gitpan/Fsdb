@@ -14,7 +14,7 @@ package Fsdb::Filter::dbrowdiff;
 
 =head1 NAME
 
-dbrowdiff - comete row-by-row differences of some column
+dbrowdiff - compute row-by-row differences of some column
 
 =head1 SYNOPSIS
 
@@ -22,7 +22,7 @@ dbrowdiff [-B|-I] column
 
 =head1 DESCRIPTION
 
-For a given column, comput the differences between each row
+For a given column, compute the differences between each row
 of the table.  Differences are output to two new columns,
 C<absdiff> and C<pctdiff>.
 

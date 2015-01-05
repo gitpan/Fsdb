@@ -1,6 +1,6 @@
 Summary: A set of commands for manipulating flat-text databases from the shell
 Name: perl-Fsdb
-Version: 2.53
+Version: 2.54
 Release: 1%{?dist}
 License: GPLv2
 Group: Development/Libraries
@@ -61,7 +61,7 @@ real database).  FSDB is very good at doing things like:
 Rather than hand-code scripts to do each special case, FSDB provides
 higher-level functions than one gets with raw perl or shell scripts.
 (Some features:  control uses names instead of column numbers,
-it is self-documenting, and is robuts with good error and memory handling.)
+it is self-documenting, and is robust with good error and memory handling.)
 
 %prep
 %setup -q -n Fsdb-%{version}
@@ -103,5 +103,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Wed Nov 26 2014 John Heidemann <johnh@isi.edu> 2.53-1
+* Fri Nov 28 2014 John Heidemann <johnh@isi.edu> 2.54-1
 - See http://www.isi.edu/~johnh/SOFTWARE/FSDB/

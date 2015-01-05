@@ -35,7 +35,7 @@ but the pathname exists for the duration of execution
 (and can be opened).
 
 Note that there is a potential race condition between when we pick the file
-and when the caller opens it, when an external program could interceed.
+and when the caller opens it, when an external program could intercede.
 The caller therefor should open files with exclusive access.
 
 This routine is Perl thread-safe, and process fork safe.

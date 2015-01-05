@@ -84,7 +84,7 @@ And then replace the core with arrays:
 This code has two advantages over hrefs:
 First, there is explicit error checking for presence of
 the expected fields.
-Second, arrays are likely a bit faster than hashs.
+Second, arrays are likely a bit faster than hashes.
 
 
 =head2 Objects Instead of Arrays
@@ -412,7 +412,7 @@ sub close {
 
     $fsdb->error;
 
-Returns a descrptive string if there is an error,
+Returns a descriptive string if there is an error,
 or undef if not.
 
 The string will never end in a newline or punctuation.
@@ -886,7 +886,7 @@ sub i_to_col {
 
     $fsdb->fastpath_cancel();
 
-Discard any active fastpath code and allow fastpath-incompatable operations.
+Discard any active fastpath code and allow fastpath-incompatible operations.
 =cut
 
 sub fastpath_cancel {

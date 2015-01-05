@@ -241,7 +241,7 @@ may be used to leave output open for further I/O.
 
 By default, programs close their output when done.
 With this option, programs in Perl can have a subprogram create
-an output stread and return it to the caller in C<$OUT_REF>.
+an output refrence and return it to the caller in C<$OUT_REF>.
 The caller can then use it for further I/O.
 (This option is only supported by some filters.)
 
@@ -501,7 +501,7 @@ sub finish_io_option ($$@) {
 
     direction_to_stdio($direction)
 
-Private interal routing.  Give a filehanle for STDIN or
+Private internal routing.  Give a filehandle for STDIN or
 STDOUT based on $DIRECTION == 'input or 'output'
 
 =cut

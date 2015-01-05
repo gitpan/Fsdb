@@ -2,7 +2,7 @@
 
 #
 # dbformmail.pm
-# Copyright (C) 1997-2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1997-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -23,7 +23,7 @@ dbformmail [-m MECHANISM] format_file.txt
 =head1 DESCRIPTION
 
 Read a ``form mail'' message from the file FORMAT_FILE.TXT,
-filling in underscore-preeded column-names with data.
+filling in underscore-preceded column-names with data.
 Output a shell script which will send each message through some
 mail transport MECHANISM.
 
@@ -355,7 +355,7 @@ sub finish ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

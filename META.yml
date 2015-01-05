@@ -4,13 +4,13 @@ author:
   - 'John Heidemann <johnh@isi.edu>'
 build_requires:
   ExtUtils::MakeMaker: 0
-  Test::Pod: 0
-  Test::Pod::Coverage: 0
+  Test::Pod: '0'
+  Test::Pod::Coverage: '0'
 configure_requires:
   ExtUtils::MakeMaker: 0
 distribution_type: module
 dynamic_config: 1
-generated_by: 'ExtUtils::MakeMaker version 6.72'
+generated_by: 'ExtUtils::MakeMaker version 6.98'
 license: GPL-2
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -21,12 +21,12 @@ no_index:
     - t
     - inc
 requires:
-  HTML::Parser: 0
-  IO::Compress::Bzip2: 0
-  IO::Compress::Gzip: 0
-  IO::Compress::Xz: 0
-  IO::Uncompress::AnyUncompress: 0
-  Test::More: 0
-  Text::CSV_XS: 0
-  XML::Simple: 0
-version: 2.54
+  HTML::Parser: '0'
+  IO::Compress::Bzip2: '0'
+  IO::Compress::Gzip: '0'
+  IO::Compress::Xz: '0'
+  IO::Uncompress::AnyUncompress: '0'
+  Test::More: '0'
+  Text::CSV_XS: '0'
+  XML::Simple: '0'
+version: '2.55'

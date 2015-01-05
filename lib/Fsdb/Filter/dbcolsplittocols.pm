@@ -2,7 +2,7 @@
 
 #
 # dbcolsplittocols.pm
-# Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -22,7 +22,7 @@ dbcolsplittocols [-E] [-C ElementSeparator] column [column...]
 
 =head1 DESCRIPTION
 
-Create new columns by spliting an existing column.
+Create new columns by splitting an existing column.
 The fragments of the column are each divided by ElementSeparator
 (default is underscore).
 
@@ -44,7 +44,7 @@ Specify the separator I<S> used to join columns.
 =item B<-E> or B<--enumerate>
 
 Enumerate output columns: rather than assuming the column name uses
-teh element separator, we keep it whole and fill in with indexes
+the element separator, we keep it whole and fill in with indexes
 starting from 0.
 (Not currently implemented, but planned.  See
 L<dbcolsplittorows>.)
@@ -285,7 +285,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

@@ -196,7 +196,7 @@ sub parse_options ($@) {
 	'autorun!' => \$self->{_autorun},
 	'd|debug+' => \$self->{_debug},
 	'f|format=s' => \$self->{_format},
-	'F|fs|cs|fieldseperator|columnseperator=s' => \$self->{_fscode},
+	'F|fs|cs|fieldseparator|columnseparator=s' => \$self->{_fscode},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },

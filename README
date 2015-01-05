@@ -143,9 +143,27 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        <http://www.isi.edu/~johnh/SOFTWARE/FSDB/index.html>.
 
 [1mWHAT'S NEW[0m
-   [1m2.54, date tbd one-line tbd[0m
+   [1m2.55, 2015-01-05 many spelling fixes and dbcolmovingstats tests are more[0m
+       [1mrobust to different numeric precision[0m
        ENHANCEMENT
-           xxx
+           dbfilediff now can be extra quiet, as I continue to try to track
+           down a numeric difference on FreeBSD AMD boxes.
+
+       ENHANCEMENT
+           dbcolmovingstats gave different test output (just reflecting
+           rounding error) when stddev approaches zero.  We now detect hand
+           handle this case.  See
+           <https://rt.cpan.org/Public/Bug/Display.html?id=101220> and thanks
+           to H. Merijn Brand for the bug report.
+
+       BUG FIX
+           Many, many spelling bugs found by H. Merijn Brand for the bug
+           report.
+
+       INCOMPATBLE CHANGE
+           A number of programs had misspelled "separator" in
+           "--fieldseparator" and "--columnseparator" options as "seperator".
+           These are now correctly spelled.
 
 [1mREADME CONTENTS[0m
        executive summary
@@ -301,7 +319,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        In addition to typical database functions (select, join, etc.) there
        are also a number of statistical functions.
 
-       The real power of Fsdb is that one can apply arbitary code to rows to
+       The real power of Fsdb is that one can apply arbitrary code to rows to
        do powerful things.
 
                cat DATA/passwd | dbroweval '_fullname =~ s/(\w+)_(\w+)/$2,_$1/'
@@ -368,7 +386,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            split one column into multiple rows
 
        dbfilepivot
-           "pivots" a file, converting multiple rows correponding to the same
+           "pivots" a file, converting multiple rows corresponding to the same
            entity into a single row with multiple columns.
 
        dbfilevalidate
@@ -744,7 +762,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
                cat $FILE | dbcolhisto -g -n 20 $COLUMN | dbcolneaten | dbstripcomments
 
-       Merging a the hw1 column from file hw1.fsdb into grades.fsdb assuing
+       Merging a the hw1 column from file hw1.fsdb into grades.fsdb assuming
        there's a common student id in column "id":
 
                dbcol id hw1 <hw1.fsdb >t.fsdb
@@ -780,7 +798,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        Most tools buffer one or a few lines of data, so memory will scale with
        the size of each line.  (So lines with many columns, or when columns
-       have lots data, may cause larege memory consumption.)
+       have lots data, may cause large memory consumption.)
 
        All Fsdb tools should run in constant or at worst "n log n" time.
 
@@ -788,7 +806,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        I make every attempt to choose numerically stable algorithms (although
        I also welcome feedback and suggestions for improvement), normal
        rounding due to computer floating point approximations can result in
-       inaccuracies when data spans a large range of precisions.  (See for
+       inaccuracies when data spans a large range of precision.  (See for
        example the [4mdbcolstats_extrema[24m test cases.)
 
        Any requirements and limitations of each Fsdb tool is documented on its
@@ -869,7 +887,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        Graham Phillips, Yuri Pradkin, Alefiya Hussain, Ya Xu, Michael
        Schwendt, Fabio Silva [4mfabio@isi.edu[24m, Jerry Zhao [4mzhaoy@isi.edu[24m, Ning Xu
        [4mnxu@aludra.usc.edu[24m, Martin Lukac [4mmlukac@lecs.cs.ucla.edu[24m, Xue Cai,
-       Michael McQuaid, Christopher Meng, Calvin Ardi.
+       Michael McQuaid, Christopher Meng, Calvin Ardi, H. Merijn Brand.
 
        Fsdb includes datasets contributed from NIST ([4mDATA/nist_zarr13.fsdb[24m),
        from
@@ -966,7 +984,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        files if necessary)
        NEW dbcolmovingstats does moving means over a series of data
        NEW dbcol has a -v option to get all columns except those listed
-       NEW dbmultistats does quartitles and medians
+       NEW dbmultistats does quartiles and medians
        NEW dbstripextraheaders now also cleans up bogus comments before the
        fist header
        BUG FIX dbcolneaten works better with double-space-separated data
@@ -1368,7 +1386,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            compatibly, but not written.
 
        BUG FIX
-           dbmapreduce now tolerates comments that preceed the first key,
+           dbmapreduce now tolerates comments that precede the first key,
            instead of failing with an error message.
 
    [1m2.9, 6-Aug-08[0m
@@ -1391,7 +1409,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        BUG FIX
            dbcolpercentile now defaults to assuming the target column is
-           numeric.  The new option "-N" allows selectin of a non-numeric
+           numeric.  The new option "-N" allows selection of a non-numeric
            target.
 
        BUG FIX
@@ -1403,16 +1421,16 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        Still in beta, but picking up some bug fixes.
 
        ENHANCEMENT
-           html_table_to_db is now more agressive about filling in empty cells
-           with the official empty value, rather than leaving them blank or as
-           whitespace.
+           html_table_to_db is now more aggressive about filling in empty
+           cells with the official empty value, rather than leaving them blank
+           or as whitespace.
 
        ENHANCEMENT
            dbpipeline now catches failures during pipeline element setup and
            exits reasonably gracefully.
 
        BUG FIX
-           dbsubprocess now reaps child prcoesses, thus avoiding running out
+           dbsubprocess now reaps child processes, thus avoiding running out
            of processes when used a lot.
 
    [1m2.12, 16-Oct-08[0m
@@ -1521,12 +1539,12 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        IMPROVEMENT
            [4mdbmapreduce[24m now detects and correctly fails when the input and
-           reducer have incompatible field seperators.
+           reducer have incompatible field separators.
 
        IMPROVEMENT
            [4mdbcolstats[24m, [4mdbcolhisto[24m, [4mdbcolscorrelate[24m, [4mdbcolsregression[24m, and
            [4mdbrowcount[24m now all take an "-F" option to let one specify the
-           output field seperator (so they work better with [4mdbmapreduce[24m).
+           output field separator (so they work better with [4mdbmapreduce[24m).
 
        BUG FIX
            An omitted "-k" from the manual page of [4mdbmultistats[24m is now there.
@@ -1556,7 +1574,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            [4mdbmerge[24m now correctly handles n-way merges.  Bug reported by Yuri
            Pradkin.
 
-       INCOMPATABLE CHANGE
+       INCOMPARABLE CHANGE
            [4mdbcolneaten[24m now defaults to [4mnot[24m padding the last column.
 
        ADDITION
@@ -1567,7 +1585,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        ADDITION
            New program [4mdbcolcopylast[24m copies the last value of a column into a
            new column copylast_column of the next row.  New program requested
-           by Fabio Silva; useful for convereting dbmultistats output into
+           by Fabio Silva; useful for converting dbmultistats output into
            dbrvstatdiff input.
 
        BUG FIX
@@ -1580,7 +1598,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            handling standard IO redirection.
 
    [1m2.23, 2011-03-10 Several small portability bugfixes; improved [4m[22mdbcolstats[0m
-       [1mfor large datsets[0m
+       [1mfor large datasets[0m
        IMPROVEMENT
            Documentation to [4mdbrvstatdiff[24m was changed to use "sd" to refer to
            standard deviation, not "ss" (which might be confused with sum-of-
@@ -1624,7 +1642,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        [1mdifferent field separators[0m
        IMPROVEMENT
            The [4mdbfilealter[24m command had a "--correct" option to work-around
-           from incompatible field-seperators, but it did nothing.  Now it
+           from incompatible field-separators, but it did nothing.  Now it
            does the correct but sad, data-loosing thing.
 
        IMPROVEMENT
@@ -1646,7 +1664,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        NEW [4mxml_to_db[24m can convert simple, very regular XML files into Fsdb.
 
-       NEW [4mdbfilepivot[24m "pivots" a file, converting multiple rows correponding
+       NEW [4mdbfilepivot[24m "pivots" a file, converting multiple rows corresponding
            to the same entity into a single row with multiple columns.
 
    [1m2.26, 2011-12-12 Bug fixes, particularly for perl-5.14.2.[0m
@@ -1655,7 +1673,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        BUG FIX
            Fixed problems where dbcolstats was truncating floating point
-           numbers when sorting.  This strange behavior happenes as of
+           numbers when sorting.  This strange behavior happens as of
            perl-5.14.2 and it [4mseems[24m like a Perl bug.  I've worked around it
            for the test suites, but I'm a bit nervous.
 
@@ -1675,7 +1693,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            The internal [4mt/test_command.t[24m test framework is now documented.
 
        BUG FIX
-           [4mdbrowuniq[24m now corretly handles the case where there is no input
+           [4mdbrowuniq[24m now correctly handles the case where there is no input
            (previously it output a blank line, which is a malformed fsdb
            file).  Thanks to Yuri Pradkin for reporting this bug.
 
@@ -1693,7 +1711,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            lack threads.  (Without this fix, I get massive failures in the
            non-ithreads test system.)
 
-   [1m2.30, 2012-11-25 imporovements to perl portability[0m
+   [1m2.30, 2012-11-25 improvements to perl portability[0m
        BUG FIX
            Removed unicode character in documention of [4mdbcolscorrelated[24m so pod
            tests will pass.  (Sigh, that should work :-( )
@@ -1736,7 +1754,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        IMPROVEMENT
            Test suites that are numeric now use dbfilediff to do numeric-aware
            comparisons, so the test suite should now be robust to slightly
-           different computers and operating systems and complilers than
+           different computers and operating systems and compilers than
            [4mexactly[24m what I use.
 
    [1m2.33, 2012-12-23 Minor fixes to some test cases.[0m
@@ -1855,7 +1873,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        BUG FIX
            dbrowuniq no longer duplicates singleton unique lines when
-           outputing both (with "-B").
+           outputting both (with "-B").
 
        BUG FIX
            Add missing "XML::Simple" dependency to [4mMakefile.PL[24m.
@@ -1897,7 +1915,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
    [1m2.43, 2013-08-27 Adds in-file compression.[0m
        BUG FIX
            Changed the sort on [4mTEST/dbsort_merge.cmd[24m to strings (from
-           numerics) so we're less succeptable to false test-failures due to
+           numerics) so we're less susceptible to false test-failures due to
            floating point IO differences.
 
        EXPERIMENTAL ENHANCEMENT
@@ -1926,7 +1944,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            Fsdb now handles automatic compression of file contents.  Enable
            compression with "dbfilealter -Z xz" (or "gz" or "bz2").  All
            programs should operate on compressed files and leave the output
-           with the same level of copmresion.  "xz" is recommended as fastest
+           with the same level of compression.  "xz" is recommended as fastest
            and most efficient.  "gz" is produces unrepeatable output (and so
            has no output test), it seems to insist on adding a timestamp.
 
@@ -1944,15 +1962,15 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            child termination.
 
        ENHANCEMENT
-           Details about removing theads: "dbpipeline" is thread free, and new
-           tests to verify each of its parts.  The easy cases are
+           Details about removing threads: "dbpipeline" is thread free, and
+           new tests to verify each of its parts.  The easy cases are
            "dbcolpercentile", "dbcolstats", "dbfilepivot", "dbjoin", and
            "dbcolstatscores", each of which use it in simple ways
            (2013-09-09).  "dbmerge" is now thread free (2013-09-13), but was a
-           signficant rewrite, which brought "dbsort" along.  "dbmapreduce" is
-           partly thread free (2013-09-21), again as a rewrite, and it brings
-           "dbmultistats" along.  Full "dbmapreduce" support took much longer
-           (2013-10-02).
+           significant rewrite, which brought "dbsort" along.  "dbmapreduce"
+           is partly thread free (2013-09-21), again as a rewrite, and it
+           brings "dbmultistats" along.  Full "dbmapreduce" support took much
+           longer (2013-10-02).
 
        BUG FIX
            When running with user-only output ("-n"), dbroweval now resets the
@@ -1961,7 +1979,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        NEW dbcolcreate will create all columns at the head of each row with
            the "--first" option.
 
-       NEW dbfilecat will concatinate two files, verifying that thye have the
+       NEW dbfilecat will concatenate two files, verifying that they have the
            same schema.
 
        ENHANCEMENT
@@ -1971,7 +1989,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            Also, dbmapreduce now supports a "--" option to prevent
            misinterpreting sub-program parameters as for dbmapreduce.
 
-       INCOMAPTIBLE CHANGE
+       INCOMPATIBLE CHANGE
            dbmapreduce no longer figures out if it needs to add the key to the
            output.  For multi-key-aware reducers, it never does (and cannot).
            For non-multi-key-aware reducers, it defaults to add the key and
@@ -1979,7 +1997,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            attempt to create pre-existing column...").  In such cases, one
            must disable adding the key with the new option "--no-prepend-key".
 
-       INCOMAPTIBLE CHANGE
+       INCOMPATIBLE CHANGE
            dbmapreduce no longer copies the input field separator by default.
            For multi-key-aware reducers, it never does (and cannot).  For non-
            multi-key-aware reducers, it defaults to [4mnot[24m copying the field
@@ -2030,7 +2048,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
        ENHANCEMENT
            Removed references to Jdb in the package specification.  Since the
            name was changed in 2008, there's no longer a huge need for
-           backwards compatability.  (Suggestion form Petr Xabata.)
+           backwards comparability.  (Suggestion form Petr Xabata.)
 
        ENHANCEMENT
            Test suites now invoke the perl using the path from
@@ -2071,7 +2089,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            Fixed 3 uses of "use v5.10" in test suites that were causing test
            failures (due to warnings, not real failures) on some platforms.
 
-   [1m2.51, 2014-09-05 Feature enchancements to dbcolmovingstats, dbcolcreate,[0m
+   [1m2.51, 2014-09-05 Feature enhancements to dbcolmovingstats, dbcolcreate,[0m
        [1mdbmapreduce, and new sqlselect_to_db[0m
        ENHANCEMENT
            dbcolcreate now has a "--no-recreate-fatal" that causes it to
@@ -2079,22 +2097,22 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
        ENHANCEMENT
            dbmapreduce once again is robust to reducers that output the key;
-           "--no-prepend-key" is no longer manditory.
+           "--no-prepend-key" is no longer mandatory.
 
        ENHANCEMENT
            dbcolsplittorows can now enumerate the output rows with "-E".
 
        BUG FIX
-           dbcolmovingstats is more mathemtically robust.  Previously for some
-           inputs and some platforms, floating point rounding could sometimes
-           cause squareroots of negative numbers.
+           dbcolmovingstats is more mathematically robust.  Previously for
+           some inputs and some platforms, floating point rounding could
+           sometimes cause squareroots of negative numbers.
 
        NEW sqlselect_to_db converts the output of the MySQL or MarinaDB select
            comment into fsdb format.
 
        INCOMPATIBLE CHANGE
            dbfilediff now outputs the [4msecond[24m row when doing sloppy numeric
-           comparisions, to beter support test suites.
+           comparisons, to better support test suites.
 
    [1m2.52, 2014-11-03 Fixing the test suite for line number changes.[0m
        ENHANCEMENT
@@ -2118,7 +2136,7 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            An important stability improvement to dbmapreduce.  It, plus
            dbmultistats, and dbcolstats now support controlled parallelism
            with the "--pararallelism=N" option.  They default to run with the
-           number of avaiable CPUs.  dbmapreduce also moderates its level of
+           number of available CPUs.  dbmapreduce also moderates its level of
            parallelism.  Previously it would create reducers as needed,
            causing CPU thrashing if reducers ran much slower than data
            production.
@@ -2128,6 +2146,12 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
            should.  (The obscure bug was an interaction with dbcolcreate with
            non-multi-key reducers that output their own key.  dbmapreduce has
            too many useful corner cases.)
+
+   [1m2.54, 2014-11-28 fix for the test suite to correct failing tests on not-my-[0m
+       [1mplatform[0m
+       BUGFIX
+           Sigh, the test suite now has a test suite.  Because, yes, I broke
+           it, causing many incorrect failures at cpantesters.  Now fixed.
 
 [1mAUTHOR[0m
        John Heidemann, "johnh@isi.edu"
@@ -2160,4 +2184,4 @@ Fsdb(3)               User Contributed Perl Documentation              Fsdb(3)
 
 
 
-perl v5.18.4                      2014-11-27                           Fsdb(3)
+perl v5.18.4                      2015-01-05                           Fsdb(3)

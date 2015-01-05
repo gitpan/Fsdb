@@ -2,7 +2,7 @@
 
 #
 # dbfilecat.pm
-# Copyright (C) 2013 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2013-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -13,7 +13,7 @@
 
 =head1 NAME
 
-dbfilecat - concatinate two files with identical schema
+dbfilecat - concatenate two files with identical schema
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ or
 
 =head1 DESCRIPTION
 
-Concatinate all provided input files,
+Concatenate all provided input files,
 producing one result.
 We remove extra header lines.
 
@@ -146,7 +146,7 @@ exit 0;
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2013 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2013-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

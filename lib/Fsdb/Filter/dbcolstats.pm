@@ -2,7 +2,7 @@
 
 #
 # dbcolstats.pm
-# Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -74,14 +74,14 @@ Compute median value.  (Will sort data if necessary.)
 =item B<-q N> or B<--quantile N>
 
 Compute quantile (quartile when N is 4),
-or an artbitrary quantile for other values of N,
+or an arbitrary quantile for other values of N,
 where the scores that are 1 Nth of the way across the population.
 
 =item B<--sample>
 
 Compute I<sample> population statistics
-(e.g., the sample standard devation),
-assuming I<n-1> degress of freedom.
+(e.g., the sample standard deviation),
+assuming I<n-1> degrees of freedom.
 
 =item B<--nosample>
 
@@ -243,7 +243,7 @@ use Fsdb::Support::NamedTmpfile;
 
     $filter = new Fsdb::Filter::dbcolstats(@arguments);
 
-Create a new dbcolstats object, taking command-line arugments.
+Create a new dbcolstats object, taking command-line arguments.
 
 =cut
 
@@ -304,7 +304,7 @@ sub parse_options ($@) {
 	'c|confidence=f' => \$self->{_confidence_fraction},
 	'd|debug+' => \$self->{_debug},
 	'f|format=s' => \$self->{_format},
-	'F|fs|cs|fieldseperator|columnseperator=s' => \$self->{_fscode},
+	'F|fs|cs|fieldseparator|columnseparator=s' => \$self->{_fscode},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'm|median!' =>  \$self->{_median},
@@ -625,7 +625,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2014 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

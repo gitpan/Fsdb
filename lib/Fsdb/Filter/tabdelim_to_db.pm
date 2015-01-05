@@ -24,7 +24,7 @@ tabdelim_to_db - convert tab-delimited data into fsdb
 
 Converts a tab-delimited data stream to Fsdb format.
 
-The input is tab-delimiated (I<not> fsdb):
+The input is tab-delimited (I<not> fsdb):
 the first row is taken to be the names of the columns;
 tabs separate columns.
 

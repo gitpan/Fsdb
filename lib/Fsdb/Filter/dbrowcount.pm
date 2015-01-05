@@ -2,7 +2,7 @@
 
 #
 # dbrowcount.pm
-# Copyright (C) 2007 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2007-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -28,10 +28,10 @@ This program is a strict subset of L<dbcolstats>.
 
 Although there are other ways to get a count of rows
 (C<dbcolstats>, or C<dbrowaccumulate -C 1> and some processing),
-counting is so common it warrents its own command.
+counting is so common it warrants its own command.
 (For example, consider how often C<wc -l> is used in regular shell
 scripting.)
-There are some gross and subtle differences, though, in thatd
+There are some gross and subtle differences, though, in that
 C<dbrowcount> doesn't require one to specify a column to search,
 and it also doesn't look for and skip null data items.
 
@@ -197,7 +197,7 @@ sub parse_options ($@) {
 	'man' => sub { pod2usage(-verbose => 2); },
 	'autorun!' => \$self->{_autorun},
 	'close!' => \$self->{_close},
-	'F|fs|cs|fieldseperator|columnseperator=s' => \$self->{_fscode},
+	'F|fs|cs|fieldseparator|columnseparator=s' => \$self->{_fscode},
 	'i|input=s' => sub { $self->parse_io_option('input', @_); },
 	'log!' => \$self->{_logprog},
 	'o|output=s' => sub { $self->parse_io_option('output', @_); },
@@ -257,7 +257,7 @@ Internal: write trailer.
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2007 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2007-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

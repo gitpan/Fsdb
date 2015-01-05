@@ -1,5 +1,5 @@
 prog='dbcolmovingstats'
-# The following input SOMETIMES goes negative on the qsrt around line 3694
+# The following input SOMETIMES goes negative on the sqrt around line 3694
 # (the run of 0.8244 values).   We now catch that that in dbcolmovingstats.
 args='-w 20 a_short'
 cmp='diff -cb '

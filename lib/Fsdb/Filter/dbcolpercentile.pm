@@ -2,7 +2,7 @@
 
 #
 # dbcolpercentile.pm
-# Copyright (C) 1997-2008 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1997-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -44,7 +44,7 @@ Compute ranks instead of percentiles.
 
 =item B<--fraction>
 
-Show fraction (percentage, except between 0 and 1, not cumulatative fraction).
+Show fraction (percentage, except between 0 and 1, not cumulative fraction).
 
 =item B<-a> or B<--include-non-numeric>
 
@@ -445,7 +445,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2008 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

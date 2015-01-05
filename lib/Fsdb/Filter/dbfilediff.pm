@@ -2,7 +2,7 @@
 
 #
 # dbfilediff.pm
-# Copyright (C) 2012-2014 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 2012-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -49,7 +49,7 @@ to account for things like variations in different computer's
 floating point precision and differences in printf output.
 
 Epsilon comparision is asymmetric, in that it assumes the first
-input is correct an allows the second intput to vary,
+input is correct an allows the second input to vary,
 but not the reverse.
 
 Because two tables are required,
@@ -86,9 +86,10 @@ Specify the name of the C<diff> column, if any.
 
 =item B<-q> or B<--quiet>
 
-Be quiet, supressing output for identical rows.
+Be quiet, suppressing output for identical rows.
 (This behavior is different from Unix L<diff(1)> 
-where C<-q> supresses I<all> output.
+where C<-q> suppresses I<all> output.)
+If repeated, omits epsilon-equivalent rows.
 
 =back
 
@@ -234,7 +235,7 @@ sub set_defaults ($) {
     $self->{_epsilon_numerics} = undef;
     $self->{_exit_one_if_diff} = undef;
     $self->{_destination_column} = 'diff';
-    $self->{_quiet} = undef;
+    $self->{_quiet} = 0;
 }
 
 =head2 parse_options
@@ -287,7 +288,7 @@ sub setup ($) {
 	    or croak $self->{_prog} . ": cannot create column " . $self->{_destination_column} . " (maybe it already existed?)\n";
 
 
-    croak $self->{_prog} . ": intput streams have different schemas; cannot merge\n"
+    croak $self->{_prog} . ": input streams have different schemas; cannot merge\n"
 	if ($self->{_ins}[0]->compare($self->{_ins}[1]) ne 'identical');
 }
 
@@ -295,7 +296,7 @@ sub setup ($) {
 
     ($value, $epsilon, $sig_figs) = _find_epsilon($fp)
 
-Return a numeric VALUE and an EPSILON that reflects its signficant figures
+Return a numeric VALUE and an EPSILON that reflects its significant figures
 with possible rounding error.
 
 =cut
@@ -312,7 +313,7 @@ sub _find_epsilon {
     #
     # Need to convert significand to epsilon.
     #
-    # first, find signficant digits in the string (non-trivial)
+    # first, find significant digits in the string (non-trivial)
     # then, adjust that by the exponent.
     #
     # For test cases, see TEST/find_epsilon.t.
@@ -414,9 +415,12 @@ sub run ($) {
 	    };
 	};
 	if (defined($eq)) {
-	    push(@$f1, ($eq eq 'epsilon' ? "~": "="));
-	    if ($eq eq 'epsilon' || !$self->{_quiet}) {
-		&$out_fastpath_sub($f1);
+	    if ($eq eq 'epsilon') {
+	        push(@$f1, "~");
+		&$out_fastpath_sub($f1) if ($self->{_quiet} <= 1);
+	    } else {
+	        push(@$f1, "=");
+		&$out_fastpath_sub($f1) if ($self->{_quiet} == 0);
 	    };
 	} else {
 	    $difference_count++;
@@ -438,7 +442,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 2012-2014 by John Heidemann <johnh@isi.edu>
+Copyright (C) 2012-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

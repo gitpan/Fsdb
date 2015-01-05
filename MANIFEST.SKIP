@@ -12,6 +12,7 @@ lib/boilerplate.pm
 ^lib/Fsdb/Filter/OLD
 ^T/
 ^TEST/ABANDONED
+^TEST/ABANDONED
 \.trial$
 ^TEST/OLD
 ^EXPERIMENTAL

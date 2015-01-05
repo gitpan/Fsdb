@@ -2,7 +2,7 @@
 
 #
 # dbcolneaten.pm
-# Copyright (C) 1991-2011 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -31,7 +31,7 @@ Field settings are of the form
 
     field op value
 
-OP is >=, =, or <= specifing that the width of 
+OP is >=, =, or <= specifying that the width of 
 that FIELD must be more, equal, or less than that VALUE
 
 
@@ -366,7 +366,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2011 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

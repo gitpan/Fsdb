@@ -2,7 +2,7 @@
 
 #
 # dbcolmovingstats.pm
-# Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>
+# Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 # $Id$
 #
 # This program is distributed under terms of the GNU general
@@ -35,7 +35,7 @@ Optionally, with C<-m> we also compute median.
 
 Values before a sufficient number have been accumulated are given the
 empty value (if specified with C<-e>).
-If no empty value is givne, stats are computed on as many are possible if no empty
+If no empty value is given, stats are computed on as many are possible if no empty
 value is specified.
 
 Dbcolmovingstats runs in O(1) memory, but must buffer a full window of data.
@@ -360,6 +360,22 @@ sub run ($) {
 	# Sqrt_part can go negtiave if we have floating point rounding in the subtraction,
 	# so protect against that.
 	$stddev = ($sqrt_part > 0 ? sqrt($sqrt_part) : 0);
+	#
+	# We get different results for different FP precision.
+	# Result TEST/dbcolmovingstats_rounding_error is unstable
+	# for the run of values that are all 0.8244.
+	# See <file:///~/NOTES/201501/150104#* Software/fsdb>
+	# and <https://rt.cpan.org/Ticket/Display.html?id=101220>.
+	# Fix: map values where the relative standard deviation is small
+	# to a fixed value.  This seems (empircally) to happen when stddev/mean < 1e-7
+	# which corresponds to IEEE single precision floating point.
+	#
+        # In practice, this case comes up only with strings of identical values
+	# where the moving stddev drops to zero +/- rounding error.
+	#
+	if ($mean != 0 && $stddev != 0 && $stddev / $mean < 1e-7) {
+	    $stddev = 1e-7;
+	};
 	if ($doing_median) {
 	    my $median_i = int($n / 2);
 	    # 1 -> 0.5 -> [0]
@@ -390,7 +406,7 @@ sub run ($) {
 
 =head1 AUTHOR and COPYRIGHT
 
-Copyright (C) 1991-2012 by John Heidemann <johnh@isi.edu>
+Copyright (C) 1991-2015 by John Heidemann <johnh@isi.edu>
 
 This program is distributed under terms of the GNU general
 public license, version 2.  See the file COPYING

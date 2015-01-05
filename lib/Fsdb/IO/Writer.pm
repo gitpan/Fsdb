@@ -476,7 +476,7 @@ sub write_raw {
     format_fsdb_fields(\%data, \@fields)
 
 Returns a string representing double-space-separated, formatted version of
-the hash'ed fields stoed in %data, listed in @fields.
+the hash'ed fields stored in %data, listed in @fields.
 (This routine is a hack, there needs to be a FsdbWriter to do this properly,
 but there isn't currently.
 
